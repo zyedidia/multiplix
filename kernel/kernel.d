@@ -5,10 +5,12 @@ import core.volatile;
 
 import dev = board.virt.dev;
 
+__gshared int x = 2;
+
 void kmain() {
     io.writeln("Hello world");
 
-    const int i = 42;
+    int i = x + 42;
     io.writeln(i);
 
     io.writeln(&kmain);

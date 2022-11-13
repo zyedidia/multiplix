@@ -42,7 +42,7 @@ local flags = {
     dc = sel(
         conf.dc == "gdc",
         f"-fno-exceptions -fno-rtti -Os -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections",
-        f"--betterC -Oz -mtriple=$prefix -mattr=+m,+a,+c -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections"
+        f"--betterC -Oz -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections"
     ),
     as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
     ld := -nostartfiles -T$link -mcmodel=$(machine.mcmodel) -Wl,--gc-sections

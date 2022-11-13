@@ -15,17 +15,20 @@ SECTIONS
     } >ram
     .rodata : {
         _krodata_start = .;
+        __global_pointer$ = . + 0x800;
         *(.rodata*)
+        *(.srodata*)
         _krodata_end = .;
     }
     .data : { 
         _kdata_start = .;
+        *(.sdata*)
         *(.data*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         _kdata_end = .;
     } 
     .bss : {
-        . = ALIGN(4);
+        . = ALIGN(8);
         _kbss_start = .;
         *(.bss*)
         *(COMMON)
