@@ -1,0 +1,8 @@
+local knit = require("knit")
+
+local src = knit.rglob("libd", "*.d")
+
+return {
+    files = src,
+    packages = {"-Ilibd"}
+}

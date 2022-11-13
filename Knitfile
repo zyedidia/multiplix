@@ -1,0 +1,63 @@
+local knit = require("knit")
+
+local prefix = "riscv64-unknown-elf"
+
+local machine = {
+    board = "virt",
+    mabi = "lp64",
+    march = "rv64imac",
+    arch = "riscv64",
+    mcmodel = "medany",
+}
+
+local tools = {
+    dc := $prefix-gdc
+    cc := $prefix-gcc
+    as := $prefix-as
+    ld := $prefix-ld
+    cpp := $prefix-cpp
+    objcopy := $prefix-objcopy
+    objdump := $prefix-objdump
+    gdb := $prefix-gdb
+    qemu := qemu-system-$(machine.arch)
+}
+
+local link = "link.ld"
+
+local flags = {
+    dc := -fno-exceptions -fno-rtti -Os -nostartfiles -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
+    as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
+    ld := -nostartfiles -nodefaultlibs -T$link -mcmodel=$(machine.mcmodel)
+}
+
+local libgcc = knit.shell(f"$(tools.cc) $(flags.as) --print-libgcc-file-name")
+
+local meta = r{
+    $ %.o: %.s
+        $(tools.cc) $(flags.as) -xassembler-with-cpp $input -c -o $output
+    $ %.bin: %.elf
+        $(tools.objcopy) $input -O binary $output
+    $ %.list: %.elf
+        $(tools.objdump) -D $input > $output
+}
+
+local dsrc := $(knit.glob("*.d")) $(knit.rglob("libd", "*.d"))
+
+local kernel = r{
+    $ kernel.o: $dsrc libd[I]
+        $(tools.dc) $(flags.dc) -Ilibd $input -c -o $output
+    $ kernel.elf: kernel.o start.o $link[I]
+        $(tools.cc) $(flags.as) $(flags.ld) $input $libgcc -o $output
+    $ qemu:VBQ: kernel.elf
+        $(tools.qemu) -machine $(machine.board) -nographic -kernel $input -bios none
+    $ qemu-gdb:VBQ: kernel.elf
+        $(tools.qemu) -s -S -machine $(machine.board) -nographic -kernel $input -bios none &
+        $(tools.gdb) -ex "file $input" -ex "target remote localhost:1234"
+}
+
+return b{
+    $ all: kernel.elf kernel.list
+
+    kernel,
+    meta
+}
