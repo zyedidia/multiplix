@@ -18,8 +18,7 @@ void kmain() {
 
 extern (C) {
     void ulib_tx(ubyte b) {
-        static import uart;
-        uart.tx(b);
+        dev.Uart.tx(b);
     }
 
     void ulib_exit(ubyte code) {

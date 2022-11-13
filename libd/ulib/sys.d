@@ -1,7 +1,6 @@
 module ulib.sys;
 
 import io = ulib.io;
-import uart = uart;
 import kernel = kernel;
 
 extern (C) {
