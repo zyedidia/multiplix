@@ -2,13 +2,13 @@ module ulib.io;
 
 import ulib.string : itoa;
 import ulib.math : min, max;
-import ulib.trait : isInt, Unqual;
+import ulib.trait : isInt;
 
 import sys = ulib.sys;
 
 struct File {
 public:
-    void function(ubyte) putc;
+    void function(ubyte) putc = void;
 
     this(void function(ubyte) putc) {
         this.putc = putc;
@@ -16,8 +16,7 @@ public:
 
     void write(Args...)(Args args) {
         foreach (arg; args) {
-            alias T = typeof(arg);
-            writeElem(cast(Unqual!T) arg);
+            writeElem(arg);
         }
     }
 
@@ -31,8 +30,8 @@ public:
     }
 
 private:
-    char[256] buffer;
-    size_t size;
+    char[256] buffer = void;
+    size_t size = 0;
 
     void writeElem(T)(T* val) {
         writeElem("0x");

@@ -36,7 +36,7 @@ local tools = {
     qemu := qemu-system-$(machine.arch)
 }
 
-local link = "link.ld"
+local link = "kernel/link.ld"
 
 local flags = {
     dc = sel(
@@ -57,16 +57,16 @@ local meta = r{
         $(tools.objdump) -D $input > $output
 }
 
-local kern = knit.glob("*.d")
+local kern = knit.rglob("kernel", "*.d")
 local lib = knit.rglob("libd", "*.d")
 local dco = sel(conf.dc == "gdc", "o", "of")
 
 local kernel = r{
     $ libd.o: $lib
-        $(tools.dc) $(flags.dc) -Ilibd $input -c -$dco $output
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
     $ kernel.o: $kern libd[I]
-        $(tools.dc) $(flags.dc) -Ilibd $input -c -$dco $output
-    $ kernel.elf: kernel.o libd.o start.o $link[I]
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
+    $ kernel.elf: kernel.o libd.o kernel/start.o $link[I]
         $(tools.cc) $(flags.as) $(flags.ld) $input -lgcc -o $output
     $ qemu:VBQ: kernel.elf
         $(tools.qemu) -machine $(machine.board) -nographic -kernel $input -bios none
@@ -76,7 +76,7 @@ local kernel = r{
 }
 
 return b{
-    $ all: kernel.elf kernel.list
+    $ all: kernel.elf kernel.list kernel.bin
 
     kernel,
     meta

@@ -3,13 +3,15 @@ module kernel;
 import io = ulib.io;
 import core.volatile;
 
+import dev = board.virt.dev;
+
 void kmain() {
     io.writeln("Hello world");
-}
 
-void shutdown() {
-    enum poweroff = cast(uint*) 0x100000;
-    volatileStore(poweroff, 0x5555);
+    const int i = 42;
+    io.writeln(i);
+
+    io.writeln(&kmain);
 }
 
 extern (C) {
@@ -19,6 +21,6 @@ extern (C) {
     }
 
     void ulib_exit(ubyte code) {
-        shutdown();
+        dev.SysCon.shutdown();
     }
 }

@@ -3,6 +3,7 @@ module dstart;
 import core.volatile;
 
 static import kernel;
+import sys = ulib.sys;
 
 extern (C) extern __gshared uint _kbss_start, _kbss_end;
 
@@ -15,5 +16,5 @@ extern (C) void dstart() {
     }
 
     kernel.kmain();
-    kernel.shutdown();
+    sys.exit(0);
 }

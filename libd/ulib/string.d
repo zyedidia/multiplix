@@ -2,9 +2,10 @@ module ulib.string;
 
 import ulib.trait;
 
-string itoa(S)(S num, char[] buf, uint base = 10) if (isInt!S) {
+string itoa(S)(S input, char[] buf, uint base = 10) if (isInt!S) {
     size_t pos = buf.length;
     bool sign = false;
+    Unqual!S num = input;
 
     static if (S.min < 0) {
         if (num < 0) {
