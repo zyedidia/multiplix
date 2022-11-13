@@ -52,12 +52,28 @@ extern (C) {
         _arraybounds(file, line);
     }
 
+    void _d_arrayboundsp(immutable(char*) file, uint line)
+    {
+        import ulib.memory : strlen;
+        _arraybounds(file[0 .. strlen(file)], line);
+    }
+
     void _d_arraybounds_slice(string file, uint line, size_t lower, size_t upper, size_t length) {
         _arraybounds_slice(file, line, lower, upper, length);
     }
 
+    void _d_arraybounds_slicep(immutable(char*) file, uint line, size_t lower, size_t upper, size_t length) {
+        import ulib.memory : strlen;
+        _arraybounds_slice(file[0 .. strlen(file)], line, lower, upper, length);
+    }
+
     void _d_arraybounds_index(string file, uint line, size_t index, size_t length) {
         _arraybounds_index(file, line, index, length);
+    }
+
+    void _d_arraybounds_indexp(immutable(char*) file, uint line, size_t index, size_t length) {
+        import ulib.memory : strlen;
+        _arraybounds_index(file[0 .. strlen(file)], line, index, length);
     }
 
     void _d_unittest(string file, uint line) {

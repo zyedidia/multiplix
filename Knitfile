@@ -1,6 +1,14 @@
 local knit = require("knit")
 
+function sel(cond, t, f)
+    if cond then return t else return f end
+end
+
 local prefix = "riscv64-unknown-elf"
+
+local conf = {
+    dc = cli.dc or "ldc",
+}
 
 local machine = {
     board = "virt",
@@ -10,8 +18,14 @@ local machine = {
     mcmodel = "medany",
 }
 
+if machine.mcmodel == "medany" then
+    machine.cmodel = "medium"
+else
+    machine.cmodel = "small"
+end
+
 local tools = {
-    dc := $prefix-gdc
+    dc = sel(conf.dc == "gdc", f"$prefix-gdc", "ldc2"),
     cc := $prefix-gcc
     as := $prefix-as
     ld := $prefix-ld
@@ -25,12 +39,14 @@ local tools = {
 local link = "link.ld"
 
 local flags = {
-    dc := -fno-exceptions -fno-rtti -Os -nostartfiles -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
+    dc = sel(
+        conf.dc == "gdc",
+        f"-fno-exceptions -fno-rtti -Os -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections",
+        f"--betterC -Oz -mtriple=$prefix -mattr=+m,+a,+c -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections"
+    ),
     as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
-    ld := -nostartfiles -nodefaultlibs -T$link -mcmodel=$(machine.mcmodel)
+    ld := -nostartfiles -T$link -mcmodel=$(machine.mcmodel) -Wl,--gc-sections
 }
-
-local libgcc = knit.shell(f"$(tools.cc) $(flags.as) --print-libgcc-file-name")
 
 local meta = r{
     $ %.o: %.s
@@ -42,12 +58,13 @@ local meta = r{
 }
 
 local dsrc := $(knit.glob("*.d")) $(knit.rglob("libd", "*.d"))
+local dco = sel(conf.dc == "gdc", "o", "of")
 
 local kernel = r{
     $ kernel.o: $dsrc libd[I]
-        $(tools.dc) $(flags.dc) -Ilibd $input -c -o $output
+        $(tools.dc) $(flags.dc) -Ilibd $input -c -$dco $output
     $ kernel.elf: kernel.o start.o $link[I]
-        $(tools.cc) $(flags.as) $(flags.ld) $input $libgcc -o $output
+        $(tools.cc) $(flags.as) $(flags.ld) $input -lgcc -o $output
     $ qemu:VBQ: kernel.elf
         $(tools.qemu) -machine $(machine.board) -nographic -kernel $input -bios none
     $ qemu-gdb:VBQ: kernel.elf

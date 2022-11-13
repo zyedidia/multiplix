@@ -1,4 +1,4 @@
-module core.bitop;
+module core.volatile;
 
 nothrow:
 @safe:

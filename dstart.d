@@ -1,6 +1,6 @@
 module dstart;
 
-import core.bitop;
+import core.volatile;
 
 static import kernel;
 
