@@ -4,8 +4,13 @@ import io = ulib.io;
 import uart = uart;
 import kernel = kernel;
 
-__gshared io.File stdout = io.File(function(ubyte c) { uart.tx(c); });
+extern (C) {
+    void ulib_tx(ubyte b);
+    void ulib_exit(ubyte code);
+}
+
+__gshared io.File stdout = io.File(function(ubyte c) { ulib_tx(c); });
 
 void exit(ubyte code) {
-    kernel.shutdown();
+    ulib_exit(code);
 }

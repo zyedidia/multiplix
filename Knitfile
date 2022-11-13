@@ -57,13 +57,16 @@ local meta = r{
         $(tools.objdump) -D $input > $output
 }
 
-local dsrc := $(knit.glob("*.d")) $(knit.rglob("libd", "*.d"))
+local kern = knit.glob("*.d")
+local lib = knit.rglob("libd", "*.d")
 local dco = sel(conf.dc == "gdc", "o", "of")
 
 local kernel = r{
-    $ kernel.o: $dsrc libd[I]
+    $ libd.o: $lib
         $(tools.dc) $(flags.dc) -Ilibd $input -c -$dco $output
-    $ kernel.elf: kernel.o start.o $link[I]
+    $ kernel.o: $kern libd[I]
+        $(tools.dc) $(flags.dc) -Ilibd $input -c -$dco $output
+    $ kernel.elf: kernel.o libd.o start.o $link[I]
         $(tools.cc) $(flags.as) $(flags.ld) $input -lgcc -o $output
     $ qemu:VBQ: kernel.elf
         $(tools.qemu) -machine $(machine.board) -nographic -kernel $input -bios none
