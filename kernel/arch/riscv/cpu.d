@@ -1,6 +1,6 @@
 module kernel.arch.riscv.cpu;
 
-void dsb() {
+void fence() {
     asm {
         "fence";
     }

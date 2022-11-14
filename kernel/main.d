@@ -4,13 +4,12 @@ import io = ulib.io;
 import core.volatile;
 
 import dev = kernel.board.virt.dev;
-import trap = kernel.arch.riscv.trap;
-import timer = kernel.arch.riscv.timer;
+import arch = kernel.arch.riscv;
 
 void kmain() {
     io.writeln("kernel booted");
-    trap.init();
-    trap.enable();
+    arch.trap_init();
+    arch.trap_enable();
 
     while (true) {}
 }

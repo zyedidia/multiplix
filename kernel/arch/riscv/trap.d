@@ -6,27 +6,28 @@ import io = ulib.io;
 
 extern (C) extern void trapvec();
 
-void init() {
-    write!(Reg.stvec)(cast(uintptr) &trapvec);
+void trap_init() {
+    csr_write!(Csr.stvec)(cast(uintptr) &trapvec);
 }
 
-void enable() {
-    writeBit!(Reg.sstatus)(Sstatus.sie, 1);
+void trap_enable() {
+    csr_write_bit!(Csr.sstatus)(Sstatus.sie, 1);
 }
 
-void disable() {
-    writeBit!(Reg.sstatus)(Sstatus.sie, 0);
+void trap_disable() {
+    csr_write_bit!(Csr.sstatus)(Sstatus.sie, 0);
 }
 
 extern (C) void kerneltrap() {
-    uintptr sepc = read!(Reg.sepc)();
-    uintptr sstatus = read!(Reg.sstatus)();
-    uintptr scause = read!(Reg.scause)();
+    uintptr sepc = csr_read!(Csr.sepc)();
+    uintptr sstatus = csr_read!(Csr.sstatus)();
+    uintptr scause = csr_read!(Csr.scause)();
 
     io.writeln("[interrupt] sepc: ", cast(void*) sepc, ", sstatus: ", sstatus, ", scause: ", scause);
 
     if (scause == Scause.si) {
         // acknowledge the interrupt by clearing ssip
-        writeBit!(Reg.sip)(Sip.ssip, 0);
+        csr_write_bit!(Csr.sip)(Sip.ssip, 0);
     }
 }
+

@@ -5,17 +5,17 @@ import core.volatile;
 import kernel.arch.riscv.csr;
 import sys = kernel.sys;
 
-void init() {
+void timer_init() {
 }
 
-uint cycles() {
-    return cast(uint) read!(Reg.mcycle)();
+uint timer_cycles() {
+    return cast(uint) csr_read!(Csr.mcycle)();
 }
 
-void delay_us(uint us) {
-    uint rb = cycles();
+void timer_delay_us(uint us) {
+    uint rb = timer_cycles();
     while (1) {
-        uint ra = cycles();
+        uint ra = timer_cycles();
         if ((ra - rb) >= us * (sys.core_freq / (1000 * 1000))) {
             break;
         }
@@ -42,7 +42,7 @@ struct clintImpl(uintptr base) {
     }
 
     static ulong* mtimecmp_addr() {
-        int hartid = cast(int) read!(Reg.mhartid)();
+        int hartid = cast(int) csr_read!(Csr.mhartid)();
         return cast(ulong*) (base + 0x4000 + 8*hartid);
     }
     static ulong* mtime_addr() {
@@ -56,18 +56,19 @@ extern (C) extern void timervec();
 
 extern (C) __gshared ulong[5] timer_scratch;
 
-void irqinit() {
+void timer_irq_init() {
     int interval = 1000000;
 
     clint.mtimecmp = clint.mtime + interval;
 
     timer_scratch[3] = cast(ulong) clint.mtimecmp_addr();
     timer_scratch[4] = interval;
-    write!(Reg.mscratch)(cast(uintptr) &timer_scratch[0]);
+    csr_write!(Csr.mscratch)(cast(uintptr) &timer_scratch[0]);
 
-    write!(Reg.mtvec)(cast(uintptr) &timervec);
+    csr_write!(Csr.mtvec)(cast(uintptr) &timervec);
     // enable m-mode interrupts
-    writeBit!(Reg.mstatus)(Mstatus.mie, 1);
+    csr_write_bit!(Csr.mstatus)(Mstatus.mie, 1);
     // enable m-mode timer interrupts
-    writeBit!(Reg.mie)(Mie.mtie, 1);
+    csr_write_bit!(Csr.mie)(Mie.mtie, 1);
 }
+
