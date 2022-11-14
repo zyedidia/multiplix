@@ -55,6 +55,15 @@ enum Sie {
     ssie = 1,
 }
 
+enum Sip {
+    ssip = 1,
+}
+
+enum Scause {
+    // software interrupt
+    si = 0x8000000000000001UL,
+}
+
 void write(Reg reg)(uintptr val) {
     asm {
         "csrw %0, %1" : : "i"(reg), "r"(val);
