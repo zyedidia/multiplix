@@ -1,9 +1,9 @@
-module kernel;
+module kernel.main;
 
 import io = ulib.io;
 import core.volatile;
 
-import dev = board.virt.dev;
+import dev = kernel.board.virt.dev;
 
 __gshared int x = 2;
 

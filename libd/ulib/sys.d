@@ -1,7 +1,6 @@
 module ulib.sys;
 
 import io = ulib.io;
-import kernel = kernel;
 
 extern (C) {
     void ulib_tx(ubyte b);

@@ -1,4 +1,4 @@
-module dev.ns16550;
+module kernel.dev.ns16550;
 
 import core.volatile;
 

@@ -1,4 +1,4 @@
-module dev.syscon;
+module kernel.dev.syscon;
 
 import core.volatile;
 

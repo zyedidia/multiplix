@@ -1,4 +1,4 @@
-module arch.riscv.csr;
+module kernel.arch.riscv.csr;
 
 // A common interface for accessing RISC-V CSRs.
 

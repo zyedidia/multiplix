@@ -1,7 +1,7 @@
-module arch.riscv.timer;
+module kernel.arch.riscv.timer;
 
-import csr = arch.riscv.csr;
-import sys = sys;
+import csr = kernel.arch.riscv.csr;
+import sys = kernel.sys;
 
 void init() {
 }

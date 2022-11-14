@@ -1,8 +1,8 @@
-module dstart;
+module kernel.dstart;
 
 import core.volatile;
 
-static import kernel;
+import kernel.main : kmain;
 import sys = ulib.sys;
 
 extern (C) extern __gshared uint _kbss_start, _kbss_end;
@@ -15,6 +15,6 @@ extern (C) void dstart() {
         volatileStore(bss++, 0);
     }
 
-    kernel.kmain();
+    kmain();
     sys.exit(0);
 }

@@ -1,4 +1,4 @@
-module dev;
+module kernel.dev;
 
-public import dev.syscon;
-public import dev.ns16550;
+public import kernel.dev.syscon;
+public import kernel.dev.ns16550;
