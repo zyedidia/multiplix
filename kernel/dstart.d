@@ -2,6 +2,7 @@ module kernel.dstart;
 
 import core.volatile;
 
+import kernel.arch.riscv.start : start;
 import kernel.main : kmain;
 import sys = ulib.sys;
 
@@ -15,6 +16,6 @@ extern (C) void dstart() {
         volatileStore(bss++, 0);
     }
 
-    kmain();
+    start(cast(uintptr) &kmain);
     sys.exit(0);
 }

@@ -1,10 +1,58 @@
 module kernel.arch.riscv.csr;
 
-// A common interface for accessing RISC-V CSRs.
+import bits = ulib.bits;
 
 enum Reg {
+    mhartid = 0xf14,
+    mstatus = 0x300,
+    medeleg = 0x302,
+    mideleg = 0x303,
+    mie = 0x304,
+    mtvec = 0x305,
+    mscratch = 0x340,
+    mepc = 0x341,
     mcycle = 0xb00,
     mcycleh = 0xb80,
+
+    sstatus = 0x100,
+    sedeleg = 0x102,
+    sideleg = 0x103,
+    sie = 0x104,
+    stvec = 0x105,
+    sscratch = 0x140,
+    sepc = 0x141,
+    scause = 0x142,
+    stval = 0x143,
+    sip = 0x144,
+    satp = 0x180,
+
+    pmpaddr0 = 0x3b0,
+    pmpcfg0 = 0x3a0,
+}
+
+enum Mstatus {
+    mpp_hi = 12,
+    mpp_lo = 11,
+
+    mie = 3,
+
+    mode_u = 0b00,
+    mode_s = 0b01,
+    mode_m = 0b11,
+}
+
+enum Sstatus {
+    sie = 1,
+}
+
+enum Mie {
+    mtie = 7,
+}
+
+enum Sie {
+    seie = 9,
+    stie = 5,
+    ssie = 1,
 }
 
 void write(Reg reg)(uintptr val) {
@@ -17,6 +65,16 @@ void write(Reg reg, int val)() if (val < 32) {
     asm {
         "csrwi %0, %1" : : "i"(reg), "I"(val);
     }
+}
+
+void writeBit(Reg reg)(uint bit, uint val) {
+    uintptr rd = read!reg();
+    write!reg(bits.set(rd, bit, val));
+}
+
+void writeBits(Reg reg)(uint hi, uint lo, uint val) {
+    uintptr rd = read!reg();
+    write!reg(bits.set(rd, hi, lo, val));
 }
 
 uintptr read(Reg reg)() {

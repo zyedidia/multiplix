@@ -4,16 +4,15 @@ import io = ulib.io;
 import core.volatile;
 
 import dev = kernel.board.virt.dev;
-
-__gshared int x = 2;
+import trap = kernel.arch.riscv.trap;
+import timer = kernel.arch.riscv.timer;
 
 void kmain() {
-    io.writeln("Hello world");
+    io.writeln("kernel booted");
+    trap.init();
+    trap.enable();
 
-    int i = x + 42;
-    io.writeln(i);
-
-    io.writeln(&kmain);
+    while (true) {}
 }
 
 extern (C) {

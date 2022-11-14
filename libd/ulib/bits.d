@@ -17,6 +17,24 @@ bool get(T)(T x, uint bit) if (isInt!T) {
     return (x >> bit) & 1;
 }
 
+T clear(T)(T x, uint hi, uint lo) if (isInt!T) {
+    T m = mask!T(hi - lo + 1);
+    return x & ~(m << lo);
+}
+
+T clear(T)(T x, uint bit) if (isInt!T) {
+    return x & ~(1 << bit);
+}
+
+T set(T)(T x, uint bit, uint val) if (isInt!T) {
+    x = clear(x, bit);
+    return x | (val << bit);
+}
+
+T set(T)(T x, uint hi, uint lo, uint val) if (isInt!T) {
+    return clear(x, hi, lo) | (val << lo);
+}
+
 version (GNU) {
     import gcc.builtins;
 

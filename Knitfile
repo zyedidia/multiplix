@@ -66,7 +66,7 @@ local kernel = r{
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
     $ kernel.o: $kern libd[I]
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
-    $ kernel.elf: kernel.o libd.o kernel/start.o $link[I]
+    $ kernel.elf: kernel.o libd.o kernel/start.o kernel/arch/riscv/timervec.o kernel/arch/riscv/trapvec.o $link[I]
         $(tools.cc) $(flags.as) $(flags.ld) $input -lgcc -o $output
     $ qemu:VBQ: kernel.elf
         $(tools.qemu) -machine $(machine.board) -nographic -kernel $input -bios none
