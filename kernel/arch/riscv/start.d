@@ -20,6 +20,8 @@ void start(uintptr main) {
     csr_write!(Csr.pmpaddr0)(0x3fffffffffffffUL);
     csr_write!(Csr.pmpcfg0)(0xf);
 
+    csr_write!(Csr.sscratch)(csr_read!(Csr.mhartid)());
+
     timer_irq_init();
 
     asm {
