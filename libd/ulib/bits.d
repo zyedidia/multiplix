@@ -4,9 +4,9 @@ import ulib.trait;
 
 T mask(T)(uint nbits) if (isInt!T) {
     if (nbits == T.sizeof * 8) {
-        return ~0;
+        return ~(cast(T) 0);
     }
-    return (1 << nbits) - 1;
+    return ((cast(T) 1) << nbits) - 1;
 }
 
 T get(T)(T x, uint ub, uint lb) if (isInt!T) {
@@ -14,7 +14,7 @@ T get(T)(T x, uint ub, uint lb) if (isInt!T) {
 }
 
 bool get(T)(T x, uint bit) if (isInt!T) {
-    return (x >> bit) & 1;
+    return (x >> bit) & (cast(T) 1);
 }
 
 T clear(T)(T x, uint hi, uint lo) if (isInt!T) {
@@ -31,7 +31,7 @@ T set(T)(T x, uint bit, uint val) if (isInt!T) {
     return x | (val << bit);
 }
 
-T set(T)(T x, uint hi, uint lo, ulong val) if (isInt!T) {
+T set(T)(T x, uint hi, uint lo, T val) if (isInt!T) {
     return clear(x, hi, lo) | (val << lo);
 }
 
