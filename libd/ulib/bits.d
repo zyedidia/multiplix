@@ -23,7 +23,7 @@ T clear(T)(T x, uint hi, uint lo) if (isInt!T) {
 }
 
 T clear(T)(T x, uint bit) if (isInt!T) {
-    return x & ~(1 << bit);
+    return x & ~((cast(T) 1) << bit);
 }
 
 T set(T)(T x, uint bit, uint val) if (isInt!T) {
