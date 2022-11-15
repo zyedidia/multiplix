@@ -9,15 +9,9 @@ SECTIONS
         _kcode_end = .;
         . = ALIGN(8);
     }
-    .rodata : {
-        _krodata_start = .;
-        __global_pointer$ = . + 0x800;
-        *(.rodata*)
-        *(.srodata*)
-        _krodata_end = .;
-    }
     .data : { 
         _kdata_start = .;
+        __global_pointer$ = . + 0x800;
         *(.sdata*)
         *(.data*)
         . = ALIGN(8);
@@ -33,13 +27,22 @@ SECTIONS
     }
 
     .kstack : {
-        . += 8K;
+        . += 4K;
     }
 
     PROVIDE(_kstack = .);
 
-    . = ALIGN(16);
-    _kheap_start = .;
+    ASSERT((. - ADDR(.text) <= 0x4000), "bootloader code is larger than 4 pages!")
+
+    . = 0x80004000;
+    PROVIDE(kernel_entry_pa = .);
+
+    .rodata : {
+        _krodata_start = .;
+        *(.rodata*)
+        *(.srodata*)
+        _krodata_end = .;
+    }
 
     /DISCARD/ : { *(.comment .note .eh_frame) }
 }

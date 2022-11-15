@@ -8,7 +8,7 @@ extern (C) extern __gshared uint _kbss_start, _kbss_end;
 
 __gshared arch.Pagetable39 kernel_pagetable;
 
-__gshared auto kernelbin = cast(ubyte[]) import("kernel.bin");
+auto kbin = cast(immutable ubyte[]) import("kernel.bin");
 
 extern (C) void dstart() {
     uint* bss = &_kbss_start;
@@ -22,9 +22,16 @@ extern (C) void dstart() {
 }
 
 enum highmem_base = 0xFFFF_FFC0_0000_0000;
-enum kernel_entry = 0xFFFF_FFC0_8000_8000;
-enum kernel_entry_pa = kernel_entry - highmem_base;
+extern (C) extern __gshared char kernel_entry_pa;
 
+// The bootloader occupies the first 4 pages of memory, from 0x8000_0000 to
+// 0x8000_4000. It sets up a basic pagetable that identity-maps the first 3GB
+// of physical memory to low and high canonical addresses. It also initializes
+// timer interrupts with an m-mode interrupt handler, and sets up supervisor
+// mode. It copies the kernel binary payload, stored in kbin, to 0x8000_4000
+// (the kernel's physical entrypoint), and then uses an 'mret' to jump to
+// 0xFFFF_FFC0_8000_4000, the kernel's virtual entrypoint. The mret causes a
+// switch to s-mode, and enables the MMU.
 void boot() {
     // set up kernel pagetable so that
     //  VA (0xFFFF'FFC0'0000'0000,...+3GB) -> PA (0-3GB) (high canonical addresses)
@@ -43,10 +50,9 @@ void boot() {
     arch.csr_write_bits!(arch.Csr.satp)(59, 44, 0);
     arch.csr_write_bits!(arch.Csr.satp)(63, 60, arch.Satp.sv39);
 
-    // load the bin file in kernelbin into 0xFFFF'FFC0'8000'8000 (physical address 0x8000'8000)
-    memcpy(cast(void*) kernel_entry_pa, kernelbin.ptr, kernelbin.length);
+    memcpy(cast(void*) &kernel_entry_pa, kbin.ptr, kbin.length);
     // initialize arch and tell it to jump to highmem_base
-    arch.start(cast(uintptr) kernel_entry);
+    arch.start(highmem_base + cast(uintptr) &kernel_entry_pa);
 
     while (1) {}
 }
