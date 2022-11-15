@@ -37,13 +37,12 @@ void boot() {
     //  VA (0xFFFF'FFC0'0000'0000,...+3GB) -> PA (0-3GB) (high canonical addresses)
     //  VA (0-PHYSMEM) -> PA (0-3GB)
 
-    enum gb(ulong n) = 1024 * 1024 * 1024 * n;
-    kernel_pagetable.map_gigapage(gb!(0), gb!(0));
-    kernel_pagetable.map_gigapage(gb!(1), gb!(1));
-    kernel_pagetable.map_gigapage(gb!(2), gb!(2));
-    kernel_pagetable.map_gigapage(highmem_base + gb!(0), gb!(0));
-    kernel_pagetable.map_gigapage(highmem_base + gb!(1), gb!(1));
-    kernel_pagetable.map_gigapage(highmem_base + gb!(2), gb!(2));
+    import sys = kernel.sys;
+
+    for (size_t addr = 0; addr < sys.memsize_physical; addr += sys.gb!(1)) {
+        kernel_pagetable.map_gigapage(addr, addr);
+        kernel_pagetable.map_gigapage(highmem_base + addr, addr);
+    }
 
     // install the pagetable in satp
     arch.csr_write_bits!(arch.Csr.satp)(43, 0, kernel_pagetable.pn());

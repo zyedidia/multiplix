@@ -12,6 +12,13 @@ static if ((void*).sizeof == 8) {
     static assert("pointer size must be 4 or 8 bytes");
 }
 
+void check(bool b) {
+    import core.exception;
+    if (!b) {
+        panic("check failed");
+    }
+}
+
 version (LDC) {
     extern (C) void _d_array_slice_copy(void* dst, size_t dstlen, void* src,
             size_t srclen, size_t elemsz) {

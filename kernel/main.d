@@ -1,15 +1,23 @@
 module kernel.main;
 
-import io = ulib.io;
 import core.volatile;
 
 import dev = kernel.board.virt.dev;
 import arch = kernel.arch.riscv;
 
+import vm = kernel.vm;
+import sys = kernel.sys;
+import kernel.buddy;
+
+import io = ulib.io;
+import ulib.alloc;
+
 void kmain() {
     io.writeln("kernel booted");
     arch.trap_init();
     arch.trap_enable();
+    kallocinit();
+    io.writeln(kalloc_page());
 
     while (true) {}
 }

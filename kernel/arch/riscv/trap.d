@@ -23,7 +23,7 @@ extern (C) void kerneltrap() {
     uintptr sstatus = csr_read!(Csr.sstatus)();
     uintptr scause = csr_read!(Csr.scause)();
 
-    io.writeln("[interrupt] sepc: ", cast(void*) sepc, ", sstatus: ", sstatus, ", scause: ", scause);
+    /* io.writeln("[interrupt] sepc: ", cast(void*) sepc, ", sstatus: ", sstatus, ", scause: ", scause); */
 
     if (scause == Scause.si) {
         // acknowledge the interrupt by clearing ssip
