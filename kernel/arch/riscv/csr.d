@@ -64,6 +64,14 @@ enum Scause {
     si = 0x8000000000000001UL,
 }
 
+enum Satp {
+    off = 0,
+    sv39 = 8,
+    sv48 = 9,
+    sv57 = 10,
+    sv64 = 11,
+}
+
 void csr_write(Csr reg)(uintptr val) {
     asm {
         "csrw %0, %1" : : "i"(reg), "r"(val);
@@ -81,7 +89,7 @@ void csr_write_bit(Csr reg)(uint bit, uint val) {
     csr_write!reg(bits.set(rd, bit, val));
 }
 
-void csr_write_bits(Csr reg)(uint hi, uint lo, uint val) {
+void csr_write_bits(Csr reg)(uint hi, uint lo, ulong val) {
     uintptr rd = csr_read!reg();
     csr_write!reg(bits.set(rd, hi, lo, val));
 }

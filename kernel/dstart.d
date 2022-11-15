@@ -16,6 +16,6 @@ extern (C) void dstart() {
         volatileStore(bss++, 0);
     }
 
-    start(cast(uintptr) &kmain);
+    kmain();
     sys.exit(0);
 }

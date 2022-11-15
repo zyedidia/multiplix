@@ -36,16 +36,14 @@ local tools = {
     qemu := qemu-system-$(machine.arch)
 }
 
-local link = "kernel/link.ld"
-
 local flags = {
     dc = sel(
         conf.dc == "gdc",
-        f"-fno-exceptions -fno-rtti -Os -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections",
-        f"--betterC -Oz -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections"
+        f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections",
+        f"--betterC -O3 -g -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections"
     ),
     as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
-    ld := -nostartfiles -T$link -mcmodel=$(machine.mcmodel) -Wl,--gc-sections
+    ld := -nostartfiles -mcmodel=$(machine.mcmodel) -Wl,--gc-sections
 }
 
 local meta = r{
@@ -59,24 +57,34 @@ local meta = r{
 
 local kern = knit.rglob("kernel", "*.d")
 local lib = knit.rglob("libd", "*.d")
+local boot = knit.rglob("boot", "*.d") + knit.rglob("kernel/arch/riscv", "*.d")
 local dco = sel(conf.dc == "gdc", "o", "of")
+
+local link = {
+    kernel = "kernel/link.ld",
+    boot = "boot/link.ld",
+}
 
 local kernel = r{
     $ libd.o: $lib
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
     $ kernel.o: $kern libd[I]
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
-    $ kernel.elf: kernel.o libd.o kernel/start.o kernel/arch/riscv/timervec.o kernel/arch/riscv/trapvec.o $link[I]
-        $(tools.cc) $(flags.as) $(flags.ld) $input -lgcc -o $output
-    $ qemu:VBQ: kernel.elf
+    $ boot.o: $boot libd[I] kernel.bin[I]
+        $(tools.dc) $(flags.dc) -Iboot -Ikernel -Ilibd -J. $input -c -$dco $output
+    $ boot.elf: boot.o libd.o boot/start.o kernel/arch/riscv/timervec.o $(link.boot)[I]
+        $(tools.cc) $(flags.as) $(flags.ld) -T$(link.boot) $input -lgcc -o $output
+    $ kernel.elf: kernel.o libd.o kernel/start.o kernel/arch/riscv/trapvec.o $(link.kernel)[I]
+        $(tools.cc) $(flags.as) $(flags.ld) -T$(link.kernel) $input -lgcc -o $output
+    $ qemu:VB: boot.elf
         $(tools.qemu) -machine $(machine.board) -nographic -kernel $input -bios none
-    $ qemu-gdb:VBQ: kernel.elf
+    $ qemu-gdb:VBQ: boot.elf
         $(tools.qemu) -s -S -machine $(machine.board) -nographic -kernel $input -bios none &
-        $(tools.gdb) -ex "file $input" -ex "target remote localhost:1234"
+        $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
 }
 
 return b{
-    $ all: kernel.elf kernel.list kernel.bin
+    $ all: kernel.elf kernel.list kernel.bin boot.list boot.bin
 
     kernel,
     meta

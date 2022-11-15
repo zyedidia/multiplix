@@ -31,7 +31,7 @@ T set(T)(T x, uint bit, uint val) if (isInt!T) {
     return x | (val << bit);
 }
 
-T set(T)(T x, uint hi, uint lo, uint val) if (isInt!T) {
+T set(T)(T x, uint hi, uint lo, ulong val) if (isInt!T) {
     return clear(x, hi, lo) | (val << lo);
 }
 
@@ -59,8 +59,8 @@ version (LDC) {
     }
 }
 
-template bitfield(alias data, args...) {
-    enum bitfield = bitfieldShim!((typeof(data)).stringof, data, args).ret;
+template field(alias data, args...) {
+    enum field = bitfieldShim!((typeof(data)).stringof, data, args).ret;
 }
 
 template bitfieldShim(const char[] typeStr, alias data, args...) {

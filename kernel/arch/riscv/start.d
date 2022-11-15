@@ -12,9 +12,6 @@ void start(uintptr main) {
     // jump to main after the mret
     csr_write!(Csr.mepc)(main);
 
-    // make sure paging is disabled
-    csr_write!(Csr.satp)(0);
-
     // delegate all interrupts and exceptions to supervisor mode
     csr_write!(Csr.medeleg)(0xffff);
     csr_write!(Csr.mideleg)(0xffff);
