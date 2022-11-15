@@ -21,7 +21,7 @@ extern (C) void dstart() {
     boot();
 }
 
-enum highmem_base = 0xFFFF_FFC0_0000_0000;
+enum highmem_base = 0xFFFF_FFC0_0000_0000UL;
 extern (C) extern __gshared char kernel_entry_pa;
 
 // The bootloader occupies the first 4 pages of memory, from 0x8000_0000 to
@@ -50,9 +50,12 @@ void boot() {
     arch.csr_write_bits!(arch.Csr.satp)(59, 44, 0);
     arch.csr_write_bits!(arch.Csr.satp)(63, 60, arch.Satp.sv39);
 
-    memcpy(cast(void*) &kernel_entry_pa, kbin.ptr, kbin.length);
+    memcpy(&kernel_entry_pa, kbin.ptr, kbin.length);
     // initialize arch and tell it to jump to highmem_base
-    arch.start(highmem_base + cast(uintptr) &kernel_entry_pa);
+
+    // LDC bug: adding a manifest constant to an address doesn't work
+    auto highmem_base = highmem_base;
+    arch.start(cast(uintptr) (&kernel_entry_pa) + highmem_base);
 
     while (1) {}
 }
