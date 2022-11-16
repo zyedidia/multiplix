@@ -45,9 +45,7 @@ void boot() {
     }
 
     // install the pagetable in satp
-    arch.csr_write_bits!(arch.Csr.satp)(43, 0, kernel_pagetable.pn());
-    arch.csr_write_bits!(arch.Csr.satp)(59, 44, 0);
-    arch.csr_write_bits!(arch.Csr.satp)(63, 60, arch.Satp.sv39);
+    arch.csr_write!(arch.Csr.satp)(kernel_pagetable.satp(0));
 
     memcpy(&kernel_entry_pa, kbin.ptr, kbin.length);
     // initialize arch and tell it to jump to highmem_base

@@ -1,4 +1,4 @@
-module kernel.buddy;
+module kernel.alloc;
 
 // Implementation of a buddy page allocator
 
@@ -6,6 +6,7 @@ import vm = kernel.vm;
 import sys = kernel.sys;
 
 import ulib.bits : msb;
+import ulib.linker;
 
 import io = ulib.io;
 
@@ -211,7 +212,6 @@ public:
 
 __gshared BuddyAllocator!(sys.pagesize, sys.memsize_physical) buddy;
 
-import ulib.linker;
 mixin(LinkerVar!("_kheap_start"));
 
 void kallocinit() {

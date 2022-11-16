@@ -7,10 +7,9 @@ import arch = kernel.arch.riscv;
 
 import vm = kernel.vm;
 import sys = kernel.sys;
-import kernel.buddy;
+import kernel.alloc;
 
 import io = ulib.io;
-import ulib.alloc;
 
 void kmain() {
     io.writeln("kernel booted");
