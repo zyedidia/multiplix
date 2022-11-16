@@ -52,13 +52,17 @@ void boot() {
 
     // LDC bug: adding a manifest constant to an address doesn't work
     auto highmem_base = highmem_base;
-    arch.start(cast(uintptr) (&kernel_entry_pa) + highmem_base);
+    arch.start(cast(uintptr)(&kernel_entry_pa) + highmem_base);
 
-    while (1) {}
+    while (1) {
+    }
 }
 
 extern (C) {
     // stub implementations of ulib functions so that we can link with ulib
-    void ulib_tx(ubyte b) {}
-    void ulib_exit(ubyte code) {}
+    void ulib_tx(ubyte b) {
+    }
+
+    void ulib_exit(ubyte code) {
+    }
 }

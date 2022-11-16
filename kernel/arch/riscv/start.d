@@ -15,7 +15,8 @@ void start(uintptr main) {
     // delegate all interrupts and exceptions to supervisor mode
     csr_write!(Csr.medeleg)(0xffff);
     csr_write!(Csr.mideleg)(0xffff);
-    csr_write!(Csr.sie)(csr_read!(Csr.sie) | (1UL << Sie.seie) | (1UL << Sie.stie) | (1UL << Sie.ssie));
+    csr_write!(Csr.sie)(csr_read!(Csr.sie) | (1UL << Sie.seie) | (1UL << Sie.stie) | (
+            1UL << Sie.ssie));
 
     csr_write!(Csr.pmpaddr0)(0x3fffffffffffffUL);
     csr_write!(Csr.pmpcfg0)(0xf);
@@ -28,5 +29,6 @@ void start(uintptr main) {
         "mret";
     }
 
-    while (true) {}
+    while (true) {
+    }
 }

@@ -6,6 +6,7 @@ import bits = ulib.bits;
 
 struct Pte39 {
     ulong data;
+    // dfmt off
     mixin(bits.field!(data,
         "valid",      1,
         "read",       1,
@@ -21,11 +22,11 @@ struct Pte39 {
         "ppn2",       26,
         "_reserved",  10,
     ));
+    // dfmt on
 }
 
 struct Pagetable39 {
-    align(4096)
-    Pte39[512] ptes;
+    align(4096) Pte39[512] ptes;
 
     void map_gigapage(uintptr va, uintptr pa) {
         auto vpn2 = bits.get(va, 38, 30);
@@ -49,7 +50,7 @@ struct Pagetable39 {
     }
 
     uintptr pn() {
-        return cast(uintptr) (&ptes[0]) / 4096;
+        return cast(uintptr)(&ptes[0]) / 4096;
     }
 
     uintptr satp(uint asid) {

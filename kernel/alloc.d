@@ -20,8 +20,8 @@ private:
         return pn * pagesize;
     }
 
-    enum min_order = msb(pagesize)-1;
-    enum max_order = msb(memsize)-1;
+    enum min_order = msb(pagesize) - 1;
+    enum max_order = msb(memsize) - 1;
 
     struct PhysPage {
         bool free;
@@ -92,9 +92,10 @@ public:
 
             uint order = pages[pn].order;
             while (valid(pn, order)) {
-                uintptr bpn = get_buddy(pn);  // buddy pn
+                uintptr bpn = get_buddy(pn); // buddy pn
                 // We can coalesce backwards
-                if (bpn < pn && pages[bpn].free == pages[pn].free && pages[bpn].order == pages[pn].order) {
+                if (bpn < pn && pages[bpn].free == pages[pn].free
+                        && pages[bpn].order == pages[pn].order) {
                     // Merge blocks
                     pages[bpn].order++;
                     order++;
@@ -189,8 +190,7 @@ public:
         uintptr bpn = get_buddy(pn);
         uint order = pages[pn].order;
 
-        while (bpn != cast(uintptr) -1 && pages[bpn].free &&
-               pages[bpn].order == pages[pn].order) {
+        while (bpn != cast(uintptr)-1 && pages[bpn].free && pages[bpn].order == pages[pn].order) {
             // coalesce
             ll_free_remove(pn_to_free(bpn), pages[pn].order);
 

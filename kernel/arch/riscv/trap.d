@@ -7,7 +7,7 @@ import io = ulib.io;
 extern (C) extern void trapvec();
 
 void trap_init() {
-    csr_write!(Csr.stvec)(cast(uintptr) &trapvec);
+    csr_write!(Csr.stvec)(cast(uintptr)&trapvec);
 }
 
 void trap_enable() {
@@ -30,4 +30,3 @@ extern (C) void kerneltrap() {
         csr_write_bit!(Csr.sip)(Sip.ssip, 0);
     }
 }
-

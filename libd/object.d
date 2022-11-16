@@ -14,6 +14,7 @@ static if ((void*).sizeof == 8) {
 
 void check(bool b) {
     import core.exception;
+
     if (!b) {
         panic("check failed");
     }

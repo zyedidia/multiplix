@@ -83,8 +83,15 @@ local kernel = r{
         $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
 }
 
+local allsrc = knit.rglob(".", "*.d")
+
 return b{
-    $ all: kernel.elf kernel.list kernel.bin boot.list boot.bin
+    $ all:V: kernel.elf kernel.list kernel.bin boot.list boot.bin
+
+    $ format:VB:
+        dfmt -i --brace_style=otbs $allsrc
+    $ clean:VB:
+        knit :all -t clean
 
     kernel,
     meta

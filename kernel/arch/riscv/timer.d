@@ -43,10 +43,11 @@ struct clintImpl(uintptr base) {
 
     static ulong* mtimecmp_addr() {
         int hartid = cast(int) csr_read!(Csr.mhartid)();
-        return cast(ulong*) (base + 0x4000 + 8*hartid);
+        return cast(ulong*)(base + 0x4000 + 8 * hartid);
     }
+
     static ulong* mtime_addr() {
-        return cast(ulong*) (base + 0xbff8);
+        return cast(ulong*)(base + 0xbff8);
     }
 }
 
@@ -63,12 +64,11 @@ void timer_irq_init() {
 
     timer_scratch[3] = cast(ulong) clint.mtimecmp_addr();
     timer_scratch[4] = interval;
-    csr_write!(Csr.mscratch)(cast(uintptr) &timer_scratch[0]);
+    csr_write!(Csr.mscratch)(cast(uintptr)&timer_scratch[0]);
 
-    csr_write!(Csr.mtvec)(cast(uintptr) &timervec);
+    csr_write!(Csr.mtvec)(cast(uintptr)&timervec);
     // enable m-mode interrupts
     csr_write_bit!(Csr.mstatus)(Mstatus.mie, 1);
     // enable m-mode timer interrupts
     csr_write_bit!(Csr.mie)(Mie.mtie, 1);
 }
-

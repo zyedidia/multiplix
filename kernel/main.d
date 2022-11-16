@@ -18,7 +18,8 @@ void kmain() {
     kallocinit();
     io.writeln(kalloc_page());
 
-    while (true) {}
+    while (true) {
+    }
 }
 
 extern (C) {

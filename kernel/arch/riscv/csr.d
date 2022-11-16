@@ -74,13 +74,13 @@ enum Satp {
 
 void csr_write(Csr reg)(uintptr val) {
     asm {
-        "csrw %0, %1" : : "i"(reg), "r"(val);
+        "csrw %0, %1" :  : "i"(reg), "r"(val);
     }
 }
 
 void csr_write(Csr reg, int val)() if (val < 32) {
     asm {
-        "csrwi %0, %1" : : "i"(reg), "I"(val);
+        "csrwi %0, %1" :  : "i"(reg), "I"(val);
     }
 }
 
