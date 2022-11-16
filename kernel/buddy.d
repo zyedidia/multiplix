@@ -211,10 +211,11 @@ public:
 
 __gshared BuddyAllocator!(sys.pagesize, sys.memsize_physical) buddy;
 
-extern (C) extern __gshared char _kheap_start;
+import ulib.linker;
+mixin(LinkerVar!("_kheap_start"));
 
 void kallocinit() {
-    buddy.__ctor(cast(uintptr) &_kheap_start);
+    buddy.__ctor(_kheap_start_addr());
 }
 
 void* kalloc_page(size_t sz) {
