@@ -16,7 +16,13 @@ void kmain() {
     arch.trap_init();
     arch.trap_enable();
     kallocinit();
-    io.writeln(kalloc_page());
+    /* io.writeln("allocated page: ", kalloc_page()); */
+
+    import sbi = kernel.arch.riscv.sbi;
+    bool has_reset = sbi.Base.probe_extension(sbi.Timer.ext);
+    io.writeln("has sbi reset extension: ", has_reset);
+    uint x = sbi.Base.get_spec_version();
+    io.writeln(x);
 
     while (true) {
     }

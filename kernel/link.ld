@@ -3,7 +3,7 @@ ENTRY(_start)
 SECTIONS
 {
     /* kernel is located at high canonical addresses */
-    . = 0xFFFFFFC080004000;
+    . = 0xFFFFFFC080204000;
     .text : {
         _kcode_start = .;
         KEEP(*(.text.boot))  

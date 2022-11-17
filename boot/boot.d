@@ -10,7 +10,7 @@ __gshared arch.Pagetable39 kernel_pagetable;
 
 auto kbin = cast(immutable ubyte[]) import("kernel.bin");
 
-extern (C) void dstart() {
+extern (C) void dstart(uint hartid) {
     uint* bss = &_kbss_start;
     uint* bss_end = &_kbss_end;
 
@@ -18,7 +18,7 @@ extern (C) void dstart() {
         volatileStore(bss++, 0);
     }
 
-    boot();
+    boot(hartid);
 }
 
 enum highmem_base = 0xFFFF_FFC0_0000_0000UL;
@@ -32,10 +32,10 @@ extern (C) extern __gshared char kernel_entry_pa;
 // (the kernel's physical entrypoint), and then uses an 'mret' to jump to
 // 0xFFFF_FFC0_8000_4000, the kernel's virtual entrypoint. The mret causes a
 // switch to s-mode, and enables the MMU.
-void boot() {
+void boot(uint hartid) {
     // set up kernel pagetable so that
-    //  VA (0xFFFF'FFC0'0000'0000,...+3GB) -> PA (0-3GB) (high canonical addresses)
-    //  VA (0-PHYSMEM) -> PA (0-3GB)
+    //  VA (0xFFFF'FFC0'0000'0000,...+PHYSMEM) -> PA (0-PHYSMEM) (high canonical addresses)
+    //  VA (0-PHYSMEM) -> PA (0-PHYSMEM)
 
     import sys = kernel.sys;
 
@@ -52,7 +52,7 @@ void boot() {
 
     // LDC bug: adding a manifest constant to an address doesn't work
     auto highmem_base = highmem_base;
-    arch.start(cast(uintptr)(&kernel_entry_pa) + highmem_base);
+    arch.start(hartid, cast(uintptr)(&kernel_entry_pa) + highmem_base);
 
     while (1) {
     }
