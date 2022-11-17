@@ -6,24 +6,13 @@ import kernel.arch.riscv.timer;
 import bits = ulib.bits;
 
 void start(uint hartid, uintptr main) {
-    // change privilege to supervisor mode after mret
-    /* csr_write_bits!(Csr.mstatus)(Mstatus.mpp_hi, Mstatus.mpp_lo, Mstatus.mode_s); */
-
-    // jump to main after the sret
-    /* csr_write!(Csr.sepc)(main); */
-
-    // delegate all interrupts and exceptions to supervisor mode
-    /* csr_write!(Csr.medeleg)(0xffff); */
-    /* csr_write!(Csr.mideleg)(0xffff); */
+    // enable all kinds of interrupts
     csr_write!(Csr.sie)(csr_read!(Csr.sie) | (1UL << Sie.seie) | (1UL << Sie.stie) | (
             1UL << Sie.ssie));
 
-    /* csr_write!(Csr.pmpaddr0)(0x3fffffffffffffUL); */
-    /* csr_write!(Csr.pmpcfg0)(0xf); */
-
+    // write the hartid to sscratch
     csr_write!(Csr.sscratch)(hartid);
 
-    /* timer_irq_init(); */
-
+    // call main
     (cast(void function()) main)();
 }

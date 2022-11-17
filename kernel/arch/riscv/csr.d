@@ -3,17 +3,6 @@ module kernel.arch.riscv.csr;
 import bits = ulib.bits;
 
 enum Csr {
-    mhartid = 0xf14,
-    mstatus = 0x300,
-    medeleg = 0x302,
-    mideleg = 0x303,
-    mie = 0x304,
-    mtvec = 0x305,
-    mscratch = 0x340,
-    mepc = 0x341,
-    mcycle = 0xb00,
-    mcycleh = 0xb80,
-
     sstatus = 0x100,
     sedeleg = 0x102,
     sideleg = 0x103,
@@ -25,6 +14,11 @@ enum Csr {
     stval = 0x143,
     sip = 0x144,
     satp = 0x180,
+
+    cycle = 0xc00,
+    time = 0xc01,
+    cycleh = 0xc80,
+    timeh = 0xc81,
 
     pmpaddr0 = 0x3b0,
     pmpcfg0 = 0x3a0,
@@ -60,8 +54,8 @@ enum Sip {
 }
 
 enum Scause {
-    // software interrupt
-    si = 0x8000000000000001UL,
+    // software timer interrupt
+    sti = 0x8000000000000005UL,
 }
 
 enum Satp {

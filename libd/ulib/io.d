@@ -63,7 +63,7 @@ private:
     }
 
     void writeElem(S = long)(S value, uint base = 10) if (isInt!S) {
-        char[S.sizeof * 8] buf;
+        char[S.sizeof * 8] buf = void;
         writeElem(itoa(value, buf, base));
     }
 }

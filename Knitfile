@@ -72,7 +72,7 @@ local kernel = r{
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
     $ boot.o: $boot libd[I] kernel.bin[I]
         $(tools.dc) $(flags.dc) -Iboot -Ikernel -Ilibd -J. $input -c -$dco $output
-    $ boot.elf: boot.o libd.o boot/start.o kernel/arch/riscv/timervec.o $(link.boot)[I]
+    $ boot.elf: boot.o libd.o boot/start.o $(link.boot)[I]
         $(tools.cc) $(flags.as) $(flags.ld) -T$(link.boot) $input -lgcc -o $output
     $ kernel.elf: kernel.o libd.o kernel/start.o kernel/arch/riscv/trapvec.o $(link.kernel)[I]
         $(tools.cc) $(flags.as) $(flags.ld) -T$(link.kernel) $input -lgcc -o $output

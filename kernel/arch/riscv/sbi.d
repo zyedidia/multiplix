@@ -1,70 +1,89 @@
 module kernel.arch.riscv.sbi;
 
+import ldc.llvmasm;
+
 struct SbiRet {
     uint error;
     uint value;
 }
 
-private SbiRet ecall(int ext, int fid, uintptr a0,
-                        uintptr a1, uintptr a2,
-                        uintptr a3, uintptr a4,
-                        uintptr a5) {
-        SbiRet ret;
+SbiRet ecall(int ext, int fid, uintptr a0, uintptr a1) {
+    SbiRet ret;
 
-        asm {
-            "ecall"
-              : "r" (a0), "r" (a1)
-              : "r" (a2), "r" (a3), "r" (a4), "r" (a5), "r" (fid), "r" (ext)
-              : "memory";
-        }
-        ret.error = cast(uint)a0;
-        ret.value = cast(uint)a1;
+    auto result = __asmtuple!(uint, uint) (
+        "ecall",
+        "={a0},={a1},{a7},{a6},{a0},{a1},~{memory}",
+        ext, fid, a0, a1
+    );
+    ret.error = result.v[0];
+    ret.value = result.v[1];
 
-        return ret;
+    return ret;
+}
+
+SbiRet ecall(int ext, int fid, uintptr a0) {
+    SbiRet ret;
+
+    auto result = __asmtuple!(uint, uint) (
+        "ecall",
+        "={a0},={a1},{a7},{a6},{a0},~{memory}",
+        ext, fid, a0,
+    );
+    ret.error = result.v[0];
+    ret.value = result.v[1];
+
+    return ret;
+}
+
+SbiRet ecall(int ext, int fid) {
+    SbiRet ret;
+
+    auto result = __asmtuple!(uint, uint) (
+        "ecall",
+        "={a0},={a1},{a7},{a6},~{memory}",
+        ext, fid
+    );
+    ret.error = result.v[0];
+    ret.value = result.v[1];
+
+    return ret;
 }
 
 struct Base {
     enum ext = 0x10;
 
     static uint get_spec_version() {
-        auto ret = ecall(ext, 0,
-                0, 0, 0, 0, 0, 0);
+        auto ret = ecall(ext, 0);
         return ret.value;
     }
 
     static uint get_impl_id() {
-        auto ret = ecall(ext, 1,
-                0, 0, 0, 0, 0, 0);
+        auto ret = ecall(ext, 1);
         return ret.value;
     }
 
     static uint get_impl_version() {
-        auto ret = ecall(ext, 2,
-                0, 0, 0, 0, 0, 0);
+        auto ret = ecall(ext, 2);
         return ret.value;
     }
 
     static bool probe_extension(uint extid) {
-        auto ret = ecall(ext, 3,
-                0, 0, 0, 0, 0, 0);
+        auto ret = ecall(ext, 3, extid);
         return ret.value != 0;
     }
 
     static uint get_mvendorid() {
-        auto ret = ecall(ext, 4,
-                0, 0, 0, 0, 0, 0);
+        auto ret = ecall(ext, 4);
         return ret.value;
     }
 
     static uint get_marchid() {
-        auto ret = ecall(ext, 5,
-                0, 0, 0, 0, 0, 0);
+        auto ret = ecall(ext, 5);
         return ret.value;
     }
 
     static uint get_mimpid() {
-        auto ret = ecall(ext, 6,
-                0, 0, 0, 0, 0, 0);
+        auto ret = ecall(ext, 6);
         return ret.value;
     }
 }
@@ -73,8 +92,7 @@ struct Timer {
     enum ext = 0x54494D45;
 
     static void set_timer(ulong stime_value) {
-        ecall(ext, 0,
-                0, 0, 0, 0, 0, 0);
+        ecall(ext, 0, stime_value);
     }
 }
 
@@ -93,8 +111,7 @@ struct Reset {
     }
 
     static void system_reset(Type ty, Reason reason) {
-        ecall(ext, 0,
-                0, 0, 0, 0, 0, 0);
+        ecall(ext, 0, ty, reason);
     }
 
     static void reboot() {

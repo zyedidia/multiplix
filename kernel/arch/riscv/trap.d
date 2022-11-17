@@ -1,6 +1,7 @@
 module kernel.arch.riscv.trap;
 
 import kernel.arch.riscv.csr;
+import kernel.arch.riscv.timer;
 
 import io = ulib.io;
 
@@ -23,10 +24,9 @@ extern (C) void kerneltrap() {
     uintptr sstatus = csr_read!(Csr.sstatus)();
     uintptr scause = csr_read!(Csr.scause)();
 
-    /* io.writeln("[interrupt] sepc: ", cast(void*) sepc, ", sstatus: ", sstatus, ", scause: ", scause); */
+    io.writeln("[interrupt] sepc: ", cast(void*) sepc, ", sstatus: ", sstatus, ", scause: ", scause);
 
-    if (scause == Scause.si) {
-        // acknowledge the interrupt by clearing ssip
-        csr_write_bit!(Csr.sip)(Sip.ssip, 0);
+    if (scause == Scause.sti) {
+        timer_irq_init();
     }
 }
