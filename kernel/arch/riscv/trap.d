@@ -24,7 +24,7 @@ extern (C) void kerneltrap() {
     uintptr sstatus = csr_read!(Csr.sstatus)();
     uintptr scause = csr_read!(Csr.scause)();
 
-    io.writeln("[interrupt] sepc: ", cast(void*) sepc, ", sstatus: ", sstatus, ", scause: ", scause);
+    io.writeln("[interrupt] sepc: ", cast(void*) sepc);
 
     if (scause == Scause.sti) {
         timer_irq_init();

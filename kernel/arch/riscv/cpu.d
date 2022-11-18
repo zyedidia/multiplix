@@ -5,3 +5,9 @@ void fence() {
         "fence";
     }
 }
+
+void sfence_vma() {
+    asm {
+        "sfence.vma zero, zero";
+    }
+}

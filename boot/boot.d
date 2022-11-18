@@ -24,6 +24,18 @@ extern (C) void dstart(uint hartid) {
 enum highmem_base = 0xFFFF_FFC0_0000_0000UL;
 extern (C) extern __gshared char kernel_entry_pa;
 
+void flush_dcache() {
+    ulong* addr = (cast(ulong*) (0x2010000 + 0x200));
+    ulong line = 0x8000_0000;
+    ulong end = 0x87FF_FFFF;
+
+    while (line < end) {
+        volatileStore(addr, line);
+        line += 64;
+        arch.fence();
+    }
+}
+
 // The bootloader occupies the first 4 pages of memory, from 0x8000_0000 to
 // 0x8000_4000. It sets up a basic pagetable that identity-maps the first 3GB
 // of physical memory to low and high canonical addresses. It also initializes
@@ -33,19 +45,27 @@ extern (C) extern __gshared char kernel_entry_pa;
 // 0xFFFF_FFC0_8000_4000, the kernel's virtual entrypoint. The mret causes a
 // switch to s-mode, and enables the MMU.
 void boot(uint hartid) {
+    import io = ulib.io;
+    io.writeln("hello rvos!");
+
     // set up kernel pagetable so that
     //  VA (0xFFFF'FFC0'0000'0000,...+PHYSMEM) -> PA (0-PHYSMEM) (high canonical addresses)
     //  VA (0-PHYSMEM) -> PA (0-PHYSMEM)
-
     import sys = kernel.sys;
 
-    for (size_t addr = 0; addr < sys.memsize_physical; addr += sys.gb!(1)) {
+    for (size_t addr = 0; addr < sys.addrspace_physical; addr += sys.gb!(1)) {
         kernel_pagetable.map_gigapage(addr, addr);
         kernel_pagetable.map_gigapage(highmem_base + addr, addr);
     }
 
+    arch.fence();
+
     // install the pagetable in satp
+    arch.sfence_vma();
     arch.csr_write!(arch.Csr.satp)(kernel_pagetable.satp(0));
+    arch.sfence_vma();
+
+    io.writeln("enabled virtual memory");
 
     memcpy(&kernel_entry_pa, kbin.ptr, kbin.length);
     // initialize arch and tell it to jump to highmem_base
@@ -59,8 +79,9 @@ void boot(uint hartid) {
 }
 
 extern (C) {
-    // stub implementations of ulib functions so that we can link with ulib
     void ulib_tx(ubyte b) {
+        import kernel.arch.riscv.sbi;
+        legacy_putchar(b);
     }
 
     void ulib_exit(ubyte code) {

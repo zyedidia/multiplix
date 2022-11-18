@@ -15,7 +15,7 @@ ulong timer_cycles() {
 }
 
 void timer_irq_init() {
-    ulong interval = 1000000;
+    ulong interval = 10000000;
     ulong next_time = timer_time() + interval;
     sbi.Timer.set_timer(next_time);
 }

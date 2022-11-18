@@ -122,3 +122,8 @@ struct Reset {
         system_reset(Type.shutdown, Reason.no_reason);
     }
 }
+
+void legacy_putchar(ubyte b) {
+    enum ext = 0x01;
+    ecall(ext, 0, b);
+}

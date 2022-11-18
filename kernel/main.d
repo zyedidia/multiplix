@@ -19,24 +19,30 @@ void kmain() {
         ulib_exit(1);
     }
 
-    io.writeln("kernel booted");
+    io.writeln("arrived in kmain at: ", &kmain);
 
     arch.timer_irq_init();
     arch.trap_init();
     arch.trap_enable();
+    io.writeln("timer interrupts enabled");
     kallocinit();
-    io.writeln("allocated page: ", kalloc_page());
+    io.writeln("buddy kalloc returned: ", kalloc_page());
 
     while (true) {
+        asm {
+            "wfi";
+        }
     }
 }
 
 extern (C) {
     void ulib_tx(ubyte b) {
-        dev.Uart.tx(b);
+        sbi.legacy_putchar(b);
+        /* dev.Uart.tx(b); */
     }
 
     void ulib_exit(ubyte code) {
-        dev.SysCon.shutdown();
+        sbi.Reset.shutdown();
+        /* dev.SysCon.shutdown(); */
     }
 }

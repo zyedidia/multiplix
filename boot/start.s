@@ -9,4 +9,5 @@ _start:
 	.option pop
 	call dstart
 _halt:
+	wfi
 	j _halt

@@ -36,6 +36,8 @@ struct Pagetable39 {
         ptes[vpn2].read = 1;
         ptes[vpn2].write = 1;
         ptes[vpn2].exec = 1;
+        ptes[vpn2].accessed = 1;
+        ptes[vpn2].dirty = 1;
         ptes[vpn2].ppn0 = 0; // ignored
         ptes[vpn2].ppn1 = 0; // ignored
         ptes[vpn2].ppn2 = cast(uint) ppn2;
