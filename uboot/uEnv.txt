@@ -1,0 +1,2 @@
+kernel_addr_r=0x84000000
+bootcmd=load mmc 0:1 ${kernel_addr_r} /rvos.bin; go ${kernel_addr_r}
