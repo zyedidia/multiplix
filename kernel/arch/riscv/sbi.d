@@ -1,6 +1,7 @@
 module kernel.arch.riscv.sbi;
 
 import ldc.llvmasm;
+import ulib.option;
 
 struct SbiRet {
     uint error;
@@ -134,6 +135,19 @@ struct Hart {
         suspended = 4,
         suspend_pending = 5,
         resume_pending = 6,
+    }
+
+    __gshared static Option!ulong _nharts;
+
+    static ulong nharts() {
+        if (_nharts.has()) {
+            return _nharts.get();
+        }
+        ulong i;
+        for (i = 0; exists(i); i++) {
+        }
+        _nharts = Option!ulong(i);
+        return i;
     }
 
     static bool exists(ulong hartid) {
