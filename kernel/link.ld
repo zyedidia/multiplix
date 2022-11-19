@@ -34,11 +34,20 @@ SECTIONS
         _kbss_end = .;
     }
 
-    .kstack : {
-        . += 8K;
+    .tdata : { 
+        _tdata_start = .;
+        *(.tdata*)
+        . = ALIGN(8);
+        _tdata_end = .;
+    } 
+    .tbss : {
+        . = ALIGN(8);
+        _tbss_start = .;
+        *(.tbss*)
+        *(COMMON)
+        . = ALIGN(16);
+        _tbss_end = .;
     }
-
-    PROVIDE(_kstack = .);
 
     . = ALIGN(16);
     _kheap_start = .;

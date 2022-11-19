@@ -137,16 +137,16 @@ struct Hart {
         resume_pending = 6,
     }
 
-    __gshared static Option!ulong _nharts;
+    __gshared static Option!uint _nharts;
 
-    static ulong nharts() {
+    static uint nharts() {
         if (_nharts.has()) {
             return _nharts.get();
         }
-        ulong i;
+        uint i;
         for (i = 0; exists(i); i++) {
         }
-        _nharts = Option!ulong(i);
+        _nharts = Option!uint(i);
         return i;
     }
 

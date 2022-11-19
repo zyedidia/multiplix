@@ -11,21 +11,21 @@ import sys = kernel.sys;
 import kernel.alloc;
 
 import io = ulib.io;
+import ulib.linker;
 
 // The bootloader drops us in here with an identity-mapped pagetable.
-void kmain() {
+void kmain(uint hartid, uint nharts, uintptr heap_start) {
     if (!sbi.Base.probe_extension(sbi.Timer.ext)) {
         io.writeln("timer extension not supported!");
         ulib_exit(1);
     }
-
-    io.writeln("arrived in kmain at: ", &kmain);
+    io.writeln("kmain(", hartid, ", ", nharts, ", ", cast(void*) heap_start, ")");
 
     arch.timer_irq_init();
     arch.trap_init();
     arch.trap_enable();
     io.writeln("timer interrupts enabled");
-    kallocinit();
+    kallocinit(heap_start);
     io.writeln("buddy kalloc returned: ", kalloc_page());
 
     while (true) {

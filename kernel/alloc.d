@@ -6,7 +6,6 @@ import vm = kernel.vm;
 import sys = kernel.sys;
 
 import ulib.bits : msb;
-import ulib.linker;
 
 import io = ulib.io;
 
@@ -212,10 +211,8 @@ public:
 
 __gshared BuddyAllocator!(sys.pagesize, sys.memsize_physical) buddy;
 
-mixin(LinkerVar!("_kheap_start"));
-
-void kallocinit() {
-    buddy.__ctor(_kheap_start_addr());
+void kallocinit(uintptr heap_start) {
+    buddy.__ctor(heap_start);
 }
 
 void* kalloc_page(size_t sz) {
