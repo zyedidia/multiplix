@@ -47,6 +47,10 @@ void flush_dcache() {
 void boot(uint hartid) {
     import io = ulib.io;
     io.writeln("hello rvos!");
+    import kernel.arch.riscv.sbi;
+    io.writeln("hart 0 status: ", Hart.get_status(0), " exists: ", Hart.exists(0));
+    io.writeln("hart 1 status: ", Hart.get_status(1), " exists: ", Hart.exists(1));
+    io.writeln("hart 2 status: ", Hart.get_status(2), " exists: ", Hart.exists(2));
 
     // set up kernel pagetable so that
     //  VA (0xFFFF'FFC0'0000'0000,...+PHYSMEM) -> PA (0-PHYSMEM) (high canonical addresses)

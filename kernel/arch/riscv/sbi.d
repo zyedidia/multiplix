@@ -123,6 +123,30 @@ struct Reset {
     }
 }
 
+struct Hart {
+    enum ext = 0x48534D;
+
+    enum State {
+        started = 0,
+        stopped = 1,
+        start_pending = 2,
+        stop_pending = 3,
+        suspended = 4,
+        suspend_pending = 5,
+        resume_pending = 6,
+    }
+
+    static bool exists(ulong hartid) {
+        auto r = ecall(ext, 2, hartid);
+        return r.error == 0;
+    }
+
+    static uint get_status(ulong hartid) {
+        auto r = ecall(ext, 2, hartid);
+        return r.value;
+    }
+}
+
 void legacy_putchar(ubyte b) {
     enum ext = 0x01;
     ecall(ext, 0, b);

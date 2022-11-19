@@ -83,7 +83,7 @@ local kernel = r{
     $ kernel.elf: kernel.o libd.o kernel/start.o kernel/arch/riscv/trapvec.o $(link.kernel)[I]
         $(tools.cc) $(flags.as) $(flags.ld) -T$(link.kernel) $input -lgcc -o $output
     $ qemu:VB: boot.elf
-        $(tools.qemu) -machine $(machine.board) -m 2G -nographic -kernel $input
+        $(tools.qemu) -smp 2 -machine $(machine.board) -m 2G -nographic -kernel $input
     $ qemu-gdb:VBQ: boot.elf
         $(tools.qemu) -s -S -machine $(machine.board) -m 2G -nographic -kernel $input &
         $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
