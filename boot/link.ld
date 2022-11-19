@@ -2,7 +2,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-    .text 0x84000000 : {
+    .text 0x84010000 : {
         _kcode_start = .;
         KEEP(*(.text.boot))  
         *(.text*) 
@@ -32,9 +32,9 @@ SECTIONS
 
     PROVIDE(_kstack = .);
 
-    ASSERT((. - ADDR(.text) <= 0x4000), "bootloader code is larger than 4 pages!")
+    ASSERT((. - ADDR(.text) <= 0x4000), "boot code is larger than 4 pages!")
 
-    . = 0x84004000;
+    . = 0x84014000;
     PROVIDE(kernel_entry_pa = .);
 
     .rodata : {

@@ -3,3 +3,4 @@
 *.list
 *.bin
 .knit
+compile_commands.json

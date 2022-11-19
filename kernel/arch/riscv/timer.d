@@ -10,6 +10,16 @@ ulong timer_time() {
     return csr_read!(Csr.time)();
 }
 
+void delay_time(ulong time) {
+    ulong rb = timer_time();
+    while (1) {
+        ulong ra = timer_time();
+        if ((ra - rb) >= time) {
+            break;
+        }
+    }
+}
+
 ulong timer_cycles() {
     return csr_read!(Csr.cycle)();
 }

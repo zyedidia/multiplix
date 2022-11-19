@@ -40,7 +40,7 @@ local flags = {
     dc = sel(
         conf.dc == "gdc",
         f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections",
-        f"--betterC -O3 -gc -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections"
+        f"--betterC --disable-simplify-libcalls -O3 -gc -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections"
     ),
     as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
     ld := -nostartfiles -mcmodel=$(machine.mcmodel) -Wl,--gc-sections
@@ -58,11 +58,13 @@ local meta = r{
 local kern = knit.rglob("kernel", "*.d")
 local lib = knit.rglob("libd", "*.d")
 local boot = knit.rglob("boot", "*.d") + knit.rglob("kernel/arch/riscv", "*.d")
+local bootloader = knit.rglob("bootloader", "*.d") + knit.rglob("kernel/arch/riscv", "*.d") + knit.glob("kernel/uart.d")
 local dco = sel(conf.dc == "gdc", "o", "of")
 
 local link = {
     kernel = "kernel/link.ld",
     boot = "boot/link.ld",
+    bootloader = "bootloader/link.ld"
 }
 
 local kernel = r{
@@ -72,6 +74,10 @@ local kernel = r{
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
     $ boot.o: $boot libd[I] kernel.bin[I]
         $(tools.dc) $(flags.dc) -Iboot -Ikernel -Ilibd -J. $input -c -$dco $output
+    $ bootloader.o: $bootloader libd[I]
+        $(tools.dc) $(flags.dc) -Ibootloader -Ikernel -Ilibd $input -c -$dco $output
+    $ bootloader.elf: bootloader.o boot/start.o libd.o $(link.bootloader)[I]
+        $(tools.cc) $(flags.as) $(flags.ld) -T$(link.bootloader) $input -lgcc -o $output
     $ boot.elf: boot.o libd.o boot/start.o $(link.boot)[I]
         $(tools.cc) $(flags.as) $(flags.ld) -T$(link.boot) $input -lgcc -o $output
     $ kernel.elf: kernel.o libd.o kernel/start.o kernel/arch/riscv/trapvec.o $(link.kernel)[I]

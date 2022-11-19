@@ -127,3 +127,9 @@ void legacy_putchar(ubyte b) {
     enum ext = 0x01;
     ecall(ext, 0, b);
 }
+
+uint legacy_getchar() {
+    enum ext = 0x02;
+    auto r = ecall(ext, 0);
+    return r.error; // for legacy sbi functions a0 (error) contains the result
+}

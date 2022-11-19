@@ -2,9 +2,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-    /* kernel is located at high canonical addresses */
-    . = 0xFFFFFFC084014000;
-    .text : {
+    .text 0x84000000 : {
         _kcode_start = .;
         KEEP(*(.text.boot))  
         *(.text*) 
@@ -13,13 +11,13 @@ SECTIONS
     }
     .rodata : {
         _krodata_start = .;
-        __global_pointer$ = . + 0x800;
         *(.rodata*)
         *(.srodata*)
         _krodata_end = .;
     }
     .data : { 
         _kdata_start = .;
+        __global_pointer$ = . + 0x800;
         *(.sdata*)
         *(.data*)
         . = ALIGN(8);
@@ -35,7 +33,7 @@ SECTIONS
     }
 
     .kstack : {
-        . += 8K;
+        . += 4K;
     }
 
     PROVIDE(_kstack = .);

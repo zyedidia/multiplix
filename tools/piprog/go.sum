@@ -1,0 +1,6 @@
+github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4 h1:G2ztCwXov8mRvP0ZfjE6nAlaCX2XbykaeHdbT6KwDz0=
+github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4/go.mod h1:2RvX5ZjVtsznNZPEt4xwJXNJrM3VTZoQf7V6gk0ysvs=
+github.com/marcinbor85/gohex v0.0.0-20210308104911-55fb1c624d84 h1:hyAgCuG5nqTMDeUD8KZs7HSPs6KprPgPP8QmGV8nyvk=
+github.com/marcinbor85/gohex v0.0.0-20210308104911-55fb1c624d84/go.mod h1:Pb6XcsXyropB9LNHhnqaknG/vEwYztLkQzVCHv8sQ3M=
+golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 h1:XfKQ4OlFl8okEOr5UvAqFRVj8pY/4yfcXrddB8qAbU0=
+golang.org/x/sys v0.0.0-20220114195835-da31bd327af9/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
