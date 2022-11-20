@@ -19,7 +19,7 @@ const (
 
 	BootStart = 0xFFFF0000
 
-	GetProgInfo = 0x11112222
+	GetProgInfo = 0x11223344
 	PutProgInfo = 0x33334444
 
 	GetCode = 0x55556666
@@ -59,6 +59,34 @@ func GetUint(port io.Reader) uint32 {
 		log.Fatal("read error:", err)
 	}
 	return u
+}
+
+func readOne(port io.Reader) byte {
+	var buf [1]byte
+	n, err := port.Read(buf[:])
+	if err != nil {
+		log.Fatal("read error:", err)
+	}
+	if n != 1 {
+		return 0
+	}
+	return buf[0]
+}
+
+func ProgRequested(port io.Reader) bool {
+	if readOne(port) != ((GetProgInfo >> 0) & 0xff) {
+		return false
+	}
+	if readOne(port) != ((GetProgInfo >> 8) & 0xff) {
+		return false
+	}
+	if readOne(port) != ((GetProgInfo >> 16) & 0xff) {
+		return false
+	}
+	if readOne(port) != ((GetProgInfo >> 24) & 0xff) {
+		return false
+	}
+	return true
 }
 
 func CheckUint(port io.Reader, val uint32) {
@@ -138,8 +166,12 @@ func main() {
 
 	defer port.Close()
 
-	// for GetUint(port) != GetProgInfo {
-	// }
+	if !ProgRequested(port) {
+		fmt.Println("Waiting for program request")
+		for !ProgRequested(port) {
+		}
+	}
+	fmt.Println("Programming...")
 
 	PutUint(port, PutProgInfo)
 	time.Sleep(200 * time.Millisecond)

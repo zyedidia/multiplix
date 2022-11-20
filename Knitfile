@@ -8,15 +8,32 @@ local prefix = "riscv64-unknown-elf"
 
 local conf = {
     dc = cli.dc or "ldc",
+    board = cli.board or "visionfive",
+    ncpu = 2,
 }
 
-local machine = {
-    board = "virt",
-    mabi = "lp64",
-    march = "rv64imac",
-    arch = "riscv64",
-    mcmodel = "medany",
+local machines = {
+    virt = {
+        board = "qemuvirt",
+        mabi = "lp64",
+        march = "rv64imac",
+        arch = "riscv64",
+        mcmodel = "medany",
+        qemu = "virt",
+        ncpu = conf.ncpu,
+    },
+    visionfive = {
+        board = "visionfive",
+        mabi = "lp64",
+        march = "rv64imac",
+        arch = "riscv64",
+        mcmodel = "medany",
+        qemu = "virt",
+        ncpu = 2,
+    }
 }
+
+local machine = machines[conf.board]
 
 if machine.mcmodel == "medany" then
     machine.cmodel = "medium"
@@ -44,6 +61,7 @@ local flags = {
     ),
     as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
     ld := -nostartfiles -mcmodel=$(machine.mcmodel) -Wl,--gc-sections
+    qemu := -smp $(machine.ncpu) -machine $(machine.qemu) -m 2G -nographic
 }
 
 local meta = r{
@@ -55,16 +73,58 @@ local meta = r{
         $(tools.objdump) -D $input > $output
 }
 
-local kern = knit.rglob("kernel", "*.d")
 local lib = knit.rglob("libd", "*.d")
-local boot = knit.rglob("boot", "*.d") + knit.rglob("kernel/arch/riscv", "*.d")
-local bootloader = knit.rglob("bootloader", "*.d") + knit.rglob("kernel/arch/riscv", "*.d") + knit.glob("kernel/uart.d")
+
+local kern = knit.join(
+    knit.filterout(knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"), {f"kernel/arch/$(machine.arch)/boot.d"}),
+    knit.rglob(f"kernel/board/$(machine.board)", "*.d"),
+    knit.rglob("kernel/dev", "*.d"),
+    knit.glob("kernel/*.d")
+)
+
+local boot = knit.join(
+    knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
+    {
+        "kernel/init.d",
+        "kernel/sys.d",
+    }
+)
+
+local bootloader = knit.join(
+    knit.filterout(knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"), {f"kernel/arch/$(machine.arch)/boot.d"}),
+    knit.rglob(f"kernel/board/$(machine.board)", "*.d"),
+    knit.rglob("kernel/dev", "*.d"),
+    knit.rglob("bootloader", "*.d"),
+    {
+        "kernel/sys.d",
+    }
+)
+
+local kernobj = {
+    "kernel.o",
+    "libd.o",
+    f"kernel/arch/$(machine.arch)/kernelstart.o",
+    f"kernel/arch/$(machine.arch)/kernelvec.o",
+}
+
+local bootobj = {
+    "boot.o",
+    "libd.o",
+    f"kernel/arch/$(machine.arch)/bootstart.o",
+}
+
+local bootloaderobj = {
+    "bootloader.o",
+    "libd.o",
+    f"kernel/arch/$(machine.arch)/bootstart.o",
+}
+
 local dco = sel(conf.dc == "gdc", "o", "of")
 
 local link = {
-    kernel = "kernel/link.ld",
-    boot = "boot/link.ld",
-    bootloader = "bootloader/link.ld"
+    kernel = "link/kernel.ld",
+    boot = "link/boot.ld",
+    bootloader = "link/bootloader.ld",
 }
 
 local kernel = r{
@@ -73,19 +133,19 @@ local kernel = r{
     $ kernel.o: $kern libd[I]
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
     $ boot.o: $boot libd[I] kernel.bin[I]
-        $(tools.dc) $(flags.dc) -Iboot -Ikernel -Ilibd -J. $input -c -$dco $output
-    $ bootloader.o: $bootloader libd[I]
-        $(tools.dc) $(flags.dc) -Ibootloader -Ikernel -Ilibd $input -c -$dco $output
-    $ bootloader.elf: bootloader.o boot/start.o libd.o $(link.bootloader)[I]
-        $(tools.cc) $(flags.as) $(flags.ld) -T$(link.bootloader) $input -lgcc -o $output
-    $ boot.elf: boot.o libd.o boot/start.o $(link.boot)[I]
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd -J. $input -c -$dco $output
+    $ boot.elf: $bootobj $(link.boot)[I]
         $(tools.cc) $(flags.as) $(flags.ld) -T$(link.boot) $input -lgcc -o $output
-    $ kernel.elf: kernel.o libd.o kernel/start.o kernel/arch/riscv/trapvec.o $(link.kernel)[I]
+    $ bootloader.o: $bootloader libd[I] kernel.bin[I]
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
+    $ bootloader.elf: $bootloaderobj $(link.bootloader)[I]
+        $(tools.cc) $(flags.as) $(flags.ld) -T$(link.bootloader) $input -lgcc -o $output
+    $ kernel.elf: $kernobj $(link.kernel)[I]
         $(tools.cc) $(flags.as) $(flags.ld) -T$(link.kernel) $input -lgcc -o $output
     $ qemu:VB: boot.elf
-        $(tools.qemu) -smp 2 -machine $(machine.board) -m 2G -nographic -kernel $input
+        $(tools.qemu) $(flags.qemu) -kernel $input
     $ qemu-gdb:VBQ: boot.elf
-        $(tools.qemu) -s -S -machine $(machine.board) -m 2G -nographic -kernel $input &
+        $(tools.qemu) $(flags.qemu) -s -S -kernel $input &
         $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
 }
 

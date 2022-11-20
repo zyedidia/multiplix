@@ -1,8 +1,14 @@
-module kernel.arch.riscv.vm;
-
-import kernel.arch.riscv.csr;
+module kernel.arch.riscv64.vm;
 
 import bits = ulib.bits;
+
+enum VmMode {
+    off = 0,
+    sv39 = 8,
+    sv48 = 9,
+    sv57 = 10,
+    sv64 = 11,
+}
 
 struct Pte39 {
     ulong data;
@@ -25,17 +31,26 @@ struct Pte39 {
     // dfmt on
 }
 
+struct PteFlags {
+    bool valid;
+    bool read;
+    bool write;
+    bool exec;
+    bool user;
+}
+
 struct Pagetable39 {
     align(4096) Pte39[512] ptes;
 
-    void map_gigapage(uintptr va, uintptr pa) {
+    void mapGiga(uintptr va, uintptr pa, PteFlags flags) {
         auto vpn2 = bits.get(va, 38, 30);
         auto ppn2 = bits.get(pa, 55, 30);
 
-        ptes[vpn2].valid = 1;
-        ptes[vpn2].read = 1;
-        ptes[vpn2].write = 1;
-        ptes[vpn2].exec = 1;
+        ptes[vpn2].valid = flags.valid;
+        ptes[vpn2].read = flags.read;
+        ptes[vpn2].write = flags.write;
+        ptes[vpn2].exec = flags.exec;
+        ptes[vpn2].user = flags.user;
         ptes[vpn2].accessed = 1;
         ptes[vpn2].dirty = 1;
         ptes[vpn2].ppn0 = 0; // ignored
@@ -43,11 +58,11 @@ struct Pagetable39 {
         ptes[vpn2].ppn2 = cast(uint) ppn2;
     }
 
-    void map_megapage(uintptr va, uintptr pa) {
+    void mapMega(uintptr va, uintptr pa, PteFlags flags) {
         // TODO
     }
 
-    void map_page(uintptr va, uintptr pa) {
+    void mapPage(uintptr va, uintptr pa, PteFlags flags) {
         // TODO
     }
 
@@ -56,7 +71,8 @@ struct Pagetable39 {
     }
 
     uintptr satp(uint asid) {
-        uintptr val = bits.set(pn(), 59, 44, asid);
-        return bits.set(val, 63, 60, Satp.sv39);
+        uintptr val = bits.write(pn(), 59, 44, asid);
+        return bits.write(val, 63, 60, VmMode.sv39);
     }
 }
+

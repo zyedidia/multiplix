@@ -2,29 +2,24 @@ module bootloader.main;
 
 import core.volatile;
 
-import timer = kernel.arch.riscv.timer;
-import uart = kernel.uart;
+import kernel.sys;
+import kernel.arch.riscv64.timer;
 import crc = bootloader.crc32;
 
 import ulib.memory;
+import io = ulib.io;
 
-extern (C) extern __gshared uint _kbss_start, _kbss_end;
+extern (C) extern shared uint _kbss_start, _kbss_end;
 
-extern (C) void dstart(uint hartid) {
-    uint* bss = &_kbss_start;
-    uint* bss_end = &_kbss_end;
-
-    while (bss < bss_end) {
-        volatileStore(bss++, 0);
-    }
-
+extern (C) void dstart() {
+    memset(cast(ubyte*) &_kbss_start, 0, &_kbss_end - &_kbss_start);
     boot();
 }
 
 enum BootFlags {
     BootStart = 0xFFFF0000,
 
-    GetProgInfo = 0x11112222,
+    GetProgInfo = 0x11223344,
     PutProgInfo = 0x33334444,
 
     GetCode = 0x55556666,
@@ -37,64 +32,59 @@ enum BootFlags {
     BadCodeCksum = 0xfeedface,
 }
 
-uint get_uint() {
+uint getUint() {
     union recv {
         ubyte[4] b;
         uint i;
     }
 
     recv x;
-    x.b[0] = uart.rx();
-    x.b[1] = uart.rx();
-    x.b[2] = uart.rx();
-    x.b[3] = uart.rx();
+    x.b[0] = Uart.rx();
+    x.b[1] = Uart.rx();
+    x.b[2] = Uart.rx();
+    x.b[3] = Uart.rx();
     return x.i;
 }
 
-void put_uint(uint u) {
-    uart.tx((u >> 0) & 0xff);
-    uart.tx((u >> 8) & 0xff);
-    uart.tx((u >> 16) & 0xff);
-    uart.tx((u >> 24) & 0xff);
+void putUint(uint u) {
+    Uart.tx((u >> 0) & 0xff);
+    Uart.tx((u >> 8) & 0xff);
+    Uart.tx((u >> 16) & 0xff);
+    Uart.tx((u >> 24) & 0xff);
 }
-
-extern (C) extern __gshared ubyte _kheap_start;
-
-extern (C) extern shared ubyte __start_copyin;
-extern (C) extern shared ubyte __stop_copyin;
 
 void boot() {
     while (true) {
-        put_uint(BootFlags.GetProgInfo);
-        import kernel.arch.riscv.timer : delay_time;
-        delay_time(1000000);
-        if (!uart.rx_empty() && get_uint() == BootFlags.PutProgInfo) {
+        putUint(BootFlags.GetProgInfo);
+        Timer.delayTime(1000000);
+
+        if (Uart.hasRxData() && getUint() == BootFlags.PutProgInfo) {
             break;
         }
     }
 
-    ubyte* base = cast(ubyte*) get_uint();
-    uint nbytes = get_uint();
-    uint crc_recv = get_uint();
+    ubyte* base = cast(ubyte*) getUint();
+    uint nbytes = getUint();
+    uint crc_recv = getUint();
 
-    put_uint(BootFlags.GetCode);
-    put_uint(crc_recv);
+    putUint(BootFlags.GetCode);
+    putUint(crc_recv);
 
-    if (get_uint() != BootFlags.PutCode) {
+    if (getUint() != BootFlags.PutCode) {
         return;
     }
 
     for (uint i = 0; i < nbytes; i++) {
-        ubyte c = uart.rx();
+        ubyte c = Uart.rx();
         volatileStore(&base[i], c);
     }
     uint crc_calc = crc.crc32(base, nbytes);
     if (crc_calc != crc_recv) {
-        put_uint(BootFlags.BadCodeCksum);
+        putUint(BootFlags.BadCodeCksum);
         return;
     }
-    put_uint(BootFlags.BootSuccess);
-    uart.tx_flush();
+    putUint(BootFlags.BootSuccess);
+    Uart.flushTx();
 
     // call the loaded program
     auto fn = cast(void function()) base;
@@ -103,7 +93,7 @@ void boot() {
 
 extern (C) {
     void ulib_tx(ubyte c) {
-        uart.tx(c);
+        Uart.tx(c);
     }
     void ulib_exit() {}
 }

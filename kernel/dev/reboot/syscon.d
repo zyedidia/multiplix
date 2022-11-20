@@ -1,7 +1,8 @@
-module kernel.dev.syscon;
+module kernel.dev.reboot.syscon;
 
 import core.volatile;
 
+// Qemu syscon device.
 struct SysCon(uint* base) {
     static void shutdown() {
         volatileStore(base, 0x5555);
@@ -11,3 +12,4 @@ struct SysCon(uint* base) {
         volatileStore(base, 0x7777);
     }
 }
+

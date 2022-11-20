@@ -1,6 +1,6 @@
 module kernel.alloc;
 
-// Implementation of a buddy page allocator
+// Implementation of a buddy page allocator.
 
 import vm = kernel.vm;
 import sys = kernel.sys;
@@ -19,8 +19,8 @@ private:
         return pn * pagesize;
     }
 
-    enum min_order = msb(pagesize) - 1;
-    enum max_order = msb(memsize) - 1;
+    enum minOrder = msb(pagesize) - 1;
+    enum maxOrder = msb(memsize) - 1;
 
     struct PhysPage {
         bool free;
@@ -33,23 +33,23 @@ private:
     }
 
     // Free list for each type of order.
-    FreePage*[max_order + 1] free_lists;
+    FreePage*[maxOrder + 1] freeLists;
 
-    void ll_free_insert(FreePage* n, int order) {
-        n.next = free_lists[order];
+    void freeInsert(FreePage* n, int order) {
+        n.next = freeLists[order];
         n.prev = null;
-        if (free_lists[order])
-            free_lists[order].prev = n;
-        free_lists[order] = n;
+        if (freeLists[order])
+            freeLists[order].prev = n;
+        freeLists[order] = n;
     }
 
-    void ll_free_remove(FreePage* n, int order) {
+    void freeRemove(FreePage* n, int order) {
         if (n.next)
             n.next.prev = n.prev;
         if (n.prev)
             n.prev.next = n.next;
         else
-            free_lists[order] = n.next;
+            freeLists[order] = n.next;
     }
 
     // An array that tracks the status of every page in the machine.
@@ -62,9 +62,9 @@ private:
 
     // Returns the page number of the buddy of the page stored at pn. Returns -1 if
     // the given pn is not valid
-    uintptr get_buddy(uintptr pn) {
+    uintptr getBuddy(uintptr pn) {
         PhysPage p = pages[pn];
-        if (p.order < min_order || p.order > max_order || !valid(pn, p.order)) {
+        if (p.order < minOrder || p.order > maxOrder || !valid(pn, p.order)) {
             return -1;
         }
 
@@ -75,23 +75,23 @@ private:
         return pagenum(pa - (1 << p.order));
     }
 
-    FreePage* pn_to_free(uintptr pn) {
+    FreePage* pnToFree(uintptr pn) {
         return cast(FreePage*) vm.pa2ka(pageaddr(pn));
     }
 
 public:
     // Initialize everything needed for the allocator.
-    // Note: 'heap_start' is a virtual address
-    this(uintptr heap_start) {
-        heap_start = vm.ka2pa(heap_start);
+    // Note: 'heapStart' is a virtual address
+    this(uintptr heapStart) {
+        heapStart = vm.ka2pa(heapStart);
         for (uintptr pa = 0; pa < memsize; pa += pagesize) {
             uintptr pn = pagenum(pa);
-            pages[pn].free = pa >= heap_start;
-            pages[pn].order = min_order;
+            pages[pn].free = pa >= heapStart;
+            pages[pn].order = minOrder;
 
             uint order = pages[pn].order;
             while (valid(pn, order)) {
-                uintptr bpn = get_buddy(pn); // buddy pn
+                uintptr bpn = getBuddy(pn); // buddy pn
                 // We can coalesce backwards
                 if (bpn < pn && pages[bpn].free == pages[pn].free
                         && pages[bpn].order == pages[pn].order) {
@@ -113,21 +113,21 @@ public:
             PhysPage page = pages[pn];
             assert(valid(pn, page.order));
             if (page.free) {
-                ll_free_insert(pn_to_free(pn), page.order);
+                freeInsert(pnToFree(pn), page.order);
             }
             pn += pagenum(1UL << page.order);
         }
     }
 
     // pointer allocation API
-    void* alloc_ptr(size_t sz) {
+    void* allocPtr(size_t sz) {
         if (sz == 0) {
             return null;
         }
 
         uint order = cast(uint) msb(sz - 1);
-        if (order < min_order) {
-            order = min_order;
+        if (order < minOrder) {
+            order = minOrder;
         }
 
         bool has_mem = true;
@@ -135,16 +135,16 @@ public:
             has_mem = false;
             // Find a block that is >= the requested order. If we can't find such a
             // block the allocation fails.
-            for (uint i = min_order; i <= max_order; i++) {
-                if (free_lists[i]) {
+            for (uint i = minOrder; i <= maxOrder; i++) {
+                if (freeLists[i]) {
                     // found a free page
-                    uintptr pa = vm.ka2pa(cast(uintptr) free_lists[i]);
+                    uintptr pa = vm.ka2pa(cast(uintptr) freeLists[i]);
                     uintptr pn = pagenum(pa);
                     assert(pages[pn].free);
                     assert(pages[pn].order == i);
                     if (order == i) {
                         // The page matches the order so we can return it directly
-                        ll_free_remove(free_lists[i], i);
+                        freeRemove(freeLists[i], i);
                         pages[pn].free = false;
                         return cast(void*) vm.pa2ka(pa);
                     } else if (i > order) {
@@ -152,14 +152,14 @@ public:
                         // order so there are no blocks with the correct size. We
                         // can split this block and try again.
                         pages[pn].order = i - 1;
-                        uintptr bpn = get_buddy(pn);
+                        uintptr bpn = getBuddy(pn);
                         pages[bpn].order = i - 1;
                         pages[bpn].free = true;
 
                         // update free lists
-                        ll_free_remove(free_lists[i], i);
-                        ll_free_insert(pn_to_free(pn), i - 1);
-                        ll_free_insert(pn_to_free(bpn), i - 1);
+                        freeRemove(freeLists[i], i);
+                        freeInsert(pnToFree(pn), i - 1);
+                        freeInsert(pnToFree(bpn), i - 1);
 
                         has_mem = true;
                         break;
@@ -172,7 +172,7 @@ public:
         return null;
     }
 
-    void free_ptr(void* ptr) {
+    void freePtr(void* ptr) {
         if (!ptr) {
             return;
         }
@@ -186,43 +186,44 @@ public:
         }
 
         pages[pn].free = true;
-        uintptr bpn = get_buddy(pn);
+        uintptr bpn = getBuddy(pn);
         uint order = pages[pn].order;
 
         while (bpn != cast(uintptr)-1 && pages[bpn].free && pages[bpn].order == pages[pn].order) {
             // coalesce
-            ll_free_remove(pn_to_free(bpn), pages[pn].order);
+            freeRemove(pnToFree(bpn), pages[pn].order);
 
             if (valid(pn, pages[pn].order + 1)) {
                 order = ++pages[pn].order;
                 pages[bpn].order = 0;
-                bpn = get_buddy(pn);
+                bpn = getBuddy(pn);
             } else if (valid(bpn, pages[pn].order + 1)) {
                 pages[pn].order = 0;
                 order = ++pages[bpn].order;
                 pn = bpn;
-                bpn = get_buddy(bpn);
+                bpn = getBuddy(bpn);
             }
         }
 
-        ll_free_insert(pn_to_free(pn), order);
+        freeInsert(pnToFree(pn), order);
     }
 }
 
-__gshared BuddyAllocator!(sys.pagesize, sys.memsize_physical) buddy;
+__gshared BuddyAllocator!(sys.pagesize, sys.memsizePhysical) buddy;
 
-void kallocinit(uintptr heap_start) {
-    buddy.__ctor(heap_start);
+void kallocinit(uintptr heapStart) {
+    buddy.__ctor(heapStart);
 }
 
-void* kalloc_page(size_t sz) {
-    return buddy.alloc_ptr(sz);
+void* kallocpage(size_t sz) {
+    return buddy.allocPtr(sz);
 }
 
-void* kalloc_page() {
-    return buddy.alloc_ptr(sys.pagesize);
+void* kallocpage() {
+    return buddy.allocPtr(sys.pagesize);
 }
 
-void kfree_page(void* ptr) {
-    buddy.free_ptr(ptr);
+void kfreepage(void* ptr) {
+    buddy.freePtr(ptr);
 }
+

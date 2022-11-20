@@ -26,12 +26,16 @@ T clear(T)(T x, uint bit) if (isInt!T) {
     return x & ~((cast(T) 1) << bit);
 }
 
-T set(T)(T x, uint bit, uint val) if (isInt!T) {
+T set(T)(T x, uint bit) if (isInt!T) {
+    return x | (1UL << bit);
+}
+
+T write(T)(T x, uint bit, uint val) if (isInt!T) {
     x = clear(x, bit);
     return x | (val << bit);
 }
 
-T set(T)(T x, uint hi, uint lo, T val) if (isInt!T) {
+T write(T)(T x, uint hi, uint lo, T val) if (isInt!T) {
     return clear(x, hi, lo) | (val << lo);
 }
 

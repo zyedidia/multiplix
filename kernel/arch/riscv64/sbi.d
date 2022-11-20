@@ -1,14 +1,20 @@
-module kernel.arch.riscv.sbi;
+module kernel.arch.riscv64.sbi;
+
+import ulib.option;
 
 import ldc.llvmasm;
-import ulib.option;
+
+// This library defines an interface to a RISC-V SBI firmware implementation.
+// Environment calls to the firmware are made with the "ecall" instruction. See
+// the RISC-V Supervisor Binary Interface Specification for details.
 
 struct SbiRet {
     uint error;
     uint value;
 }
 
-SbiRet ecall(int ext, int fid, uintptr a0, uintptr a1) {
+// ecall with 2 args
+SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1) {
     SbiRet ret;
 
     auto result = __asmtuple!(uint, uint) (
@@ -22,7 +28,8 @@ SbiRet ecall(int ext, int fid, uintptr a0, uintptr a1) {
     return ret;
 }
 
-SbiRet ecall(int ext, int fid, uintptr a0) {
+// ecall with 1 arg
+SbiRet ecall(uint ext, uint fid, uintptr a0) {
     SbiRet ret;
 
     auto result = __asmtuple!(uint, uint) (
@@ -36,7 +43,8 @@ SbiRet ecall(int ext, int fid, uintptr a0) {
     return ret;
 }
 
-SbiRet ecall(int ext, int fid) {
+// ecall with no args
+SbiRet ecall(uint ext, uint fid) {
     SbiRet ret;
 
     auto result = __asmtuple!(uint, uint) (
@@ -53,37 +61,37 @@ SbiRet ecall(int ext, int fid) {
 struct Base {
     enum ext = 0x10;
 
-    static uint get_spec_version() {
+    static uint getSpecVersion() {
         auto ret = ecall(ext, 0);
         return ret.value;
     }
 
-    static uint get_impl_id() {
+    static uint getImplId() {
         auto ret = ecall(ext, 1);
         return ret.value;
     }
 
-    static uint get_impl_version() {
+    static uint getImplVersion() {
         auto ret = ecall(ext, 2);
         return ret.value;
     }
 
-    static bool probe_extension(uint extid) {
+    static bool probeExtension(uint extid) {
         auto ret = ecall(ext, 3, extid);
         return ret.value != 0;
     }
 
-    static uint get_mvendorid() {
+    static uint getMvendorId() {
         auto ret = ecall(ext, 4);
         return ret.value;
     }
 
-    static uint get_marchid() {
+    static uint getMarchId() {
         auto ret = ecall(ext, 5);
         return ret.value;
     }
 
-    static uint get_mimpid() {
+    static uint getMimpId() {
         auto ret = ecall(ext, 6);
         return ret.value;
     }
@@ -92,8 +100,12 @@ struct Base {
 struct Timer {
     enum ext = 0x54494D45;
 
-    static void set_timer(ulong stime_value) {
-        ecall(ext, 0, stime_value);
+    static bool supported() {
+        return Base.probeExtension(ext);
+    }
+
+    static void setTimer(ulong val) {
+        ecall(ext, 0, val);
     }
 }
 
@@ -102,25 +114,29 @@ struct Reset {
 
     enum Type {
         shutdown = 0,
-        cold_reboot = 1,
-        warm_reboot = 2,
+        coldReboot = 1,
+        warmReboot = 2,
     }
 
     enum Reason {
-        no_reason = 0,
+        noReason = 0,
         failure = 1,
     }
 
-    static void system_reset(Type ty, Reason reason) {
+    static bool supported() {
+        return Base.probeExtension(ext);
+    }
+
+    static void systemReset(Type ty, Reason reason) {
         ecall(ext, 0, ty, reason);
     }
 
     static void reboot() {
-        system_reset(Type.cold_reboot, Reason.no_reason);
+        systemReset(Type.coldReboot, Reason.noReason);
     }
 
     static void shutdown() {
-        system_reset(Type.shutdown, Reason.no_reason);
+        systemReset(Type.shutdown, Reason.noReason);
     }
 }
 
@@ -130,16 +146,23 @@ struct Hart {
     enum State {
         started = 0,
         stopped = 1,
-        start_pending = 2,
-        stop_pending = 3,
+        startPending = 2,
+        stopPending = 3,
         suspended = 4,
-        suspend_pending = 5,
-        resume_pending = 6,
+        suspendPending = 5,
+        resumePending = 6,
     }
 
-    __gshared static Option!uint _nharts;
+    static bool supported() {
+        return Base.probeExtension(ext);
+    }
+
+    private __gshared static Option!uint _nharts;
 
     static uint nharts() {
+        // Compute the number of harts by repeatedly asking if a hart exists.
+        // This assumes that if hart n does not exist then all subsequent harts
+        // do not exist, and that the first hart is 0.
         if (_nharts.has()) {
             return _nharts.get();
         }
@@ -150,24 +173,27 @@ struct Hart {
         return i;
     }
 
-    static bool exists(ulong hartid) {
+    static bool exists(uint hartid) {
+        // ask for status, if error then hart does not exist
         auto r = ecall(ext, 2, hartid);
         return r.error == 0;
     }
 
-    static uint get_status(ulong hartid) {
+    static uint getStatus(uint hartid) {
         auto r = ecall(ext, 2, hartid);
         return r.value;
     }
 }
 
-void legacy_putchar(ubyte b) {
-    enum ext = 0x01;
-    ecall(ext, 0, b);
-}
+struct Legacy {
+    static void putchar(ubyte b) {
+        enum ext = 0x01;
+        ecall(ext, 0, b);
+    }
 
-uint legacy_getchar() {
-    enum ext = 0x02;
-    auto r = ecall(ext, 0);
-    return r.error; // for legacy sbi functions a0 (error) contains the result
+    static uint getchar() {
+        enum ext = 0x02;
+        auto r = ecall(ext, 0);
+        return r.error; // for legacy sbi functions a0 (error) contains the result
+    }
 }

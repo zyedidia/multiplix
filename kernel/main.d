@@ -1,48 +1,44 @@
 module kernel.main;
 
-import core.volatile;
+import io = ulib.io;
 
-import dev = kernel.board.virt.dev;
-import arch = kernel.arch.riscv;
-import sbi = kernel.arch.riscv.sbi;
-
-import vm = kernel.vm;
 import sys = kernel.sys;
 import kernel.alloc;
+import arch = kernel.arch.riscv64;
 
-import io = ulib.io;
-import ulib.linker;
+void kmain(uintptr heapBase) {
+    io.writeln("hello rvos!");
 
-// The bootloader drops us in here with an identity-mapped pagetable.
-void kmain(uint hartid, uint nharts, uintptr heap_start) {
-    if (!sbi.Base.probe_extension(sbi.Timer.ext)) {
-        io.writeln("timer extension not supported!");
-        ulib_exit(1);
-    }
-    io.writeln("kmain(", hartid, ", ", nharts, ", ", cast(void*) heap_start, ")");
-
-    arch.timer_irq_init();
-    arch.trap_init();
-    arch.trap_enable();
-    io.writeln("timer interrupts enabled");
-    kallocinit(heap_start);
-    io.writeln("buddy kalloc returned: ", kalloc_page());
+    arch.Trap.init();
+    arch.Trap.enable();
+    arch.Timer.intr();
+    kallocinit(heapBase);
+    io.writeln("buddy kalloc returned: ", kallocpage());
 
     while (true) {
-        asm {
-            "wfi";
-        }
+        arch.wait();
     }
 }
 
 extern (C) {
     void ulib_tx(ubyte b) {
-        sbi.legacy_putchar(b);
-        /* dev.Uart.tx(b); */
+        sys.Uart.tx(b);
     }
 
     void ulib_exit(ubyte code) {
-        sbi.Reset.shutdown();
-        /* dev.SysCon.shutdown(); */
+        sys.Reboot.shutdown();
+    }
+
+    extern shared ubyte _kheap_start;
+
+    void dstart(uint cpuid, uint ncpu) {
+        import kernel.init;
+
+        initBss();
+
+        uintptr tlsBase = cast(uintptr) &_kheap_start;
+        size_t tlsSize = initTls(cpuid, tlsBase);
+
+        kmain(tlsBase + ncpu * tlsSize);
     }
 }

@@ -1,8 +1,9 @@
 module kernel.sys;
 
-enum core_freq = 100;
+// targeting visionfive for now
+public import kernel.board.visionfive.system;
 
+enum highmemBase = 0xFFFF_FFC0_0000_0000;
 enum gb(ulong n) = 1024 * 1024 * 1024 * n;
-enum memsize_physical = gb!(4);
-enum addrspace_physical = 0x3F_FFFF_FFFF;
+enum memsizePhysical = gb!(4);
 enum pagesize = 4096;
