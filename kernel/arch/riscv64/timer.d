@@ -24,6 +24,16 @@ struct Timer {
         return Csr.cycle;
     }
 
+    static void delayCycles(ulong t) {
+        ulong rb = cycles();
+        while (1) {
+            ulong ra = cycles();
+            if ((ra - rb) >= t) {
+                break;
+            }
+        }
+    }
+
     static void intr() {
         intr(interval);
     }

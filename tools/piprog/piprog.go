@@ -166,10 +166,8 @@ func main() {
 
 	defer port.Close()
 
-	if !ProgRequested(port) {
-		fmt.Println("Waiting for program request")
-		for !ProgRequested(port) {
-		}
+	fmt.Println("Waiting for program request")
+	for !ProgRequested(port) {
 	}
 	fmt.Println("Programming...")
 

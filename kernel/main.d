@@ -15,8 +15,11 @@ void kmain(uintptr heapBase) {
     kallocinit(heapBase);
     io.writeln("buddy kalloc returned: ", kallocpage());
 
+    uint val = 1;
     while (true) {
-        arch.wait();
+        arch.Timer.delayCycles(1000000000/2);
+        sys.Gpio.write(0, val);
+        val = !val;
     }
 }
 

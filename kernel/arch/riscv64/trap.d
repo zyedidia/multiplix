@@ -27,7 +27,7 @@ extern (C) void kerneltrap() {
     uintptr sepc = Csr.sepc;
     uintptr scause = Csr.scause;
 
-    io.writeln("[interrupt] sepc: ", cast(void*) sepc);
+    /* io.writeln("[interrupt] sepc: ", cast(void*) sepc); */
 
     if (scause == Scause.sti) {
         Timer.intr(Timer.interval);
