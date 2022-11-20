@@ -3,12 +3,23 @@ module kernel.main;
 import io = ulib.io;
 
 import sys = kernel.sys;
-import kernel.alloc;
 import arch = kernel.arch.riscv64;
 
+import kernel.cpu;
+import kernel.alloc;
+
 void kmain(uintptr heapBase) {
+    io.writeln("core: ", cpuinfo.id, ", primary: ", cpuinfo.primary);
+
+    if (!cpuinfo.primary) {
+        while (true) {
+            arch.wait();
+        }
+    }
+
     io.writeln("hello rvos!");
 
+    arch.startAllCores();
     arch.Trap.init();
     arch.Trap.enable();
     arch.Timer.intr();
@@ -17,7 +28,7 @@ void kmain(uintptr heapBase) {
 
     uint val = 1;
     while (true) {
-        arch.Timer.delayCycles(1000000000/2);
+        arch.Timer.delayTime(1000000000/2);
         sys.Gpio.write(0, val);
         val = !val;
     }
@@ -34,13 +45,19 @@ extern (C) {
 
     extern shared ubyte _kheap_start;
 
-    void dstart(uint cpuid, uint ncpu) {
+    void dstart(uint cpuid, uint ncpu, bool primary) {
         import kernel.init;
 
-        initBss();
+        if (primary) {
+            // only zero the BSS for the primary core
+            initBss();
+        }
 
         uintptr tlsBase = cast(uintptr) &_kheap_start;
         size_t tlsSize = initTls(cpuid, tlsBase);
+
+        cpuinfo.id = cpuid;
+        cpuinfo.primary = primary;
 
         kmain(tlsBase + ncpu * tlsSize);
     }

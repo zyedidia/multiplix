@@ -1,6 +1,6 @@
 module kernel.sys;
 
-// targeting visionfive for now
+// TODO: targeting visionfive for now
 public import kernel.board.visionfive.system;
 
 enum highmemBase = 0xFFFF_FFC0_0000_0000;

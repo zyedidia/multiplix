@@ -3,9 +3,10 @@ ENTRY(_start)
 SECTIONS
 {
     /* kernel is located at high canonical addresses */
-    /* kernel entry: 0x84010000 */
-    /* bootloader size: 0x4000 */
-    /* 0xFFFFFFC084014000 = highmem + 0x84010000 + 0x4000 */
+    /* boot entry: 0x84010000 */
+    /* boot code size: 0x4000 */
+    /* kernel entry: 0xFFFFFFC084014000 = highmem + 0x84010000 + 0x4000 */
+
     . = 0xFFFFFFC084014000;
     .text : {
         _kcode_start = .;
@@ -37,6 +38,8 @@ SECTIONS
         . = ALIGN(8);
         _kbss_end = .;
     }
+
+    PROVIDE(_bootentry_pa = 0x84010000);
 
     .tdata : { 
         _tdata_start = .;

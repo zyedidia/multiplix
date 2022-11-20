@@ -2,7 +2,7 @@
 
 .globl _start
 _start:
-	// hartid comes in a0, nharts in a1
+	// hartid comes in a0, nharts in a1, primary in a2
 	la sp, _kheap_start
 	// setup per-hart 4K stack
 	addi t0, a0, 1  // t0 = hartid + 1

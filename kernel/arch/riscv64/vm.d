@@ -66,11 +66,11 @@ struct Pagetable39 {
         // TODO
     }
 
-    uintptr pn() {
+    shared uintptr pn() {
         return cast(uintptr)(&ptes[0]) / 4096;
     }
 
-    uintptr satp(uint asid) {
+    shared uintptr satp(uint asid) {
         uintptr val = bits.write(pn(), 59, 44, asid);
         return bits.write(val, 63, 60, VmMode.sv39);
     }

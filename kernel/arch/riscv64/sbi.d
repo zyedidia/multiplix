@@ -13,6 +13,21 @@ struct SbiRet {
     uint value;
 }
 
+// ecall with 3 args
+SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1, uintptr a2) {
+    SbiRet ret;
+
+    auto result = __asmtuple!(uint, uint) (
+        "ecall",
+        "={a0},={a1},{a7},{a6},{a0},{a1},{a2},~{memory}",
+        ext, fid, a0, a1, a2
+    );
+    ret.error = result.v[0];
+    ret.value = result.v[1];
+
+    return ret;
+}
+
 // ecall with 2 args
 SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1) {
     SbiRet ret;
@@ -182,6 +197,11 @@ struct Hart {
     static uint getStatus(uint hartid) {
         auto r = ecall(ext, 2, hartid);
         return r.value;
+    }
+
+    static uint start(uint hartid, uintptr startAddr, uintptr opaque) {
+        auto r = ecall(ext, 0, hartid, startAddr, opaque);
+        return r.error;
     }
 }
 
