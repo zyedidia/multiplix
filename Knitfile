@@ -158,6 +158,8 @@ return b{
         dfmt -i --brace_style=otbs $allsrc
     $ clean:VB:
         knit :all -t clean
+    $ prog:VB: boot.bin
+        piprog boot.bin
 
     kernel,
     meta

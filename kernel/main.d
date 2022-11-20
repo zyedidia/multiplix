@@ -28,7 +28,7 @@ void kmain(uintptr heapBase) {
 
     uint val = 1;
     while (true) {
-        arch.Timer.delayTime(1000000000/2);
+        arch.Timer.delayCycles(1000000000/2);
         sys.Gpio.write(0, val);
         val = !val;
     }
