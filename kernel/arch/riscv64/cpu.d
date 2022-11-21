@@ -26,7 +26,7 @@ void wait() {
 
 void setTlsBase(void* base) {
     asm {
-        "mv tp, %0" : : "r" (base);
+        "mv tp, %0" :  : "r"(base);
     }
 }
 

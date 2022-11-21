@@ -12,4 +12,3 @@ struct SysCon(uint* base) {
         volatileStore(base, 0x7777);
     }
 }
-

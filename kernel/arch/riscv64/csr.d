@@ -38,6 +38,7 @@ enum Scause {
     sti = 0x8000000000000005UL,
 }
 
+// dfmt off
 template GenCsr(string name) {
     const char[] GenCsr = "@property static uintptr " ~ name ~ "() {" ~
         "return rdcsr!(CsrNum." ~ name ~ ")();" ~
@@ -46,6 +47,7 @@ template GenCsr(string name) {
         "wrcsr!(CsrNum." ~ name ~ ")(v);" ~
     "}\n";
 }
+// dfmt on
 
 struct Csr {
     mixin(GenCsr!("stvec"));

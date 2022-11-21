@@ -9,7 +9,7 @@ extern (C) extern void kernelvec();
 
 struct Trap {
     static void init() {
-        Csr.stvec = cast(uintptr) &kernelvec;
+        Csr.stvec = cast(uintptr)&kernelvec;
     }
 
     static void enable() {

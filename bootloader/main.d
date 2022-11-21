@@ -13,7 +13,7 @@ import io = ulib.io;
 extern (C) extern shared ubyte _kbss_start, _kbss_end;
 
 extern (C) void dstart() {
-    memset(cast(ubyte*) &_kbss_start, 0, &_kbss_end - &_kbss_start);
+    memset(cast(ubyte*)&_kbss_start, 0, &_kbss_end - &_kbss_start);
     boot();
 }
 
@@ -95,12 +95,15 @@ void boot() {
     auto fn = cast(void function()) base;
     fn();
 
-    while (1) {}
+    while (1) {
+    }
 }
 
 extern (C) {
     void ulib_tx(ubyte c) {
         Uart.tx(c);
     }
-    void ulib_exit() {}
+
+    void ulib_exit() {
+    }
 }

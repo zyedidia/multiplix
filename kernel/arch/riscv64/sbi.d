@@ -13,6 +13,8 @@ struct SbiRet {
     uint value;
 }
 
+// dfmt off
+
 // ecall with 3 args
 SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1, uintptr a2) {
     SbiRet ret;
@@ -72,6 +74,8 @@ SbiRet ecall(uint ext, uint fid) {
 
     return ret;
 }
+
+// dfmt on
 
 struct Base {
     enum ext = 0x10;

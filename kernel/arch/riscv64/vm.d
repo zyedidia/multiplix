@@ -75,4 +75,3 @@ struct Pagetable39 {
         return bits.write(val, 63, 60, VmMode.sv39);
     }
 }
-

@@ -8,7 +8,7 @@ struct StarfiveGpio(uint* base) {
         uint en;
     }
 
-    enum gpo = cast(Gpo*) (cast(uintptr) base + 0x50);
+    enum gpo = cast(Gpo*)(cast(uintptr) base + 0x50);
 
     static void set(uint pin) {
         if (pin > 63) {

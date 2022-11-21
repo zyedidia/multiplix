@@ -18,5 +18,6 @@ struct Ns16550(uint* base) {
         assert(false, "rx is not implemented");
     }
 
-    static void flushTx() {}
+    static void flushTx() {
+    }
 }

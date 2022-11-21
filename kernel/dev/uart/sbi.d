@@ -13,7 +13,8 @@ import ulib.option;
 struct SbiUart {
     __gshared Option!ubyte tmp;
 
-    static void init() {}
+    static void init() {
+    }
 
     static void tx(ubyte b) {
         sbi.Legacy.putchar(b);
@@ -43,5 +44,6 @@ struct SbiUart {
         return b;
     }
 
-    static void flushTx() {}
+    static void flushTx() {
+    }
 }

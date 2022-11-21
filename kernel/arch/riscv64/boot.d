@@ -30,20 +30,15 @@ void boot(uint hartid) {
     bool wasPrimary = primary;
 
     if (primary) {
-        Pagetable39* kpagetable = cast(Pagetable39*) &kpagetable;
-        PteFlags flags = {
-            valid: true,
-            read: true,
-            write: true,
-            exec: true,
-        };
+        Pagetable39* kpagetable = cast(Pagetable39*)&kpagetable;
+        PteFlags flags = {valid: true, read: true, write: true, exec: true,};
         for (size_t addr = 0; addr < sys.memsizePhysical; addr += sys.gb!(1)) {
             kpagetable.mapGiga(addr, addr, flags);
             kpagetable.mapGiga(sys.highmemBase + addr, addr, flags);
         }
 
         // load the kernel into its phyical entrypoint
-        memcpy(cast(void*) &_kentry_pa, kbin.ptr, kbin.length);
+        memcpy(cast(void*)&_kentry_pa, kbin.ptr, kbin.length);
         fencei();
 
         // TODO: why don't I have to cast this away from shared to write this?
@@ -65,7 +60,8 @@ void boot(uint hartid) {
     uintptr main = cast(uintptr)(&_kentry_pa) + highmemBase;
     (cast(void function(uint, uint, bool)) main)(hartid, sbi.Hart.nharts(), wasPrimary);
 
-    while (1) {}
+    while (1) {
+    }
 }
 
 import kernel.init : initBss;
@@ -84,6 +80,9 @@ extern (C) {
         boot(hartid);
     }
 
-    void ulib_tx(ubyte b) {}
-    void ulib_exit(ubyte code) {}
+    void ulib_tx(ubyte b) {
+    }
+
+    void ulib_exit(ubyte code) {
+    }
 }

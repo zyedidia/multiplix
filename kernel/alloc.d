@@ -226,4 +226,3 @@ void* kallocpage() {
 void kfreepage(void* ptr) {
     buddy.freePtr(ptr);
 }
-
