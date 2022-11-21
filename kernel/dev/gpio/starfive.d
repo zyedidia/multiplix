@@ -16,6 +16,7 @@ struct StarfiveGpio(uint* base) {
         }
 
         volatileStore(&gpo[pin].val, 1);
+        // enable is active low
         volatileStore(&gpo[pin].en, 0);
     }
 

@@ -79,6 +79,7 @@ extern (C) {
         // primary core.
         if (primary) {
             initBss();
+            hartid = sbi.Hart.getRunningId();
         }
         boot(hartid);
     }

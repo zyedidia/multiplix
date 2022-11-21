@@ -16,15 +16,23 @@ void kmain(uintptr heapBase) {
             arch.wait();
         }
     }
+    import kernel.arch.riscv64.sbi;
+    io.writeln("status (should be 0): ", Hart.getStatus(cpuinfo.id));
 
     io.writeln("hello rvos!");
 
-    arch.startAllCores();
-    arch.Trap.init();
-    arch.Trap.enable();
-    arch.Timer.intr();
-    kallocinit(heapBase);
-    io.writeln("buddy kalloc returned: ", kallocpage());
+    import bits = ulib.bits;
+    sys.Uart.flushTx();
+    io.writeln(bits.get(sys.Uart.lsr, sys.Uart.Lsr.thre));
+    sys.Uart.flushTx();
+    io.writeln(bits.get(sys.Uart.lsr, sys.Uart.Lsr.temt));
+
+    /* arch.startAllCores(); */
+    /* arch.Trap.init(); */
+    /* arch.Trap.enable(); */
+    /* arch.Timer.intr(); */
+    /* kallocinit(heapBase); */
+    /* io.writeln("buddy kalloc returned: ", kallocpage()); */
 
     uint val = 1;
     while (true) {
@@ -59,6 +67,7 @@ extern (C) {
         cpuinfo.id = cpuid;
         cpuinfo.primary = primary;
 
+        sys.Uart.init();
         kmain(tlsBase + ncpu * tlsSize);
     }
 }

@@ -4,12 +4,13 @@ import core.volatile;
 
 import kernel.sys;
 import kernel.arch.riscv64.timer;
+import arch = kernel.arch;
 import crc = bootloader.crc32;
 
 import ulib.memory;
 import io = ulib.io;
 
-extern (C) extern shared uint _kbss_start, _kbss_end;
+extern (C) extern shared ubyte _kbss_start, _kbss_end;
 
 extern (C) void dstart() {
     memset(cast(ubyte*) &_kbss_start, 0, &_kbss_end - &_kbss_start);
@@ -54,6 +55,8 @@ void putUint(uint u) {
 }
 
 void boot() {
+    Uart.init();
+
     while (true) {
         putUint(BootFlags.GetProgInfo);
         Timer.delayTime(1000000);
@@ -86,9 +89,13 @@ void boot() {
     putUint(BootFlags.BootSuccess);
     Uart.flushTx();
 
+    arch.fencei();
+
     // call the loaded program
     auto fn = cast(void function()) base;
     fn();
+
+    while (1) {}
 }
 
 extern (C) {

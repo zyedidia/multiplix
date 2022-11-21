@@ -27,7 +27,7 @@ T clear(T)(T x, uint bit) if (isInt!T) {
 }
 
 T set(T)(T x, uint bit) if (isInt!T) {
-    return x | (1UL << bit);
+    return x | ((cast(T) 1) << bit);
 }
 
 T write(T)(T x, uint bit, uint val) if (isInt!T) {

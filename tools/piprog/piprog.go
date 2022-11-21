@@ -181,28 +181,16 @@ func main() {
 	CheckUint(port, crcbin)
 
 	PutUint(port, PutCode)
-	var txbuf [1]byte
-	for _, b := range bin {
-		txbuf[0] = b
-		n, err := port.Write(txbuf[:])
-		if err != nil {
-			log.Fatal("error sending code:", err)
-		}
-		if n != 1 {
-			log.Fatal("sent incorrect number of bytes:", n)
-		}
-		time.Sleep(time.Microsecond * 1)
+	n, err := port.Write(bin)
+	if err != nil {
+		log.Fatal("error sending code:", err)
 	}
-	// n, err := port.Write(bin)
-	// if err != nil {
-	// 	log.Fatal("error sending code:", err)
-	// }
-	// if n != len(bin) {
-	// 	log.Fatal("sent incorrect number of bytes:", n)
-	// }
+	if n != len(bin) {
+		log.Fatal("sent incorrect number of bytes:", n)
+	}
 
 	result := GetUint(port)
-	if result == BootError {
+	if result != BootSuccess {
 		log.Fatal("bootloader error code:", result)
 	}
 

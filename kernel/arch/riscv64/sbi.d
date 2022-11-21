@@ -188,6 +188,23 @@ struct Hart {
         return i;
     }
 
+    // OpenSBI should give us the HART ID in a0 at boot-up, but when going
+    // through u-boot first, it isn't obvious how to pass that parameter
+    // through. To determine the HART ID for the first core to boot up we use
+    // this function instead. It requests the status for every core and returns
+    // the first one that is running. Since the first core to boot up will be
+    // the only one running, that will be its ID. Subsequent cores are booted
+    // directly via OpenSBI and get their HART ID passed in as a0.
+    static uint getRunningId() {
+        uint n = nharts();
+        for (uint i = 0; i < n; i++) {
+            if (getStatus(i) == State.started) {
+                return i;
+            }
+        }
+        assert(false, "no running hart found (impossible)");
+    }
+
     static bool exists(uint hartid) {
         // ask for status, if error then hart does not exist
         auto r = ecall(ext, 2, hartid);
