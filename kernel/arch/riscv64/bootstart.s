@@ -2,9 +2,9 @@
 
 .globl _start
 _start:
-	la sp, _kstack
 	.option push
 	.option norelax
+	la sp, _kstack
 	la gp, __global_pointer$
 	.option pop
 	call dstart

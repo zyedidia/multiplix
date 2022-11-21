@@ -36,5 +36,5 @@ size_t initTls(uint cpuid, uintptr base) {
 
     arch.setTlsBase(tlsStart);
 
-    return tdataSize;
+    return tlsSize;
 }

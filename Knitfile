@@ -9,7 +9,7 @@ local prefix = "riscv64-unknown-elf"
 local conf = {
     dc = cli.dc or "ldc",
     board = cli.board or "visionfive",
-    ncpu = 2,
+    ncpu = 4,
 }
 
 local machines = {

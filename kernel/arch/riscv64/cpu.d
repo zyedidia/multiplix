@@ -35,9 +35,6 @@ import kernel.arch.riscv64.sbi;
 /* extern (C) extern ubyte _bootentry_pa; */
 enum _bootentry_pa = 0x84010000;
 
-void startAllCores() {
-    auto n = Hart.nharts();
-    for (uint i = 0; i < n; i++) {
-        Hart.start(i, cast(uintptr) _bootentry_pa, 0);
-    }
+void startCore(uint hartid) {
+    Hart.start(hartid, cast(uintptr) _bootentry_pa, 0);
 }

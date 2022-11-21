@@ -6,41 +6,45 @@ import sys = kernel.sys;
 import arch = kernel.arch.riscv64;
 
 import kernel.cpu;
+import kernel.spinlock;
 import kernel.alloc;
 
+shared Spinlock bootlock;
+
 void kmain(uintptr heapBase) {
-    io.writeln("core: ", cpuinfo.id, ", primary: ", cpuinfo.primary);
+    io.writeln("core ", cpuinfo.id, " booted, primary: ", cpuinfo.primary);
 
     if (!cpuinfo.primary) {
+        bootlock.unlock();
         while (true) {
             arch.wait();
         }
     }
-    import kernel.arch.riscv64.sbi;
-
-    io.writeln("status (should be 0): ", Hart.getStatus(cpuinfo.id));
-
     io.writeln("hello rvos!");
 
-    import bits = ulib.bits;
+    startAllCores();
+    arch.Trap.init();
+    arch.Trap.enable();
+    arch.Timer.intr();
+    kallocinit(heapBase);
+    io.writeln("buddy kalloc returned: ", kallocpage());
 
-    sys.Uart.flushTx();
-    io.writeln(bits.get(sys.Uart.lsr, sys.Uart.Lsr.thre));
-    sys.Uart.flushTx();
-    io.writeln(bits.get(sys.Uart.lsr, sys.Uart.Lsr.temt));
+    /* uint val = 1; */
+    /* while (true) { */
+    /*     arch.Timer.delayCycles(1000000000 / 2); */
+    /*     sys.Gpio.write(0, val); */
+    /*     val = !val; */
+    /* } */
+}
 
-    /* arch.startAllCores(); */
-    /* arch.Trap.init(); */
-    /* arch.Trap.enable(); */
-    /* arch.Timer.intr(); */
-    /* kallocinit(heapBase); */
-    /* io.writeln("buddy kalloc returned: ", kallocpage()); */
-
-    uint val = 1;
-    while (true) {
-        arch.Timer.delayCycles(1000000000 / 2);
-        sys.Gpio.write(0, val);
-        val = !val;
+void startAllCores() {
+    for (uint i = 0; i < numcpu; i++) {
+        if (i == cpuinfo.id) {
+            continue;
+        }
+        // bootlock will be unlocked when the core has reached kmain
+        bootlock.lock();
+        arch.startCore(i);
     }
 }
 
@@ -61,9 +65,12 @@ extern (C) {
         if (primary) {
             // only zero the BSS for the primary core
             initBss();
+            // set the immutable numcpu global
+            cast(uint) numcpu = ncpu;
         }
 
-        uintptr tlsBase = cast(uintptr)&_kheap_start;
+        // tlsBase is heap + stack space allocated for each core
+        uintptr tlsBase = cast(uintptr)&_kheap_start + 4096 * (ncpu + 1);
         size_t tlsSize = initTls(cpuid, tlsBase);
 
         cpuinfo.id = cpuid;

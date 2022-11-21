@@ -7,3 +7,5 @@ struct CpuInfo {
 }
 
 CpuInfo cpuinfo;
+
+immutable uint numcpu;
