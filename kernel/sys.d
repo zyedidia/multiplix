@@ -1,7 +1,11 @@
 module kernel.sys;
 
-// TODO: targeting visionfive for now
-public import kernel.board.qemuvirt.system;
+version (visionfive) {
+    public import kernel.board.visionfive.system;
+}
+version (qemuvirt) {
+    public import kernel.board.qemuvirt.system;
+}
 
 enum highmemBase = 0xFFFF_FFC0_0000_0000;
 enum gb(ulong n) = 1024 * 1024 * 1024 * n;
