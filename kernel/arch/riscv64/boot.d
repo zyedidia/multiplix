@@ -27,7 +27,9 @@ extern (C) extern shared char _kentry_pa;
 // identity-mapped pagetable, load the kernel into a high canonical address,
 // and jump to it.
 void boot(uint hartid) {
-    bool wasPrimary = primary;
+    // OK since primary will have be written once before we boot secondary
+    // cores
+    bool wasPrimary = cast(bool) primary;
 
     if (primary) {
         Pagetable39* kpagetable = cast(Pagetable39*)&kpagetable;
@@ -41,8 +43,8 @@ void boot(uint hartid) {
         memcpy(cast(void*)&_kentry_pa, kbin.ptr, kbin.length);
         fencei();
 
-        // TODO: why don't I have to cast this away from shared to write this?
-        primary = false;
+        // modifying primary is OK since we are the only active core
+        cast(bool) primary = false;
     }
 
     fencevma();
