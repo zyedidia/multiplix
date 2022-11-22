@@ -137,7 +137,7 @@ local kernel = r{
     $ boot.elf: $bootobj $(link.boot)[I]
         $(tools.cc) $(flags.as) $(flags.ld) -T$(link.boot) $input -lgcc -o $output
     $ bootloader.o: $bootloader libd[I]
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
+        $(tools.dc) $(flags.dc) --d-version=baremetal -Ikernel -Ilibd $input -c -$dco $output
     $ bootloader.elf: $bootloaderobj $(link.bootloader)[I]
         $(tools.cc) $(flags.as) $(flags.ld) -T$(link.bootloader) $input -lgcc -o $output
     $ kernel.elf: $kernobj $(link.kernel)[I]
