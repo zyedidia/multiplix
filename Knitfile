@@ -8,7 +8,7 @@ local prefix = "riscv64-unknown-elf"
 
 local conf = {
     dc = cli.dc or "ldc",
-    board = cli.board or "visionfive",
+    board = cli.board or "qemuvirt",
     ncpu = 4,
 }
 
@@ -57,7 +57,7 @@ local flags = {
     dc = sel(
         conf.dc == "gdc",
         f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections",
-        f"--betterC -Oz -gc -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections --fthread-model=local-exec --d-version=$(machine.board) --preview=nosharedaccess"
+        f"--betterC -Oz -gc -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections --fthread-model=local-exec --d-version=$(machine.board)"
     ),
     as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
     ld := -nostartfiles -mcmodel=$(machine.mcmodel) -Wl,--gc-sections
