@@ -1,6 +1,8 @@
 module kernel.arch.riscv64.vm;
 
+import ulib.memory;
 import bits = ulib.bits;
+import sys = kernel.sys;
 import kernel.alloc;
 import kernel.vm;
 
@@ -12,12 +14,24 @@ enum VmMode {
     sv64 = 11,
 }
 
-struct PteFlags {
-    bool valid;
-    bool read;
-    bool write;
-    bool exec;
-    bool user;
+struct Perm {
+    enum Bits {
+        valid = 0,
+        read = 1,
+        write = 2,
+        exec = 3,
+        user = 4,
+        global = 5,
+        accessed = 6,
+        dirty = 7,
+    }
+
+    enum v = (1 << Bits.valid);
+    enum ad = (1 << Bits.accessed) | (1 << Bits.dirty);
+    // kernel read/write/exec
+    enum krwx = ad | v | (1 << Bits.read) | (1 << Bits.write) | (1 << Bits.exec);
+    // user read/write/exec
+    enum urwx = krwx | (1 << Bits.user);
 }
 
 struct Pte39 {
@@ -49,82 +63,86 @@ struct Pte39 {
     }
 
     @property void pa(uintptr pa) {
-        ppn0 = cast(ushort) bits.get(pa, 20, 12);
-        ppn1 = cast(ushort) bits.get(pa, 29, 21);
-        ppn2 = cast(ushort) bits.get(pa, 55, 30);
+        data = bits.write(data, 53, 10, bits.get(pa, 55, 12));
     }
 
-    @property void flags(PteFlags flags) {
-        valid = flags.valid;
-        read = flags.read;
-        write = flags.write;
-        exec = flags.exec;
-        user = flags.user;
-        accessed = 1;
-        dirty = 1;
+    @property void perm(uint perm) {
+        data = bits.write(data, 7, 0, perm);
     }
+
+    bool leaf() {
+        // true if at least one of read/write/exec is 1
+        return bits.get(data, 3, 1) != 0;
+    }
+
+    enum Pg {
+        normal = 0, // sv39 normal page: 4K
+        mega = 1, // sv39 mega page: 2M
+        giga = 2, // sv39 giga page: 1G
+    }
+}
+
+private uintptr vpn(uint level, uintptr va) {
+    return (va >> 12+9*level) & bits.mask!uintptr(9);
 }
 
 struct Pagetable39 {
     align(4096) Pte39[512] ptes;
 
-    void mapGiga(uintptr va, uintptr pa, PteFlags flags) {
-        auto vpn2 = bits.get(va, 38, 30);
+    // Lookup the pte corresponding to 'pa'. Stops after the corresponding
+    // level. If 'alloc' is true, allocates new pagetables as necessary.
+    Pte39* walk(uintptr va, Pte39.Pg endlevel, bool alloc) {
+        Pagetable39* pt = &this;
 
-        ptes[vpn2].flags = flags;
-        ptes[vpn2].pa = pa;
+        for (int level = 2; level > endlevel; level--) {
+            Pte39* pte = &pt.ptes[vpn(level, va)];
+            if (pte.leaf()) {
+                return pte;
+            } else if (pte.valid) {
+                pt = cast(Pagetable39*) pa2ka(pte.pa);
+            } else {
+                if (!alloc) {
+                    return null;
+                }
+                pt = cast(Pagetable39*) kallocpage(Pagetable39.sizeof);
+                if (!pt) {
+                    return null;
+                }
+                memset(pt, 0, Pagetable39.sizeof);
+                pte.pa = cast(uintptr) pt;
+                pte.valid = 1;
+            }
+        }
+        return &pt.ptes[vpn(endlevel, va)];
     }
 
-    void mapMega(uintptr va, uintptr pa, PteFlags flags) {
-        auto vpn2 = bits.get(va, 38, 30);
-        auto vpn1 = bits.get(va, 29, 21);
-
-        PteFlags myflags = {flags.valid, false, false, false, flags.user};
-        Pagetable39* l2pt = void;
-        if (ptes[vpn2].pa == 0) {
-            l2pt = cast(Pagetable39*) kallocpage(Pagetable39.sizeof);
-            ptes[vpn2].pa = ka2pa(cast(uintptr) l2pt);
-        } else {
-            l2pt = cast(Pagetable39*) ptes[vpn2].pa;
+    // Map 'va' to 'pa' with the given page size and permissions. Returns false
+    // if allocation failed.
+    bool map(uintptr va, uintptr pa, Pte39.Pg pgtyp, uint perm) {
+        auto pte = walk(va, pgtyp, true);
+        if (!pte) {
+            return false;
         }
-        ptes[vpn2].flags = myflags;
-
-        l2pt.ptes[vpn1].flags = flags;
-        l2pt.ptes[vpn1].pa = pa;
+        pte.pa = pa;
+        pte.perm = perm;
+        return true;
     }
 
-    void mapPage(uintptr va, uintptr pa, PteFlags flags) {
-        auto vpn2 = bits.get(va, 38, 30);
-        auto vpn1 = bits.get(va, 29, 21);
-        auto vpn0 = bits.get(va, 20, 12);
-
-        PteFlags myflags = {flags.valid, false, false, false, flags.user};
-        Pagetable39* l2pt = void;
-        if (ptes[vpn2].pa == 0) {
-            l2pt = cast(Pagetable39*) kallocpage(Pagetable39.sizeof);
-            ptes[vpn2].pa = ka2pa(cast(uintptr) l2pt);
-        } else {
-            l2pt = cast(Pagetable39*) ptes[vpn2].pa;
-        }
-        ptes[vpn2].flags = myflags;
-
-        Pagetable39* l3pt = void;
-        if (l2pt.ptes[vpn1].pa == 0) {
-            l3pt = cast(Pagetable39*) kallocpage(Pagetable39.sizeof);
-            l2pt.ptes[vpn1].pa = ka2pa(cast(uintptr) l3pt);
-        } else {
-            l3pt = cast(Pagetable39*) l2pt.ptes[vpn1].pa;
-        }
-        l2pt.ptes[vpn1].flags = myflags;
-
-        l3pt.ptes[vpn0].flags = flags;
-        l3pt.ptes[vpn0].pa = pa;
+    // Simple giga-page mapper. This is equivalent to map(va, pa,
+    // Pte39.Pg.giga, perm) but does not link with any allocation functions so
+    // it can be used in the early boot process.
+    void mapGiga(uintptr va, uintptr pa, uint perm) {
+        auto vpn = vpn(2, va);
+        ptes[vpn].perm = perm;
+        ptes[vpn].pa = pa;
     }
 
+    // Return this pagetable's pagenumber.
     shared uintptr pn() {
-        return cast(uintptr)(&ptes[0]) / 4096;
+        return cast(uintptr)(&ptes[0]) / sys.pagesize;
     }
 
+    // Return the bits to needed to set satp to this pagetable, given an ASID.
     shared uintptr satp(uint asid) {
         uintptr val = bits.write(pn(), 59, 44, asid);
         return bits.write(val, 63, 60, VmMode.sv39);

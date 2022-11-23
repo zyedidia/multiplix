@@ -33,10 +33,9 @@ void boot(uint hartid) {
 
     if (primary) {
         Pagetable39* kpagetable = cast(Pagetable39*)&kpagetable;
-        PteFlags flags = {valid: true, read: true, write: true, exec: true,};
         for (size_t addr = 0; addr < sys.memsizePhysical; addr += sys.gb!(1)) {
-            kpagetable.mapGiga(addr, addr, flags);
-            kpagetable.mapGiga(sys.highmemBase + addr, addr, flags);
+            kpagetable.mapGiga(addr, addr, Perm.krwx);
+            kpagetable.mapGiga(sys.highmemBase + addr, addr, Perm.krwx);
         }
 
         // load the kernel into its phyical entrypoint
