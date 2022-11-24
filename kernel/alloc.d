@@ -6,6 +6,7 @@ import vm = kernel.vm;
 import sys = kernel.sys;
 
 import ulib.bits : msb;
+import ulib.option;
 
 import io = ulib.io;
 
@@ -215,12 +216,12 @@ void kallocinit(uintptr heapStart) {
     buddy.__ctor(heapStart);
 }
 
-void* kallocpage(size_t sz) {
-    return buddy.allocPtr(sz);
+Opt!(void*) kallocpage(size_t sz) {
+    return Opt!(void*)(buddy.allocPtr(sz));
 }
 
-void* kallocpage() {
-    return buddy.allocPtr(sys.pagesize);
+Opt!(void*) kallocpage() {
+    return Opt!(void*)(buddy.allocPtr(sys.pagesize));
 }
 
 void kfreepage(void* ptr) {

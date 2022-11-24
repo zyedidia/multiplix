@@ -1,6 +1,7 @@
 module kernel.arch.riscv64.vm;
 
 import ulib.memory;
+import ulib.option;
 import bits = ulib.bits;
 import sys = kernel.sys;
 import kernel.alloc;
@@ -91,38 +92,40 @@ struct Pagetable39 {
 
     // Lookup the pte corresponding to 'pa'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
-    Pte39* walk(uintptr va, Pte39.Pg endlevel, bool alloc) {
+    Opt!(Pte39*) walk(uintptr va, Pte39.Pg endlevel, bool alloc) {
         Pagetable39* pt = &this;
 
         for (int level = 2; level > endlevel; level--) {
             Pte39* pte = &pt.ptes[vpn(level, va)];
             if (pte.leaf()) {
-                return pte;
+                return Opt!(Pte39*)(pte);
             } else if (pte.valid) {
                 pt = cast(Pagetable39*) pa2ka(pte.pa);
             } else {
                 if (!alloc) {
-                    return null;
+                    return Opt!(Pte39*)(null);
                 }
-                pt = cast(Pagetable39*) kallocpage(Pagetable39.sizeof);
-                if (!pt) {
-                    return null;
+                auto pg = kallocpage(Pagetable39.sizeof);
+                if (!pg.has()) {
+                    return Opt!(Pte39*)(null);
                 }
+                pt = cast(Pagetable39*) pg.get();
                 memset(pt, 0, Pagetable39.sizeof);
                 pte.pa = cast(uintptr) pt;
                 pte.valid = 1;
             }
         }
-        return &pt.ptes[vpn(endlevel, va)];
+        return Opt!(Pte39*)(&pt.ptes[vpn(endlevel, va)]);
     }
 
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
     bool map(uintptr va, uintptr pa, Pte39.Pg pgtyp, uint perm) {
-        auto pte = walk(va, pgtyp, true);
-        if (!pte) {
+        auto opte = walk(va, pgtyp, true);
+        if (!opte.has()) {
             return false;
         }
+        auto pte = opte.get();
         pte.pa = pa;
         pte.perm = perm;
         return true;
