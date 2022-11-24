@@ -62,6 +62,9 @@ struct Allocator(A) {
 
     T* make(T, Args...)(Args args) {
         T* val = cast(T*) allocator.allocPtr(T.sizeof);
+        if (val == null) {
+            return null;
+        }
         emplaceInit(val, args);
         return val;
     }

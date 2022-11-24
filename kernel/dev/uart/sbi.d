@@ -6,12 +6,12 @@ import ulib.option;
 
 // An SBI-based UART device. Must be targeting RISC-V. Note that because
 // receiving a byte requires calling out to the firmware, this UART is
-// extremely slow at receiving and may lose bytes if they are transmitted to
+// extremely slow at receiving and may lose bytes if they are transmitted too
 // fast. It is best to only use this device to transmit. Also note that the SBI
 // console functions used by this device are expected to be deprecated in the
 // future with no replacement.
 struct SbiUart {
-    __gshared Option!ubyte tmp;
+    static Opt!ubyte tmp;
 
     static void init() {
     }
@@ -30,7 +30,7 @@ struct SbiUart {
         if (b > ubyte.max) {
             return false;
         }
-        tmp = Option!ubyte(cast(ubyte) b);
+        tmp = Opt!ubyte(cast(ubyte) b);
         return true;
     }
 
@@ -40,7 +40,7 @@ struct SbiUart {
         }
         ubyte b = tmp.get();
         // reset tmp
-        tmp = Option!ubyte.init;
+        tmp = Opt!ubyte.init;
         return b;
     }
 

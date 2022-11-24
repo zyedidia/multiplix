@@ -18,3 +18,5 @@ enum isInt16(T) = is(Unqual!T == short) || is(Unqual!T == ushort);
 enum isInt32(T) = is(Unqual!T == int) || is(Unqual!T == uint);
 enum isInt64(T) = is(Unqual!T == long) || is(Unqual!T == ulong);
 enum isInt(T) = isInt8!T || isInt16!T || isInt32!T || isInt64!T;
+
+enum isPointer(T) = is(T == U*, U) && __traits(isScalar, T);

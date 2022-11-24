@@ -1,32 +1,47 @@
 module ulib.option;
 
-struct Option(T) {
+import ulib.trait;
+
+alias Optp(T) = Opt(T*);
+
+struct Opt(T) {
     this(T s) {
-        exists = true;
         value = s;
-    }
-
-    bool has() {
-        return exists;
-    }
-
-    T get() {
-        if (!exists) {
-            assert(false, "option is none");
+        static if (!isPointer!T) {
+            exists = true;
         }
-        return value;
+    }
+
+    bool has() const {
+        static if (isPointer!T) {
+            return value != null;
+        } else {
+            return exists;
+        }
+    }
+
+    T get() const {
+        static if (isPointer!T) {
+            assert(value != null, "option is none");
+            return value;
+        } else {
+            assert(exists, "option is none");
+            return value;
+        }
     }
 
 private:
-    bool exists = false;
+    static if (!isPointer!T) {
+        bool exists = false;
+    }
     T value;
 }
 
 unittest {
-    auto o = Option!int(42);
+    auto o = Opt!int(42);
     assert(o.has());
     assert(o.get() == 42);
 
-    auto v = Option!int();
+    auto v = Opt!int();
     assert(!v.has());
 }

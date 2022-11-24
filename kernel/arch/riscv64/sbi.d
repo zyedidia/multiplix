@@ -176,7 +176,7 @@ struct Hart {
         return Base.probeExtension(ext);
     }
 
-    private __gshared static Option!uint _nharts;
+    private __gshared static Opt!uint _nharts;
 
     static uint nharts() {
         // Compute the number of harts by repeatedly asking if a hart exists.
@@ -188,7 +188,7 @@ struct Hart {
         uint i;
         for (i = 0; exists(i); i++) {
         }
-        _nharts = Option!uint(i);
+        _nharts = Opt!uint(i);
         return i;
     }
 
