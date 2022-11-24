@@ -87,6 +87,7 @@ local boot = knit.join(
     {
         "kernel/init.d",
         "kernel/sys.d",
+        "kernel/arch/package.d",
     }
 )
 
@@ -97,6 +98,7 @@ local bootloader = knit.join(
     knit.rglob("bootloader", "*.d"),
     {
         "kernel/sys.d",
+        "kernel/arch/package.d",
     }
 )
 

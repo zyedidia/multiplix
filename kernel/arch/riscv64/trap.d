@@ -19,6 +19,10 @@ struct Trap {
     static void disable() {
         Csr.sstatus = bits.clear(Csr.sstatus, Sstatus.sie);
     }
+
+    static bool enabled() {
+        return bits.get(Csr.sstatus, Sstatus.sie);
+    }
 }
 
 extern (C) void kerneltrap() {
