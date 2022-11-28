@@ -4,3 +4,5 @@
 *.bin
 .knit
 compile_commands.json
+bugs.txt
+todo.txt

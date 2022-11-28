@@ -141,12 +141,12 @@ struct Pagetable39 {
     }
 
     // Return this pagetable's pagenumber.
-    shared uintptr pn() {
+    uintptr pn() {
         return cast(uintptr)(&ptes[0]) / sys.pagesize;
     }
 
     // Return the bits to needed to set satp to this pagetable, given an ASID.
-    shared uintptr satp(uint asid) {
+    uintptr satp(uint asid) {
         uintptr val = bits.write(pn(), 59, 44, asid);
         return bits.write(val, 63, 60, VmMode.sv39);
     }

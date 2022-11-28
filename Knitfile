@@ -107,6 +107,7 @@ local kernobj = {
     "libd.o",
     f"kernel/arch/$(machine.arch)/kernelstart.o",
     f"kernel/arch/$(machine.arch)/kernelvec.o",
+    f"kernel/arch/$(machine.arch)/uservec.o",
 }
 
 local bootobj = {

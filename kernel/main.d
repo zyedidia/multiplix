@@ -29,6 +29,10 @@ void kmain(uintptr heapBase) {
     kallocinit(heapBase);
     io.writeln("buddy kalloc returned: ", kallocpage().get());
 
+    /* Proc p; */
+    /* Proc.make(&p, bin, 0x1000, 0x1000); */
+    /* usertrapret(&p); */
+
     /* uint val = 1; */
     /* while (true) { */
     /*     arch.Timer.delayCycles(1000000000 / 2); */
@@ -75,6 +79,8 @@ extern (C) {
 
         cpuinfo.id = cpuid;
         cpuinfo.primary = primary;
+        cpuinfo.tls = tlsBase + ncpu * tlsSize;
+        cpuinfo.stack = cast(uintptr)&_kheap_start + 4096 * cpuid;
 
         sys.Uart.init();
         kmain(tlsBase + ncpu * tlsSize);

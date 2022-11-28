@@ -4,6 +4,8 @@ module kernel.cpu;
 struct CpuInfo {
     uint id;
     bool primary;
+    uintptr tls;
+    uintptr stack;
 }
 
 CpuInfo cpuinfo;

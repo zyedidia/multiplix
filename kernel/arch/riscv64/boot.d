@@ -47,7 +47,7 @@ void boot(uint hartid) {
     }
 
     fencevma();
-    Csr.satp = kpagetable.satp(0);
+    Csr.satp = (cast(Pagetable39)kpagetable).satp(0);
     fencevma();
 
     // prepare to enable interrupts (only will be enabled when sstatus it

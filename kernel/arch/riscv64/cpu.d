@@ -33,6 +33,7 @@ void setTlsBase(void* base) {
 import kernel.arch.riscv64.sbi;
 
 /* extern (C) extern ubyte _bootentry_pa; */
+// TODO: don't hardcode this
 enum _bootentry_pa = 0x84010000;
 
 void startCore(uint hartid) {

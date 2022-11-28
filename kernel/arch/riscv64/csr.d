@@ -21,6 +21,8 @@ enum CsrNum {
 
 enum Sstatus {
     sie = 1,
+    spie = 5,
+    spp = 8,
 }
 
 enum Sip {

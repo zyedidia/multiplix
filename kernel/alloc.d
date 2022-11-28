@@ -224,6 +224,10 @@ Opt!(void*) kallocpage() {
     return Opt!(void*)(buddy.allocPtr(sys.pagesize));
 }
 
-void kfreepage(void* ptr) {
+Opt!(T*) kalloc(T)() {
+    return Opt!(T*)(cast(T*) buddy.allocPtr(T.sizeof));
+}
+
+void kfree(void* ptr) {
     buddy.freePtr(ptr);
 }
