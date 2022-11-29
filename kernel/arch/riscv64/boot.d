@@ -56,7 +56,8 @@ void boot(uint hartid) {
     // written as well)
     Csr.sie = Csr.sie | (1UL << Sie.seie) | (1UL << Sie.stie) | (1UL << Sie.ssie);
     // enable SUM bit so supervisor mode can access usermode pages
-    Csr.sstatus = bits.set(Csr.sstatus, Sstatus.sum);
+    // (currently not necessary)
+    // Csr.sstatus = bits.set(Csr.sstatus, Sstatus.sum);
 
     // jump to the kernel entrypoint's high canonical address
     // we have to load sys.highmemBase into a local due to a bug in LDC:

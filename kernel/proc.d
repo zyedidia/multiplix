@@ -64,7 +64,7 @@ struct Proc {
             // TODO: if failed, free memory
             return false;
         }
-        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.urwx)) {
+        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx)) {
             // TODO: if failed, free memory
             return false;
         }
