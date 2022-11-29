@@ -30,6 +30,13 @@ void setTlsBase(void* base) {
     }
 }
 
+uintptr getgp() {
+    import ldc.llvmasm;
+    return __asm!uintptr(
+        "mv $0, gp", "=r"
+    );
+}
+
 import kernel.arch.riscv64.sbi;
 
 /* extern (C) extern ubyte _bootentry_pa; */

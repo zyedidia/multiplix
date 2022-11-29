@@ -87,6 +87,7 @@ local boot = knit.join(
     {
         "kernel/init.d",
         "kernel/sys.d",
+        "kernel/vm.d",
         "kernel/arch/package.d",
     }
 )
@@ -134,7 +135,7 @@ local kernel = r{
     $ libd.o: $lib
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
     $ kernel.o: $kern libd[I]
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd -J. $input -c -$dco $output
     $ boot.o: $boot libd[I] kernel.bin[I]
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd -J. $input -c -$dco $output
     $ boot.elf: $bootobj $(link.boot)[I]

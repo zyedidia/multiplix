@@ -3,13 +3,17 @@ module kernel.main;
 import io = ulib.io;
 
 import sys = kernel.sys;
+import vm = kernel.vm;
 import arch = kernel.arch.riscv64;
 
 import kernel.cpu;
 import kernel.spinlock;
 import kernel.alloc;
+import kernel.proc;
 
 shared Spinlock bootlock;
+
+auto hellobin = cast(immutable ubyte[]) import("user/hello/hello.bin");
 
 void kmain(uintptr heapBase) {
     io.writeln("core ", cpuinfo.id, " booted, primary: ", cpuinfo.primary);
@@ -29,9 +33,12 @@ void kmain(uintptr heapBase) {
     kallocinit(heapBase);
     io.writeln("buddy kalloc returned: ", kallocpage().get());
 
-    /* Proc p; */
-    /* Proc.make(&p, bin, 0x1000, 0x1000); */
-    /* usertrapret(&p); */
+    Proc p;
+    if (!Proc.make(&p, hellobin, 0x1000, 0x1000)) {
+        io.writeln("could not make process");
+        return;
+    }
+    arch.usertrapret(&p, true);
 
     /* uint val = 1; */
     /* while (true) { */

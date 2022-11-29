@@ -111,7 +111,7 @@ struct Pagetable39 {
                 }
                 pt = cast(Pagetable39*) pg.get();
                 memset(pt, 0, Pagetable39.sizeof);
-                pte.pa = cast(uintptr) pt;
+                pte.pa = ka2pa(cast(uintptr) pt);
                 pte.valid = 1;
             }
         }
@@ -142,7 +142,7 @@ struct Pagetable39 {
 
     // Return this pagetable's pagenumber.
     uintptr pn() {
-        return cast(uintptr)(&ptes[0]) / sys.pagesize;
+        return kpa2pa(cast(uintptr)(&ptes[0])) / sys.pagesize;
     }
 
     // Return the bits to needed to set satp to this pagetable, given an ASID.

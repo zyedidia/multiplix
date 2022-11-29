@@ -23,6 +23,7 @@ enum Sstatus {
     sie = 1,
     spie = 5,
     spp = 8,
+    sum = 18,
 }
 
 enum Sip {

@@ -1,7 +1,6 @@
 module kernel.arch.riscv64.regs;
 
 struct Regs {
-    uintptr pc;
     uintptr ra;
     uintptr sp;
     uintptr gp;

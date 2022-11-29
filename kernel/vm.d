@@ -9,3 +9,10 @@ uintptr ka2pa(uintptr ka) {
 uintptr pa2ka(uintptr pa) {
     return pa + sys.highmemBase;
 }
+
+uintptr kpa2pa(uintptr kpa) {
+    if (kpa >= sys.highmemBase) {
+        return ka2pa(kpa);
+    }
+    return kpa;
+}

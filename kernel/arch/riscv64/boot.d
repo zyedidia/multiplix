@@ -5,6 +5,8 @@ import kernel.arch.riscv64;
 import sbi = kernel.arch.riscv64.sbi;
 import sys = kernel.sys;
 
+import bits = ulib.bits;
+
 import ulib.memory;
 
 // Is this a primary core (the first core to boot up).
@@ -53,6 +55,8 @@ void boot(uint hartid) {
     // prepare to enable interrupts (only will be enabled when sstatus it
     // written as well)
     Csr.sie = Csr.sie | (1UL << Sie.seie) | (1UL << Sie.stie) | (1UL << Sie.ssie);
+    // enable SUM bit so supervisor mode can access usermode pages
+    Csr.sstatus = bits.set(Csr.sstatus, Sstatus.sum);
 
     // jump to the kernel entrypoint's high canonical address
     // we have to load sys.highmemBase into a local due to a bug in LDC:
