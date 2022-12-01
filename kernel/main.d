@@ -15,6 +15,8 @@ shared Spinlock bootlock;
 
 auto hellobin = cast(immutable ubyte[]) import("user/hello/hello.bin");
 
+__gshared Proc p;
+
 void kmain(uintptr heapBase) {
     io.writeln("core ", cpuinfo.id, " booted, primary: ", cpuinfo.primary);
 
@@ -33,7 +35,6 @@ void kmain(uintptr heapBase) {
     kallocinit(heapBase);
     io.writeln("buddy kalloc returned: ", kallocpage().get());
 
-    Proc p;
     if (!Proc.make(&p, hellobin, 0x1000, 0x1000)) {
         io.writeln("could not make process");
         return;
@@ -86,7 +87,7 @@ extern (C) {
 
         cpuinfo.id = cpuid;
         cpuinfo.primary = primary;
-        cpuinfo.tls = tlsBase + ncpu * tlsSize;
+        cpuinfo.tls = tlsBase + cpuid * tlsSize;
         cpuinfo.stack = cast(uintptr)&_kheap_start + 4096 * cpuid;
 
         sys.Uart.init();

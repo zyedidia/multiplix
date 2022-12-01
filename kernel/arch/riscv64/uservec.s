@@ -41,6 +41,8 @@ uservec:
 	ld tp, 0(a0)
 	ld sp, 8(a0)
 	ld gp, 16(a0)
+	csrr t0, sepc
+	sd t0, 24(a0)
 
 	j usertrap
 

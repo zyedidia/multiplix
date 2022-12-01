@@ -25,5 +25,7 @@ int getpid() {
 }
 
 int main() {
-    return getpid();
+    while (1) {
+        getpid();
+    }
 }
