@@ -13,7 +13,7 @@ import kernel.proc;
 
 shared Spinlock bootlock;
 
-auto hellobin = cast(immutable ubyte[]) import("user/hello/hello.bin");
+auto helloelf = cast(immutable ubyte[]) import("user/hello/hello.elf");
 
 __gshared Proc p;
 
@@ -35,7 +35,7 @@ void kmain(uintptr heapBase) {
     kallocinit(heapBase);
     io.writeln("buddy kalloc returned: ", kallocpage().get());
 
-    if (!Proc.make(&p, hellobin, 0x1000, 0x1000)) {
+    if (!Proc.make(&p, helloelf)) {
         io.writeln("could not make process");
         return;
     }

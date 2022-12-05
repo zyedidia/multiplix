@@ -24,7 +24,7 @@ struct Proc {
     ubyte[] code;
     ubyte[] stack;
 
-    static bool make(Proc* proc, immutable ubyte[] binary, uintptr baseva, uintptr entryva) {
+    static bool make(Proc* proc, immutable ubyte[] binary) {
         // TODO: use arena allocation to ease memory cleanup
         // allocate pagetable
         auto opt = kalloc!(Pagetable)();
@@ -38,15 +38,8 @@ struct Proc {
             kfree(cast(void*) proc.pt);
             return false;
         }
-        proc.code = cast(ubyte[]) opgs.get()[0 .. binary.length];
-        proc.code[0 .. $] = binary[0 .. $];
-        // map newly allocated physical space to base va
-        for (uintptr va = baseva, pa = vm.ka2pa(cast(uintptr) proc.code.ptr); va < baseva + binary.length; va += sys.pagesize, pa += sys.pagesize) {
-            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx)) {
-                // TODO: if failed, free memory
-                return false;
-            }
-        }
+        import elf = kernel.elf;
+        uintptr entryva = cast(uintptr) elf.load!64(proc.pt, binary.ptr);
         // map kernel
         for (uintptr pa = 0; pa < sys.memsizePhysical; pa += sys.gb!(1)) {
             proc.pt.mapGiga(vm.pa2ka(pa), pa, Perm.krwx);
