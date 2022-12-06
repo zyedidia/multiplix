@@ -93,6 +93,7 @@ ulong load(int W)(Pagetable* pt, immutable ubyte* elfdat) {
         assert(opgs.has());
         ubyte[] code = cast(ubyte[]) opgs.get()[0 .. ph.memsz];
         memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
+        // TODO: pad with zeroes up to ph.memsz
 
         // map newly allocated physical space to base va
         for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
