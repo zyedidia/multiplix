@@ -69,6 +69,8 @@ struct Proc {
 
         proc.state = State.runnable;
 
+        fencei();
+
         return true;
     }
 }
