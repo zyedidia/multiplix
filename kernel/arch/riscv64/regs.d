@@ -32,4 +32,11 @@ struct Regs {
     uintptr t4;
     uintptr t5;
     uintptr t6;
+
+    uintptr opIndex(size_t i) {
+        if (i == 0) {
+            return 0;
+        }
+        return (cast(uintptr*)(&this))[i-1];
+    }
 }

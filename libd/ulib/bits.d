@@ -39,6 +39,19 @@ T write(T)(T x, uint hi, uint lo, T val) if (isInt!T) {
     return clear(x, hi, lo) | (val << lo);
 }
 
+T remap(T)(T i, uint from, uint to) {
+    return get(i, from) << to;
+}
+
+T remap(T)(T i, uint from_ub, uint from_lb, uint to_ub, uint to_lb) {
+    return get(i, from_ub, from_lb) << to_lb;
+}
+
+T sext(T, UT)(UT x, uint width) {
+    ulong n = (T.sizeof * 8 - 1) - (width-1);
+    return (cast(T)(x << n)) >> n;
+}
+
 version (GNU) {
     import gcc.builtins;
 

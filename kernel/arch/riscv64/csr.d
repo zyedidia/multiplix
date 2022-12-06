@@ -39,6 +39,9 @@ enum Sie {
 enum Scause {
     // software timer interrupt
     sti = 0x8000000000000005UL,
+    // breakpoint
+    brkpt = 0x3,
+    ecallU = 0x8,
 }
 
 // dfmt off

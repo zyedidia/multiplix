@@ -31,7 +31,7 @@ void kmain(uintptr heapBase) {
     startAllCores();
     arch.Trap.init();
     arch.Trap.enable();
-    arch.Timer.intr();
+    /* arch.Timer.intr(); */
     kallocinit(heapBase);
     io.writeln("buddy kalloc returned: ", kallocpage().get());
 

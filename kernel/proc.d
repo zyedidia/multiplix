@@ -24,6 +24,9 @@ struct Proc {
     ubyte[] code;
     ubyte[] stack;
 
+    uintptr brkpt;
+    uint bporig;
+
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // TODO: use arena allocation to ease memory cleanup
         // allocate pagetable
@@ -39,7 +42,7 @@ struct Proc {
             return false;
         }
         import elf = kernel.elf;
-        uintptr entryva = cast(uintptr) elf.load!64(proc.pt, binary.ptr);
+        uintptr entryva = cast(uintptr) elf.load!64(proc, binary.ptr);
         // map kernel
         for (uintptr pa = 0; pa < sys.memsizePhysical; pa += sys.gb!(1)) {
             proc.pt.mapGiga(vm.pa2ka(pa), pa, Perm.krwx);

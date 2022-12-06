@@ -61,7 +61,65 @@ extern (C) {
     extern void uservec();
 
     void usertrap(Trapframe* tf) {
-        io.writeln("user trap");
+        io.writeln("user trap, sepc: ", cast(void*) Csr.sepc, " scause: ", cast(void*) Csr.scause);
+
+        uintptr scause = Csr.scause;
+        if (scause == Scause.brkpt) {
+            // replace the breakpoint with the original bytes
+            assert(tf.p.brkpt == Csr.sepc);
+            *cast(uint*)tf.p.brkpt = tf.p.bporig;
+            // calculate the next address the program will go to
+            uint insn = tf.p.bporig;
+            uintptr next = void;
+            import kernel.arch.riscv64.isa;
+            switch (op(insn)) {
+                case Op.jal:
+                    next = Csr.sepc + extractImm(insn, ImmType.j);
+                    break;
+                case Op.jalr:
+                    next = tf.regs[rs1(insn)] + extractImm(insn, ImmType.i);
+                    break;
+                case Op.branch:
+                    long res = void;
+                    final switch (funct3(insn)) {
+                        case 0b000, 0b001:
+                            res = tf.regs[rs1(insn)] ^ tf.regs[rs2(insn)];
+                            break;
+                        case 0b100, 0b101:
+                            res = cast(long)tf.regs[rs1(insn)] < cast(long)tf.regs[rs2(insn)];
+                            break;
+                        case 0b110, 0b111:
+                            res = tf.regs[rs1(insn)] < tf.regs[rs2(insn)];
+                            break;
+                    }
+                    bool cond = void;
+                    final switch (funct3(insn)) {
+                        case 0b000, 0b101, 0b111:
+                            cond = res == 0;
+                            break;
+                        case 0b001, 0b100, 0b110:
+                            cond = res != 0;
+                            break;
+                    }
+                    if (cond) {
+                        next = Csr.sepc + extractImm(insn, ImmType.b);
+                    } else {
+                        next = Csr.sepc + 4;
+                    }
+                    break;
+                default:
+                    next = Csr.sepc + 4;
+                    break;
+            }
+            // place a breakpoint there
+            tf.p.bporig = *cast(uint*)next;
+            tf.p.brkpt = cast(uintptr)next;
+            *cast(uint*)next = Insn.ebreak;
+        } else if (scause == Scause.ecallU) {
+            tf.epc = Csr.sepc + 4;
+            tf.regs.a0 = 0;
+        }
+
         usertrapret(tf.p, false);
     }
 }

@@ -5,6 +5,7 @@ import kernel.arch;
 import sys = kernel.sys;
 import vm = kernel.vm;
 import kernel.alloc;
+import kernel.proc;
 
 enum magic = 0x464C457FU; // "\x7ELF" in little endian
 
@@ -72,7 +73,7 @@ int getwidth(ubyte* elfdat) {
     assert(0);
 }
 
-ulong load(int W)(Pagetable* pt, immutable ubyte* elfdat) {
+ulong load(int W)(Proc* proc, immutable ubyte* elfdat) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
     assert(elf.magic == magic);
@@ -94,9 +95,19 @@ ulong load(int W)(Pagetable* pt, immutable ubyte* elfdat) {
         ubyte[] code = cast(ubyte[]) opgs.get()[0 .. ph.memsz];
         memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
 
+        import riscv64 = kernel.arch.riscv64.isa;
+        if (elf.entry >= ph.vaddr && elf.entry < ph.vaddr + ph.memsz) {
+            // entry is in this segment -- place a breakpoint there
+            import io = ulib.io;
+            io.writeln("placing breakpoint at: ", cast(void*) elf.entry);
+            proc.brkpt = elf.entry;
+            proc.bporig = *(cast(uint*)(code.ptr + (elf.entry - ph.vaddr)));
+            *(cast(uint*)(code.ptr + (elf.entry - ph.vaddr))) = riscv64.Insn.ebreak;
+        }
+
         // map newly allocated physical space to base va
         for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
-            if (!pt.map(va, pa, Pte.Pg.normal, Perm.urwx)) {
+            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx)) {
                 // TODO
                 assert(false);
             }
