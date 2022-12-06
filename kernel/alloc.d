@@ -225,7 +225,12 @@ Opt!(void*) kallocpage() {
 }
 
 Opt!(T*) kalloc(T)() {
-    return Opt!(T*)(cast(T*) buddy.allocPtr(T.sizeof));
+    auto ptr = cast(T*) buddy.allocPtr(T.sizeof);
+    if (ptr) {
+        import ulib.alloc;
+        emplaceInit!(T)(ptr);
+    }
+    return Opt!(T*)(ptr);
 }
 
 void kfree(void* ptr) {

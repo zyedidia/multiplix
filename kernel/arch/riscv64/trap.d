@@ -52,6 +52,9 @@ struct Trapframe {
     Proc* p;
 }
 
+__gshared bool ssdone = false;
+__gshared uint singlesteps = 0;
+
 extern (C) {
     // userswitch in uservec.s
     extern void userswitch(Trapframe* tf, uintptr satp);
@@ -61,10 +64,13 @@ extern (C) {
     extern void uservec();
 
     void usertrap(Trapframe* tf) {
-        io.writeln("user trap, sepc: ", cast(void*) Csr.sepc, " scause: ", cast(void*) Csr.scause);
-
         uintptr scause = Csr.scause;
-        if (scause == Scause.brkpt) {
+        if (!ssdone && scause != Scause.brkpt) {
+            io.writeln("user trap (ss:", singlesteps, "), sepc: ", cast(void*) Csr.sepc, " scause: ", cast(void*) Csr.scause);
+            ssdone = true;
+        }
+        if (!ssdone && scause == Scause.brkpt) {
+            singlesteps++;
             // replace the breakpoint with the original bytes
             assert(tf.p.brkpt == Csr.sepc);
             *cast(uint*)tf.p.brkpt = tf.p.bporig;
@@ -115,6 +121,7 @@ extern (C) {
             tf.p.bporig = *cast(uint*)next;
             tf.p.brkpt = cast(uintptr)next;
             *cast(uint*)next = Insn.ebreak;
+            fencei();
         } else if (scause == Scause.ecallU) {
             tf.epc = Csr.sepc + 4;
             tf.regs.a0 = 0;

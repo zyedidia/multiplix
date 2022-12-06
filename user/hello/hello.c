@@ -24,7 +24,19 @@ int getpid() {
     return syscall_0(0);
 }
 
-int main() {
-    getpid();
-    while (1) {}
+long fact(int n) {
+    if (n == 0)
+        return 1;
+    else
+        return(n * fact(n-1));
 }
+
+int main() {
+    int a = fact(200000);
+    while (1) {syscall_0(a);}
+}
+
+/* int main() { */
+/*     getpid(); */
+/*     while (1) {} */
+/* } */

@@ -5,7 +5,7 @@ import sys = ulib.sys;
 
 void panic(Args...)(Args msg) {
     io.writeln("panic: ", msg);
-    sys.exit(1);
+    while (1) {}
 }
 
 // Compiler lowers final switch default case to this (which is a runtime error).

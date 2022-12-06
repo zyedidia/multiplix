@@ -36,7 +36,7 @@ uservec:
 	sd t6, 272(a0)
 
 	csrr t0, sscratch
-	sd a0, 104(a0)
+	sd t0, 104(a0)
 
 	ld tp, 0(a0)
 	ld sp, 8(a0)

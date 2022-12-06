@@ -2,6 +2,7 @@ module kernel.proc;
 
 import kernel.arch;
 import kernel.alloc;
+import kernel.arch.riscv64.cpu;
 
 import sys = kernel.sys;
 import vm = kernel.vm;
@@ -71,6 +72,8 @@ struct Proc {
         proc.trapframe.p = proc;
 
         proc.state = State.runnable;
+
+        fencei();
 
         return true;
     }
