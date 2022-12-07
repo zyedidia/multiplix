@@ -18,6 +18,8 @@ struct Proc {
         running,
     }
 
+    int pid;
+
     Trapframe* trapframe;
 
     Pagetable* pt;
@@ -25,6 +27,7 @@ struct Proc {
     ubyte[] code;
     ubyte[] stack;
 
+    bool singlestep;
     uintptr brkpt;
     uint bporig;
 
@@ -72,9 +75,19 @@ struct Proc {
         proc.trapframe.p = proc;
 
         proc.state = State.runnable;
+        proc.pid = 42;
 
         fencei();
 
         return true;
+    }
+
+    int getpid() {
+        return pid;
+    }
+
+    void putc(char c) {
+        import io = ulib.io;
+        io.write(c);
     }
 }

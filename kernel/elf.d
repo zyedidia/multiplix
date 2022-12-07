@@ -98,11 +98,11 @@ ulong load(int W)(Proc* proc, immutable ubyte* elfdat) {
         import riscv64 = kernel.arch.riscv64.isa;
         if (elf.entry >= ph.vaddr && elf.entry < ph.vaddr + ph.memsz) {
             // entry is in this segment -- place a breakpoint there
-            import io = ulib.io;
-            io.writeln("placing breakpoint at: ", cast(void*) elf.entry);
-            proc.brkpt = elf.entry;
-            proc.bporig = *(cast(uint*)(code.ptr + (elf.entry - ph.vaddr)));
-            *(cast(uint*)(code.ptr + (elf.entry - ph.vaddr))) = riscv64.Insn.ebreak;
+            /* import io = ulib.io; */
+            /* io.writeln("placing breakpoint at: ", cast(void*) elf.entry); */
+            /* proc.brkpt = elf.entry; */
+            /* proc.bporig = *(cast(uint*)(code.ptr + (elf.entry - ph.vaddr))); */
+            /* *(cast(uint*)(code.ptr + (elf.entry - ph.vaddr))) = riscv64.Insn.ebreak; */
         }
 
         // map newly allocated physical space to base va

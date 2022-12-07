@@ -20,8 +20,31 @@ static inline uintptr_t syscall_2(int symno, uintptr_t arg0, uintptr_t arg1) {
     return a0;
 }
 
+#define SYS_GETPID 0
+#define SYS_PUTC 1
+#define SYS_SINGLESTEP_ON 2
+#define SYS_SINGLESTEP_OFF 3
+
 int getpid() {
-    return syscall_0(0);
+    return syscall_0(SYS_GETPID);
+}
+
+void putc(char c) {
+    syscall_1(SYS_PUTC, c);
+}
+
+void singlestep_on() {
+    syscall_0(SYS_SINGLESTEP_ON);
+}
+
+void singlestep_off() {
+    syscall_0(SYS_SINGLESTEP_OFF);
+}
+
+void print(char* s) {
+    for (char c = *s; c != '\0'; c = *++s) {
+        putc(c);
+    }
 }
 
 long fact(int n) {
@@ -32,8 +55,10 @@ long fact(int n) {
 }
 
 int main() {
-    int a = fact(200000);
-    while (1) {syscall_0(a);}
+    singlestep_on();
+    print("Hello world\n");
+    singlestep_off();
+    while (1) {}
 }
 
 /* int main() { */

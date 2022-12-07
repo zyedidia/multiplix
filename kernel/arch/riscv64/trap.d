@@ -52,9 +52,6 @@ struct Trapframe {
     Proc* p;
 }
 
-__gshared bool ssdone = false;
-__gshared uint singlesteps = 0;
-
 extern (C) {
     // userswitch in uservec.s
     extern void userswitch(Trapframe* tf, uintptr satp);
@@ -65,13 +62,16 @@ extern (C) {
 
     void usertrap(Trapframe* tf) {
         uintptr scause = Csr.scause;
-        if (!ssdone && scause != Scause.brkpt) {
-            io.writeln("user trap (ss:", singlesteps, "), sepc: ", cast(void*) Csr.sepc, " scause: ", cast(void*) Csr.scause);
-            ssdone = true;
-        }
-        if (!ssdone && scause == Scause.brkpt) {
-            singlesteps++;
+        if (tf.p.singlestep && scause == Scause.brkpt) {
+            /* io.writeln("user trap, sepc: ", cast(void*) Csr.sepc, " scause: ", cast(void*) Csr.scause); */
             // replace the breakpoint with the original bytes
+            static if (false) {
+                // dump register file
+                io.writeln("pc: ", cast(void*) Csr.sepc);
+                for (int i = 0; i < 31; i++) {
+                    io.writeln(i, ": ", tf.regs[i]);
+                }
+            }
             assert(tf.p.brkpt == Csr.sepc);
             *cast(uint*)tf.p.brkpt = tf.p.bporig;
             // calculate the next address the program will go to
@@ -123,8 +123,33 @@ extern (C) {
             *cast(uint*)next = Insn.ebreak;
             fencei();
         } else if (scause == Scause.ecallU) {
+            import kernel.syscall;
+            switch (tf.regs.a7) {
+                case Syscall.getpid:
+                    tf.regs.a0 = tf.p.getpid();
+                    break;
+                case Syscall.putc:
+                    tf.p.putc(cast(char) tf.regs.a0);
+                    tf.regs.a0 = 1;
+                    break;
+                case Syscall.singlestep_on:
+                    tf.p.brkpt = Csr.sepc + 4;
+                    tf.p.bporig = *(cast(uint*)tf.p.brkpt);
+                    tf.p.singlestep = true;
+                    import kernel.arch.riscv64.isa;
+                    *(cast(uint*)tf.p.brkpt) = Insn.ebreak;
+                    fencei();
+                    break;
+                case Syscall.singlestep_off:
+                    tf.p.singlestep = false;
+                    // the next instruction will still be a breakpoint so we remove it
+                    assert(tf.p.brkpt == Csr.sepc+4);
+                    *cast(uint*)tf.p.brkpt = tf.p.bporig;
+                    break;
+                default:
+                    io.writeln("unknown syscall: ", tf.regs.a7);
+            }
             tf.epc = Csr.sepc + 4;
-            tf.regs.a0 = 0;
         }
 
         usertrapret(tf.p, false);
