@@ -226,6 +226,23 @@ struct Hart {
     }
 }
 
+struct Step {
+    enum ext = 0x0A000000;
+
+    static bool enabled() {
+        auto r = ecall(ext, 0);
+        return r.value != 0;
+    }
+
+    static void enable() {
+        ecall(ext, 1);
+    }
+
+    static void disable() {
+        ecall(ext, 2);
+    }
+}
+
 struct Legacy {
     static void putchar(ubyte b) {
         enum ext = 0x01;

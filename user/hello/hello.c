@@ -55,9 +55,9 @@ long fact(int n) {
 }
 
 int main() {
-    singlestep_on();
+    /* singlestep_on(); */
     print("Hello world\n");
-    singlestep_off();
+    /* singlestep_off(); */
     while (1) {}
 }
 

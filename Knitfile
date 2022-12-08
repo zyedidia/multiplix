@@ -16,7 +16,7 @@ local machines = {
     qemuvirt = {
         board = "qemuvirt",
         mabi = "lp64",
-        march = "rv64imac",
+        march = "rv64ima",
         arch = "riscv64",
         mcmodel = "medany",
         qemu = "virt",
@@ -25,7 +25,7 @@ local machines = {
     visionfive = {
         board = "visionfive",
         mabi = "lp64",
-        march = "rv64imac",
+        march = "rv64ima",
         arch = "riscv64",
         mcmodel = "medany",
         qemu = "virt",
@@ -57,11 +57,11 @@ local flags = {
     dc = sel(
         conf.dc == "gdc",
         f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections",
-        f"--betterC -O1 -gc -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections --fthread-model=local-exec --d-version=$(machine.board)"
+        f"--betterC -Oz -gc -mtriple=$prefix -mattr=+m,+a,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections --fthread-model=local-exec --d-version=$(machine.board)"
     ),
     as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
     ld := -nostartfiles -mcmodel=$(machine.mcmodel) -Wl,--gc-sections
-    qemu := -smp $(machine.ncpu) -machine $(machine.qemu) -m 2G -nographic
+    qemu := -bios ../opensbi_step/build/platform/generic/firmware/fw_jump.bin -smp $(machine.ncpu) -machine $(machine.qemu) -m 2G -nographic
 }
 
 local meta = r{

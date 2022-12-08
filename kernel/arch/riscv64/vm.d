@@ -73,7 +73,7 @@ struct Pte39 {
 
     bool leaf() {
         // true if at least one of read/write/exec is 1
-        return bits.get(data, 3, 1) != 0;
+        return valid && bits.get(data, 3, 1) != 0;
     }
 
     enum Pg {

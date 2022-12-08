@@ -6,6 +6,8 @@ import sys = kernel.sys;
 import vm = kernel.vm;
 import arch = kernel.arch.riscv64;
 
+import sbi = kernel.arch.riscv64.sbi;
+
 import kernel.cpu;
 import kernel.spinlock;
 import kernel.alloc;
@@ -26,20 +28,27 @@ void kmain(uintptr heapBase) {
             arch.wait();
         }
     }
+
+    sbi.Step.enable();
+
     io.writeln("hello rvos!");
 
-    startAllCores();
+    /* startAllCores(); */
+    sbi.Step.disable();
+    kallocinit(heapBase);
+    sbi.Step.enable();
+    io.writeln("buddy kalloc returned: ", kallocpage().get());
+    /* sbi.Step.disable(); */
+
     arch.Trap.init();
     arch.Trap.enable();
-    /* arch.Timer.intr(); */
-    kallocinit(heapBase);
-    io.writeln("buddy kalloc returned: ", kallocpage().get());
+    arch.Timer.intr();
 
-    if (!Proc.make(&p, helloelf)) {
-        io.writeln("could not make process");
-        return;
-    }
-    arch.usertrapret(&p, true);
+    /* if (!Proc.make(&p, helloelf)) { */
+    /*     io.writeln("could not make process"); */
+    /*     return; */
+    /* } */
+    /* arch.usertrapret(&p, true); */
 
     /* uint val = 1; */
     /* while (true) { */
