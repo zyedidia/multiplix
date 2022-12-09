@@ -41,27 +41,34 @@ void kmain(uintptr heapBase) {
     import kernel.arch.riscv64.csr;
     auto instret = Csr.instret;
     auto cycle = Csr.cycle;
-    sbi.Step.textregion(&_kcode_start, &_kcode_end);
     kallocinit(heapBase);
-    /* import ulib.memory; */
-    /* memset(&kmain, 0, 1234); */
-    io.writeln("buddy kalloc returned: ", kallocpage().get());
     auto fw_heap = kallocpage(1024 * 1024).get();
     sbi.Step.setHeap(cast(void*)vm.ka2pa(cast(uintptr)fw_heap), 1024 * 1024);
 
+    sbi.Step.markRegion(&_kcode_start, &_kcode_end - &_kcode_start, sbi.Step.Region.rdonly);
+
+    sbi.Step.enable(sbi.Step.Check.region);
+    /* import ulib.memory; */
+    /* memset(&kmain, 0, 1234); */
+    sbi.Step.disable();
+
+    io.writeln("buddy kalloc returned: ", kallocpage().get());
+
     io.writeln("instructions ", Csr.instret - instret, " cycles ", Csr.cycle - cycle);
+
+
 
     /* arch.Trap.init(); */
     /* arch.Trap.enable(); */
     /* arch.Timer.intr(); */
 
-    sbi.Step.enable();
+    /* sbi.Step.enable(sbi.Step.Check.ifence); */
     if (!Proc.make(&p, helloelf)) {
         io.writeln("could not make process");
         return;
     }
     arch.usertrapret(&p, true);
-    sbi.Step.disable();
+    /* sbi.Step.disable(); */
 
     /* uint val = 1; */
     /* while (true) { */

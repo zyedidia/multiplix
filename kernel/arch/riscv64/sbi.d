@@ -229,29 +229,51 @@ struct Hart {
 struct Step {
     enum ext = 0x0A000000;
 
+    enum Check {
+        ifence = (1 << 0),
+        vmafence = (1 << 1),
+        region = (1 << 2),
+        mem = (1 << 3),
+        equiv = (1 << 4),
+        noecall = (1 << 5),
+    }
+
+    enum Region {
+        device = (1 << 0),
+        rdonly = (1 << 1),
+        noexec = (1 << 2),
+        stack = (1 << 3),
+        rdwr = (1 << 4),
+    }
+
     static bool enabled() {
         auto r = ecall(ext, 0);
         return r.value != 0;
     }
 
-    static void enable() {
-        ecall(ext, 1);
+    static void enable(uint flags) {
+        ecall(ext, 1, flags);
     }
 
     static void disable() {
         ecall(ext, 2);
     }
 
-    static void devregion(void* start, void* end) {
-        ecall(ext, 3, cast(uintptr)start, cast(uintptr)end);
+    static void markRegion(void* start, size_t sz, uint flags) {
+        ecall(ext, 7, cast(uintptr)start, sz, flags);
     }
 
-    static void textregion(void* start, void* end) {
-        ecall(ext, 4, cast(uintptr)start, cast(uintptr)end);
+    static void enableAt(void* start, uint flags) {
+        ecall(ext, 4, cast(uintptr)start, flags);
     }
 
     static void setHeap(void* start, size_t sz) {
-        ecall(ext, 5, cast(uintptr)start, cast(uintptr)sz);
+        ecall(ext, 3, cast(uintptr)start, sz);
+    }
+
+    static int equivHash() {
+        auto r = ecall(ext, 8);
+        return r.value;
     }
 }
 
