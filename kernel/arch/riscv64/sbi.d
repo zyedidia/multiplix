@@ -249,6 +249,10 @@ struct Step {
     static void textregion(void* start, void* end) {
         ecall(ext, 4, cast(uintptr)start, cast(uintptr)end);
     }
+
+    static void setHeap(void* start, size_t sz) {
+        ecall(ext, 5, cast(uintptr)start, cast(uintptr)sz);
+    }
 }
 
 struct Legacy {

@@ -38,17 +38,16 @@ void kmain(uintptr heapBase) {
     io.writeln("hello rvos!");
 
     /* startAllCores(); */
-    /* sbi.Step.disable(); */
     import kernel.arch.riscv64.csr;
     auto instret = Csr.instret;
     auto cycle = Csr.cycle;
     sbi.Step.textregion(&_kcode_start, &_kcode_end);
-    /* sbi.Step.enable(); */
     kallocinit(heapBase);
     /* import ulib.memory; */
     /* memset(&kmain, 0, 1234); */
     io.writeln("buddy kalloc returned: ", kallocpage().get());
-    /* sbi.Step.disable(); */
+    auto fw_heap = kallocpage(1024 * 1024).get();
+    sbi.Step.setHeap(cast(void*)vm.ka2pa(cast(uintptr)fw_heap), 1024 * 1024);
 
     io.writeln("instructions ", Csr.instret - instret, " cycles ", Csr.cycle - cycle);
 
@@ -56,11 +55,13 @@ void kmain(uintptr heapBase) {
     /* arch.Trap.enable(); */
     /* arch.Timer.intr(); */
 
+    sbi.Step.enable();
     if (!Proc.make(&p, helloelf)) {
         io.writeln("could not make process");
         return;
     }
     arch.usertrapret(&p, true);
+    sbi.Step.disable();
 
     /* uint val = 1; */
     /* while (true) { */
