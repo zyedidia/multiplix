@@ -19,6 +19,10 @@ auto helloelf = cast(immutable ubyte[]) import("user/hello/hello.elf");
 
 __gshared Proc p;
 
+extern (C) {
+    extern __gshared ubyte _kcode_start, _kcode_end;
+}
+
 void kmain(uintptr heapBase) {
     io.writeln("core ", cpuinfo.id, " booted, primary: ", cpuinfo.primary);
 
@@ -29,26 +33,34 @@ void kmain(uintptr heapBase) {
         }
     }
 
-    sbi.Step.enable();
+    /* sbi.Step.enable(); */
 
     io.writeln("hello rvos!");
 
     /* startAllCores(); */
-    sbi.Step.disable();
+    /* sbi.Step.disable(); */
+    import kernel.arch.riscv64.csr;
+    auto instret = Csr.instret;
+    auto cycle = Csr.cycle;
+    sbi.Step.textregion(&_kcode_start, &_kcode_end);
+    /* sbi.Step.enable(); */
     kallocinit(heapBase);
-    sbi.Step.enable();
+    /* import ulib.memory; */
+    /* memset(&kmain, 0, 1234); */
     io.writeln("buddy kalloc returned: ", kallocpage().get());
     /* sbi.Step.disable(); */
 
-    arch.Trap.init();
-    arch.Trap.enable();
-    arch.Timer.intr();
+    io.writeln("instructions ", Csr.instret - instret, " cycles ", Csr.cycle - cycle);
 
-    /* if (!Proc.make(&p, helloelf)) { */
-    /*     io.writeln("could not make process"); */
-    /*     return; */
-    /* } */
-    /* arch.usertrapret(&p, true); */
+    /* arch.Trap.init(); */
+    /* arch.Trap.enable(); */
+    /* arch.Timer.intr(); */
+
+    if (!Proc.make(&p, helloelf)) {
+        io.writeln("could not make process");
+        return;
+    }
+    arch.usertrapret(&p, true);
 
     /* uint val = 1; */
     /* while (true) { */

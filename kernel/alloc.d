@@ -86,6 +86,10 @@ public:
     this(uintptr heapStart) {
         heapStart = vm.ka2pa(heapStart);
         for (uintptr pa = 0; pa < memsize; pa += pagesize) {
+            /* import io = ulib.io; */
+            /* if (pa % (pagesize * 10000) == 0) { */
+            /*     io.writeln("pa: ", pa); */
+            /* } */
             uintptr pn = pagenum(pa);
             pages[pn].free = pa >= heapStart;
             pages[pn].order = minOrder;

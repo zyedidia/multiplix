@@ -241,6 +241,14 @@ struct Step {
     static void disable() {
         ecall(ext, 2);
     }
+
+    static void devregion(void* start, void* end) {
+        ecall(ext, 3, cast(uintptr)start, cast(uintptr)end);
+    }
+
+    static void textregion(void* start, void* end) {
+        ecall(ext, 4, cast(uintptr)start, cast(uintptr)end);
+    }
 }
 
 struct Legacy {

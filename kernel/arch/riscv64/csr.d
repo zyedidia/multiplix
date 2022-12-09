@@ -17,6 +17,7 @@ enum CsrNum {
     time = 0xc01,
     cycleh = 0xc80,
     timeh = 0xc81,
+    instret = 0xc02,
 }
 
 enum Sstatus {
@@ -65,6 +66,7 @@ struct Csr {
     mixin(GenCsr!("scause"));
     mixin(GenCsr!("time"));
     mixin(GenCsr!("cycle"));
+    mixin(GenCsr!("instret"));
 }
 
 void wrcsr(CsrNum reg)(uintptr val) {
