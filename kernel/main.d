@@ -42,13 +42,13 @@ void kmain(uintptr heapBase) {
     auto instret = Csr.instret;
     auto cycle = Csr.cycle;
     kallocinit(heapBase);
-    auto fw_heap = kallocpage(1024 * 1024).get();
-    sbi.Step.setHeap(cast(void*)vm.ka2pa(cast(uintptr)fw_heap), 1024 * 1024);
+    /* auto fw_heap = kallocpage(1024 * 1024 * 16).get(); */
+    /* sbi.Step.setHeap(cast(void*)vm.ka2pa(cast(uintptr)fw_heap), 1024 * 1024); */
 
     sbi.Step.markRegion(&_kcode_start, &_kcode_end - &_kcode_start, sbi.Step.Region.rdonly);
 
+    import ulib.memory;
     sbi.Step.enable(sbi.Step.Check.region);
-    /* import ulib.memory; */
     /* memset(&kmain, 0, 1234); */
     sbi.Step.disable();
 
@@ -56,19 +56,23 @@ void kmain(uintptr heapBase) {
 
     io.writeln("instructions ", Csr.instret - instret, " cycles ", Csr.cycle - cycle);
 
+    auto mem = kallocpage.get();
+    sbi.Step.enable(sbi.Step.Check.mem);
+    memset(mem, 0, 4097);
+    sbi.Step.disable();
 
 
     /* arch.Trap.init(); */
     /* arch.Trap.enable(); */
     /* arch.Timer.intr(); */
 
-    /* sbi.Step.enable(sbi.Step.Check.ifence); */
+    sbi.Step.enable(sbi.Step.Check.vmafence);
     if (!Proc.make(&p, helloelf)) {
         io.writeln("could not make process");
         return;
     }
     arch.usertrapret(&p, true);
-    /* sbi.Step.disable(); */
+    sbi.Step.disable();
 
     /* uint val = 1; */
     /* while (true) { */

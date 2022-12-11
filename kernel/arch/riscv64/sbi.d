@@ -275,6 +275,14 @@ struct Step {
         auto r = ecall(ext, 8);
         return r.value;
     }
+
+    static void memAlloc(uintptr start, size_t sz) {
+        ecall(ext, 5, start, sz);
+    }
+
+    static void memFree(uintptr ptr) {
+        ecall(ext, 6, ptr);
+    }
 }
 
 struct Legacy {

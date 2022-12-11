@@ -5,6 +5,8 @@ module kernel.alloc;
 import vm = kernel.vm;
 import sys = kernel.sys;
 
+import sbi = kernel.arch.riscv64.sbi;
+
 import ulib.bits : msb;
 import ulib.option;
 
@@ -151,7 +153,9 @@ public:
                         // The page matches the order so we can return it directly
                         freeRemove(freeLists[i], i);
                         pages[pn].free = false;
-                        return cast(void*) vm.pa2ka(pa);
+                        auto va = vm.pa2ka(pa);
+                        sbi.Step.memAlloc(va, sz);
+                        return cast(void*) va;
                     } else if (i > order) {
                         // We found a block that is greater than the requested
                         // order so there are no blocks with the correct size. We
