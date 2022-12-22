@@ -4,36 +4,62 @@ function sel(cond, t, f)
     if cond then return t else return f end
 end
 
-local prefix = "riscv64-unknown-elf"
+local prefixes = {
+    aarch64 = "aarch64-none-elf",
+    riscv64 = "riscv64-unknown-elf",
+}
 
 local conf = {
-    dc = cli.dc or "ldc",
-    board = cli.board or "qemuvirt",
+    dc = "ldc",
+    board = cli.board or "raspi3",
     ncpu = 4,
+    lto = sel(cli.lto == nil, true, tobool(cli.lto)),
 }
 
 local machines = {
-    qemuvirt = {
-        board = "qemuvirt",
-        mabi = "lp64",
-        march = "rv64imac",
-        arch = "riscv64",
-        mcmodel = "medany",
-        qemu = "virt",
-        ncpu = conf.ncpu,
+    raspi3 = {
+        board = "raspi3",
+        march = "armv8-a+crc",
+        mcpu = "cortex-a53",
+        mattr = "+strict-align",
+        arch = "aarch64",
+        qemu = "raspi3b",
+        ncpu = 4,
     },
     visionfive = {
         board = "visionfive",
         mabi = "lp64",
         march = "rv64imac",
+        mattr = "+m,+a,+c,+relax",
         arch = "riscv64",
         mcmodel = "medany",
-        qemu = "virt",
         ncpu = 2,
     }
 }
 
+function flags_llvm(machine)
+    local prefix = prefixes[machine.arch]
+    local flags := -mtriple=$(prefix)
+    if machine.arch == "aarch64" then
+        flags = flags .. f" -mcpu=$(machine.mcpu) -mattr=$(machine.mattr)"
+    elseif machine.arch == "riscv64" then
+        flags = flags .. f" -mattr=$(machine.mattr) -code-model=$(machine.cmodel)"
+    end
+    return flags
+end
+
+function flags_gnu(machine)
+    local flags := -march=$(machine.march)
+    if machine.arch == "aarch64" then
+        flags = flags .. f" -mcpu=$(machine.mcpu)"
+    elseif machine.arch == "riscv64" then
+        flags = flags .. f" -mcmodel=$(machine.mcmodel) -mabi=$(machine.mabi)"
+    end
+    return flags
+end
+
 local machine = machines[conf.board]
+local prefix = prefixes[machine.arch]
 
 if machine.mcmodel == "medany" then
     machine.cmodel = "medium"
@@ -42,121 +68,92 @@ else
 end
 
 local tools = {
-    dc = sel(conf.dc == "gdc", f"$prefix-gdc", "ldc2"),
+    dc = "ldc2",
     cc := $prefix-gcc
     as := $prefix-as
     ld := $prefix-ld
     cpp := $prefix-cpp
     objcopy := $prefix-objcopy
     objdump := $prefix-objdump
-    gdb := $prefix-gdb
+    gdb := gdb-multiarch
     qemu := qemu-system-$(machine.arch)
 }
+
+local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
+local flto = sel(conf.lto, "-flto=thin", "")
 
 local flags = {
     dc = sel(
         conf.dc == "gdc",
-        f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections",
-        f"--betterC -Oz -gc -mtriple=$prefix -mattr=+m,+a,+c,+relax -platformlib= --code-model=$(machine.cmodel) --function-sections --data-sections --fthread-model=local-exec --d-version=$(machine.board)"
+        f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections $(flags_gnu(machine))",
+        f"-betterC $flto -Oz -g -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags_llvm(machine))"
     ),
-    as := -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel)
-    ld := -nostartfiles -mcmodel=$(machine.mcmodel) -Wl,--gc-sections
-    qemu := -smp $(machine.ncpu) -machine $(machine.qemu) -m 2G -nographic
+    as := -Os $(flags_gnu(machine))
+    ld := -Os -mstrict-align $(flags_gnu(machine)) -nostartfiles -nodefaultlibs -Wl,--gc-sections -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2 -Wl,-plugin-opt=-code-model=$(machine.cmodel)
+    qemu := -M $(machine.qemu) -nographic -serial null -serial mon:stdio -no-reboot
 }
+
+local dco = sel(conf.dc == "gdc", "o", "of")
 
 local meta = r{
     $ %.o: %.s
         $(tools.cc) $(flags.as) -xassembler-with-cpp $input -c -o $output
+    $ %.o:D[.deps/%.dep]: %.d
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/$match.dep
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
+    $ %.boot: %.elf
+        plboot make -o $output $input
     $ %.list: %.elf
         $(tools.objdump) -D $input > $output
 }
 
 local lib = knit.rglob("libd", "*.d")
 
-local kern = knit.join(
-    knit.filterout(knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"), {f"kernel/arch/$(machine.arch)/boot.d"}),
-    knit.rglob(f"kernel/board/$(machine.board)", "*.d"),
-    knit.rglob("kernel/dev", "*.d"),
-    knit.glob("kernel/*.d")
-)
-
-local boot = knit.join(
-    knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
-    {
-        "kernel/init.d",
-        "kernel/sys.d",
-        "kernel/vm.d",
-        "kernel/arch/package.d",
-    }
-)
-
-local bootloader = knit.join(
-    knit.filterout(knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"), {f"kernel/arch/$(machine.arch)/boot.d"}),
-    knit.rglob(f"kernel/board/$(machine.board)", "*.d"),
-    knit.rglob("kernel/dev", "*.d"),
-    knit.rglob("bootloader", "*.d"),
-    {
-        "kernel/sys.d",
-        "kernel/arch/package.d",
-    }
-)
-
-local kernobj = {
-    "kernel.o",
-    "libd.o",
-    f"kernel/arch/$(machine.arch)/kernelstart.o",
-    f"kernel/arch/$(machine.arch)/kernelvec.o",
-    f"kernel/arch/$(machine.arch)/uservec.o",
+local src = {
+    bootloader = knit.join(
+        lib,
+        knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
+        knit.rglob("kernel/dev", "*.d"),
+        knit.rglob("bootloader", "*.d"),
+        {
+            "kernel/timer.d",
+            "kernel/arch/package.d",
+            "kernel/board/package.d",
+            f"kernel/board/$(machine.board).d",
+        }
+    )
 }
 
-local bootobj = {
-    "boot.o",
-    "libd.o",
-    f"kernel/arch/$(machine.arch)/bootstart.o",
+local obj = {
+    bootloader = knit.join(
+        knit.extrepl(src.bootloader, ".d", ".o"),
+        {
+            f"kernel/arch/$(machine.arch)/bootstart.o",
+        }
+    )
 }
-
-local bootloaderobj = {
-    "bootloader.o",
-    "libd.o",
-    f"kernel/arch/$(machine.arch)/bootstart.o",
-}
-
-local dco = sel(conf.dc == "gdc", "o", "of")
 
 local link = {
-    kernel = "link/kernel.ld",
-    boot = "link/boot.ld",
-    bootloader = "link/bootloader.ld",
+    bootloader = f"link/$(machine.board)/bootloader.ld",
 }
 
 local kernel = r{
-    $ libd.o: $lib
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output
-    $ kernel.o: $kern libd[I]
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd -J. $input -c -$dco $output
-    $ boot.o: $boot libd[I] kernel.bin[I]
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd -J. $input -c -$dco $output
-    $ boot.elf: $bootobj $(link.boot)[I]
-        $(tools.cc) $(flags.as) $(flags.ld) -T$(link.boot) $input -lgcc -o $output
-    $ bootloader.o: $bootloader libd[I]
-        $(tools.dc) $(flags.dc) --d-version=baremetal -Ikernel -Ilibd $input -c -$dco $output
-    $ bootloader.elf: $bootloaderobj $(link.bootloader)[I]
-        $(tools.cc) $(flags.as) $(flags.ld) -T$(link.bootloader) $input -lgcc -o $output
-    $ kernel.elf: $kernobj $(link.kernel)[I]
-        $(tools.cc) $(flags.as) $(flags.ld) -T$(link.kernel) $input -lgcc -o $output
-    $ qemu:VB: boot.elf
+    $ bootloader/main.o:D[.deps/bootloader/main.dep]: bootloader/main.d
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/bootloader/main.dep -d-version=uart
+    $ bootloader.elf: $(obj.bootloader) $(link.bootloader)[I]
+        $(tools.cc) $(flags.ld) -T$(link.bootloader) $input -o $output
+    $ qemu:VB: bootloader.elf
         $(tools.qemu) $(flags.qemu) -kernel $input
-    $ qemu-gdb:VBQ: boot.elf
+    $ qemu-gdb:VBQ: bootloader.elf
         $(tools.qemu) $(flags.qemu) -s -S -kernel $input &
-        $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
+        $(tools.gdb) -ex "file bootloader.elf" -ex "target remote localhost:1234"
 }
 
 local allsrc = knit.rglob(".", "*.d")
 
 return b{
-    $ all:V: kernel.elf kernel.list kernel.bin boot.list boot.bin
+    $ all:V: bootloader.bin
 
     $ bootloader:V: bootloader.bin
 
@@ -164,8 +161,9 @@ return b{
         dfmt -i --brace_style=otbs $allsrc
     $ clean:VB:
         knit :all -t clean
-    $ prog:VB: boot.bin
-        piprog boot.bin
+        rm -rf .deps
+    $ prog:VB: bootloader.bin
+        piprog $input
 
     kernel,
     meta

@@ -48,7 +48,7 @@ private:
     void writeElem(string s) {
         while (s.length > 0) {
             auto a = min(s.length, buffer.length - size);
-            buffer[size .. size + a] = s;
+            buffer[size .. size + a] = s[0 .. a];
             s = s[a .. $];
             size += a;
 

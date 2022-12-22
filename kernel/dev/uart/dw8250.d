@@ -86,7 +86,7 @@ struct Dw8250(uintptr base) {
         tfnf = 1, // transmit fifo not full
     }
 
-    static void init() {
+    static void init(int baud) {
         // dll/dlh cannot be accessed until the uart is not busy
         while (bits.get(usr, Usr.busy)) {
         }
@@ -107,18 +107,18 @@ struct Dw8250(uintptr base) {
         thr = b;
     }
 
-    static bool hasRxData() {
-        return bits.get(lsr, Lsr.dr);
+    static bool rx_empty() {
+        return !bits.get(lsr, Lsr.dr);
     }
 
     static ubyte rx() {
         // wait until we have data available
-        while (!hasRxData()) {
+        while (rx_empty()) {
         }
         return cast(ubyte) rbr;
     }
 
-    static void flushTx() {
+    static void tx_flush() {
         // wait until the transmitter is empty
         while (!bits.get(lsr, Lsr.thre)) {
         }

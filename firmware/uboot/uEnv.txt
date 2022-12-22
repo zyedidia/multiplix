@@ -1,3 +1,0 @@
-kernel_addr_r=0x84000000
-bootdelay=0
-bootcmd=load mmc 0:1 ${kernel_addr_r} /kernel.bin; go ${kernel_addr_r}

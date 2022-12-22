@@ -1,8 +1,0 @@
-return b{
-    $ hello.bin: hello.elf
-        riscv64-unknown-elf-objcopy $input -O binary $output
-    $ hello.elf: hello.c
-        riscv64-unknown-elf-gcc $input -O2 -o $output -T../../link/user.ld -ffreestanding -nostdlib
-    $ hello.list: hello.elf
-        riscv64-unknown-elf-objdump -D $input > $output
-}

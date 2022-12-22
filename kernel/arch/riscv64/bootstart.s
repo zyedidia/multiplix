@@ -11,3 +11,4 @@ _start:
 _halt:
 	wfi
 	j _halt
+
