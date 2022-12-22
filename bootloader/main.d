@@ -83,7 +83,7 @@ version (uart) {
 
         while (true) {
             putUint(BootFlags.GetProgInfo);
-            Timer.delay_cycles(1000000);
+            Timer.delay_cycles(100000000);
 
             if (!Uart.rx_empty() && getUint() == BootFlags.PutProgInfo) {
                 break;
