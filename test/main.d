@@ -5,5 +5,9 @@ import kernel.board;
 
 extern (C) void kmain() {
     Uart.init(115200);
-    io.writeln("hello world");
+    int el;
+    asm {
+        "mrs %0, CurrentEL" : "=r"(el);
+    }
+    io.writeln("EL: ", el >> 2);
 }
