@@ -88,7 +88,7 @@ local flags = {
         f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections $(flags_gnu(machine))",
         f"-betterC $flto -Oz -g -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags_llvm(machine))"
     ),
-    as := -Os $(flags_gnu(machine))
+    as := -Os $(flags_gnu(machine)) -xassembler-with-cpp
     ld := -Os -mstrict-align $(flags_gnu(machine)) -nostartfiles -nodefaultlibs -Wl,--gc-sections -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2 -Wl,-plugin-opt=-code-model=$(machine.cmodel)
     qemu := -M $(machine.qemu) -nographic -serial null -serial mon:stdio -no-reboot
 }
@@ -97,7 +97,7 @@ local dco = sel(conf.dc == "gdc", "o", "of")
 
 local meta = r{
     $ %.o: %.s
-        $(tools.cc) $(flags.as) -xassembler-with-cpp $input -c -o $output
+        $(tools.cc) $(flags.as) $input -c -o $output
     $ %.o:D[.deps/%.dep]: %.d
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/$match.dep
     $ %.bin: %.elf
@@ -110,20 +110,33 @@ local meta = r{
 
 local lib = knit.rglob("libd", "*.d")
 
+local kernel = knit.join(
+    knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
+    knit.rglob("kernel/dev", "*.d"),
+    knit.glob("kernel/*.d"),
+    {
+        "kernel/arch/package.d",
+        "kernel/board/package.d",
+        f"kernel/board/$(machine.board).d",
+    }
+)
+
 local src = {
     bootloader = knit.join(
         lib,
-        knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
-        knit.rglob("kernel/dev", "*.d"),
-        knit.rglob("bootloader", "*.d"),
-        {
-            "kernel/timer.d",
-            "kernel/arch/package.d",
-            "kernel/board/package.d",
-            f"kernel/board/$(machine.board).d",
-        }
+        kernel,
+        knit.rglob("bootloader", "*.d")
+    ),
+    test = knit.join(
+        lib,
+        kernel,
+        knit.rglob("test", "*.d")
     )
 }
+
+if cli.payload ~= nil then
+    src.bootloader = knit.join(src.bootloader, {"bootloader/payload.o"})
+end
 
 local obj = {
     bootloader = knit.join(
@@ -131,17 +144,29 @@ local obj = {
         {
             f"kernel/arch/$(machine.arch)/bootstart.o",
         }
-    )
+    ),
+    test = knit.join(
+        knit.extrepl(src.test, ".d", ".o"),
+        {
+            f"kernel/arch/$(machine.arch)/bootstart.o",
+        }
+    ),
 }
 
 local link = {
     bootloader = f"link/$(machine.board)/bootloader.ld",
 }
 
+local bootversion = sel(cli.payload == nil, "uart", "payload")
+
 local kernel = r{
     $ bootloader/main.o:D[.deps/bootloader/main.dep]: bootloader/main.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/bootloader/main.dep -d-version=uart
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/bootloader/main.dep -d-version=$bootversion
+    $ bootloader/payload.o: bootloader/payload.s
+        $(tools.cc) $(flags.as) -c -o $output $input -DPAYLOAD=$(cli.payload)
     $ bootloader.elf: $(obj.bootloader) $(link.bootloader)[I]
+        $(tools.cc) $(flags.ld) -T$(link.bootloader) $input -o $output
+    $ test.elf: $(obj.test) $(link.bootloader)[I]
         $(tools.cc) $(flags.ld) -T$(link.bootloader) $input -o $output
     $ qemu:VB: bootloader.elf
         $(tools.qemu) $(flags.qemu) -kernel $input
@@ -162,8 +187,8 @@ return b{
     $ clean:VB:
         knit :all -t clean
         rm -rf .deps
-    $ prog:VB: bootloader.bin
-        piprog $input
+    $ prog-%:VB: %.elf
+        plboot prog $input
 
     kernel,
     meta

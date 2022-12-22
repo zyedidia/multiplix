@@ -12,21 +12,10 @@ import io = ulib.io;
 import ulib.memory;
 
 extern (C) {
-    extern __gshared uint _kbss_start, _kbss_end;
     extern shared ubyte __start_copyin, __stop_copyin;
     extern shared ubyte __start_copyin2, __stop_copyin2;
     extern __gshared ubyte _kheap_start;
-
-    void dstart() {
-        uint* bss = &_kbss_start;
-        uint* bss_end = &_kbss_end;
-        while (bss < bss_end) {
-            volatileStore(bss++, 0);
-        }
-        boot();
-    }
 }
-
 
 struct BootData {
     ubyte* entry;
@@ -126,9 +115,12 @@ version (uart) {
         return BootData(cast(ubyte*) entry, base[0 .. nbytes]);
     }
 } else {
+    extern (C) extern __gshared ubyte payload;
+    extern (C) extern __gshared int payload_size;
+
     BootData unpack() {
-        ubyte* entry = (cast(ubyte**) payload)[0];
-        return BootData(entry, payload[8 .. $]);
+        ubyte* entry = (cast(ubyte**) &payload)[0];
+        return BootData(entry, (&payload)[8 .. payload_size]);
     }
 }
 
@@ -137,7 +129,7 @@ bool overlaps(ubyte* d1, size_t sz1, ubyte* d2, size_t sz2) {
     return d1 < d2 + sz2 && d2 < d1 + sz1;
 }
 
-void boot() {
+extern (C) void kmain() {
     // move copyin to a new location, which cannot overlap with [entry,
     // entry+nbytes) or [boot.data, boot.data+nbytes) or the stack
     ubyte* new_copyin = &_kheap_start;
@@ -160,12 +152,7 @@ void boot() {
         new_copyin += nbytes + (nbytes % 16);
     }
 
-    /* io.writeln(new_copyin); */
-    /* io.writeln(copyin_size); */
-
     memcpy(new_copyin, cast(ubyte*)&copyin, copyin_size);
-
-    /* io.writeln("jumping to ", boot.entry); */
 
     insn_fence();
 
@@ -174,15 +161,6 @@ void boot() {
     fn(boot.entry, boot.data);
 
     while (1) {
-    }
-}
-
-extern (C) {
-    void ulib_tx(ubyte c) {
-        Uart.tx(c);
-    }
-
-    void ulib_exit() {
     }
 }
 

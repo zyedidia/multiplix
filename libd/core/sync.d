@@ -37,9 +37,22 @@ alias insn_fence = () {
     }
 };
 
+pragma(inline, true)
+alias memory_fence = () {
+    version (RISCV64) {
+        asm {
+            "fence";
+        }
+    } else version (AArch64) {
+        asm {
+            "dsb sy";
+        }
+    }
+};
+
 /// Used to introduce happens-before edges between operations.
 pragma(LDC_fence)
-    void memory_fence(AtomicOrdering ordering = DefaultOrdering,
+    void llvm_memory_fence(AtomicOrdering ordering = DefaultOrdering,
                       SynchronizationScope syncScope = SynchronizationScope.Default);
 
 

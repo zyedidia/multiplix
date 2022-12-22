@@ -8,3 +8,4 @@ bugs.txt
 todo.txt
 TODO.txt
 .deps
+*.boot
