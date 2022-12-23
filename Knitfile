@@ -15,6 +15,7 @@ local conf = {
     ncpu = 4,
     lto = sel(cli.lto == nil, true, tobool(cli.lto)),
     release = cli.release or false,
+    entry = cli.entry,
 }
 
 local machines = {
@@ -143,19 +144,20 @@ local obj = {
     bootloader = knit.join(
         knit.extrepl(src.bootloader, ".d", ".o"),
         {
-            f"kernel/arch/$(machine.arch)/bootstart.o",
+            f"kernel/arch/$(machine.arch)/monitorstart.o",
         }
     ),
     test = knit.join(
         knit.extrepl(src.test, ".d", ".o"),
         {
-            f"kernel/arch/$(machine.arch)/bootstart.o",
+            f"kernel/arch/$(machine.arch)/monitorstart.o",
         }
     ),
 }
 
 local link = {
     bootloader = f"link/$(machine.board)/bootloader.ld",
+    extra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)"),
 }
 
 local bootversion = sel(cli.payload == nil, "uart", "payload")
@@ -166,9 +168,9 @@ local kernel = r{
     $ bootloader/payload.o: bootloader/payload.s
         $(tools.cc) $(flags.as) -c -o $output $input -DPAYLOAD=$(cli.payload)
     $ bootloader.elf: $(obj.bootloader) $(link.bootloader)[I]
-        $(tools.cc) $(flags.ld) -T$(link.bootloader) $input -o $output
+        $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
     $ test.elf: $(obj.test) $(link.bootloader)[I]
-        $(tools.cc) $(flags.ld) -T$(link.bootloader) $input -o $output
+        $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
     $ qemu:VB: bootloader.elf
         $(tools.qemu) $(flags.qemu) -kernel $input
     $ qemu-gdb:VBQ: bootloader.elf
