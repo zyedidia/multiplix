@@ -10,5 +10,9 @@ extern (C) void kmain() {
     /*     "mrs %0, CurrentEL" : "=r"(el); */
     /* } */
     /* io.writeln("EL: ", el >> 2); */
-    io.writeln("hello");
+
+    io.writeln("hello world");
+    Reboot.reboot();
+
+    /* io.writeln("hart: ", Csr.mhartid, " misa: ", Csr.misa); */
 }

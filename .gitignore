@@ -9,3 +9,4 @@ todo.txt
 TODO.txt
 .deps
 *.boot
+*.bin.out

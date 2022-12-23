@@ -12,7 +12,6 @@ local prefixes = {
 local conf = {
     dc = "ldc",
     board = cli.board or "visionfive",
-    ncpu = 4,
     lto = sel(cli.lto == nil, true, tobool(cli.lto)),
     release = cli.release or false,
     entry = cli.entry,
@@ -25,8 +24,7 @@ local machines = {
         mcpu = "cortex-a53",
         mattr = "+strict-align",
         arch = "aarch64",
-        qemu = "raspi3b",
-        ncpu = 4,
+        qemu = "-M raspi3b -serial null -serial mon:stdio",
     },
     visionfive = {
         board = "visionfive",
@@ -35,8 +33,16 @@ local machines = {
         mattr = "+m,+a,+c,+relax",
         arch = "riscv64",
         mcmodel = "medany",
-        qemu = "virt",
-        ncpu = 2,
+        qemu = "-M virt -bios none -smp 2 -m 2G",
+    },
+    virt_riscv64 = {
+        board = "virt_riscv64",
+        mabi = "lp64",
+        march = "rv64imac",
+        mattr = "+m,+a,+c,+relax",
+        arch = "riscv64",
+        mcmodel = "medany",
+        qemu = "-M virt -bios none -smp 4 -m 2G",
     }
 }
 
@@ -93,7 +99,7 @@ local flags = {
     ),
     as := -Os $(flags_gnu(machine)) -xassembler-with-cpp
     ld := -Os -mstrict-align $(flags_gnu(machine)) -nostartfiles -nodefaultlibs -Wl,--gc-sections -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2 -Wl,-plugin-opt=-code-model=$(machine.cmodel)
-    qemu := -M $(machine.qemu) -nographic
+    qemu := $(machine.qemu) -nographic
 }
 
 local dco = sel(conf.dc == "gdc", "o", "of")
@@ -174,10 +180,10 @@ local kernel = r{
         $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
     $ test.elf: $(obj.test) $(link.bootloader)[I]
         $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
-    $ qemu:VB: bootloader.elf
-        $(tools.qemu) $(flags.qemu) -kernel $input
-    $ qemu-gdb:VBQ: test.elf
-        $(tools.qemu) $(flags.qemu) -bios none -s -S -kernel $input &
+    $ qemu-%:VB: %.elf
+        $(tools.qemu) $(flags.qemu) -no-reboot -kernel $input
+    $ qemu-gdb:VB: test.elf
+        $(tools.qemu) $(flags.qemu) -no-reboot -s -S -kernel $input &
         $(tools.gdb) -ex "file $input" -ex "target remote localhost:1234"
 }
 
