@@ -33,7 +33,7 @@ SECTIONS
     .kstack : {
         . += 4K;
     }
-    PROVIDE(_kstack = .);
+    PROVIDE(_kstack = . - 16);
 
     . = ALIGN(16);
     _kheap_start = .;

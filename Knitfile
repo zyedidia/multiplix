@@ -35,6 +35,7 @@ local machines = {
         mattr = "+m,+a,+c,+relax",
         arch = "riscv64",
         mcmodel = "medany",
+        qemu = "virt",
         ncpu = 2,
     }
 }
@@ -92,7 +93,7 @@ local flags = {
     ),
     as := -Os $(flags_gnu(machine)) -xassembler-with-cpp
     ld := -Os -mstrict-align $(flags_gnu(machine)) -nostartfiles -nodefaultlibs -Wl,--gc-sections -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2 -Wl,-plugin-opt=-code-model=$(machine.cmodel)
-    qemu := -M $(machine.qemu) -nographic -serial null -serial mon:stdio -no-reboot
+    qemu := -M $(machine.qemu) -nographic
 }
 
 local dco = sel(conf.dc == "gdc", "o", "of")
@@ -104,6 +105,8 @@ local meta = r{
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/$match.dep
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
+    $ %.bin.out: %.bin
+        ./firmware/visionfive/fsz.sh $input $output
     $ %.boot: %.elf
         plboot make -o $output $input
     $ %.list: %.elf
@@ -173,9 +176,9 @@ local kernel = r{
         $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
     $ qemu:VB: bootloader.elf
         $(tools.qemu) $(flags.qemu) -kernel $input
-    $ qemu-gdb:VBQ: bootloader.elf
-        $(tools.qemu) $(flags.qemu) -s -S -kernel $input &
-        $(tools.gdb) -ex "file bootloader.elf" -ex "target remote localhost:1234"
+    $ qemu-gdb:VBQ: test.elf
+        $(tools.qemu) $(flags.qemu) -bios none -s -S -kernel $input &
+        $(tools.gdb) -ex "file $input" -ex "target remote localhost:1234"
 }
 
 local allsrc = knit.rglob(".", "*.d")

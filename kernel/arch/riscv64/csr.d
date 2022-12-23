@@ -1,6 +1,12 @@
 module kernel.arch.riscv64.csr;
 
 enum CsrNum {
+    misa = 0x301,
+    mtvec = 0x305,
+    mepc = 0x341,
+    mcause = 0x342,
+    mtval = 0x343,
+
     sstatus = 0x100,
     sedeleg = 0x102,
     sideleg = 0x103,
@@ -53,6 +59,11 @@ template GenCsr(string name) {
 // dfmt on
 
 struct Csr {
+    mixin(GenCsr!("mtvec"));
+    mixin(GenCsr!("misa"));
+    mixin(GenCsr!("mcause"));
+    mixin(GenCsr!("mepc"));
+    mixin(GenCsr!("mtval"));
     mixin(GenCsr!("stvec"));
     mixin(GenCsr!("satp"));
     mixin(GenCsr!("sie"));
