@@ -39,7 +39,7 @@ version (uart) {
         BadCodeCksum = 0xfeedface,
     }
 
-    ulong getUlong() {
+    ulong get_ulong() {
         union recv {
             ubyte[8] b;
             ulong i;
@@ -57,7 +57,7 @@ version (uart) {
         return x.i;
     }
 
-    uint getUint() {
+    uint get_uint() {
         union recv {
             ubyte[4] b;
             uint i;
@@ -71,7 +71,7 @@ version (uart) {
         return x.i;
     }
 
-    void putUint(uint u) {
+    void put_uint(uint u) {
         Uart.tx((u >> 0) & 0xff);
         Uart.tx((u >> 8) & 0xff);
         Uart.tx((u >> 16) & 0xff);
@@ -82,24 +82,24 @@ version (uart) {
         Uart.init(115200);
 
         while (true) {
-            putUint(BootFlags.GetProgInfo);
-            Timer.delay_cycles(100000000);
+            put_uint(BootFlags.GetProgInfo);
+            Timer.delay_us(100 * 1000); // delay 100ms
 
-            if (!Uart.rx_empty() && getUint() == BootFlags.PutProgInfo) {
+            if (!Uart.rx_empty() && get_uint() == BootFlags.PutProgInfo) {
                 break;
             }
         }
 
         ubyte* base = &_kheap_start;
-        ulong entry = getUlong();
-        uint nbytes = getUint();
-        uint crc_recv = getUint();
+        ulong entry = get_ulong();
+        uint nbytes = get_uint();
+        uint crc_recv = get_uint();
 
-        putUint(BootFlags.GetCode);
-        putUint(crc_recv);
+        put_uint(BootFlags.GetCode);
+        put_uint(crc_recv);
 
-        if (getUint() != BootFlags.PutCode) {
-            putUint(BootFlags.BootError);
+        if (get_uint() != BootFlags.PutCode) {
+            put_uint(BootFlags.BootError);
             while (1) {}
         }
         for (uint i = 0; i < nbytes; i++) {
@@ -107,10 +107,10 @@ version (uart) {
         }
         uint crc_calc = crc.crc32(base, nbytes);
         if (crc_calc != crc_recv) {
-            putUint(BootFlags.BadCodeCksum);
+            put_uint(BootFlags.BadCodeCksum);
             while (1) {}
         }
-        putUint(BootFlags.BootSuccess);
+        put_uint(BootFlags.BootSuccess);
 
         return BootData(cast(ubyte*) entry, base[0 .. nbytes]);
     }

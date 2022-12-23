@@ -16,7 +16,7 @@ public:
 
     void write(Args...)(Args args) {
         foreach (arg; args) {
-            writeElem(arg);
+            write_elem(arg);
         }
     }
 
@@ -33,19 +33,19 @@ private:
     char[256] buffer = void;
     size_t size = 0;
 
-    void writeElem(T)(T* val) {
-        writeElem("0x");
-        writeElem(cast(uintptr) val, 16);
+    void write_elem(T)(T* val) {
+        write_elem("0x");
+        write_elem(cast(uintptr) val, 16);
     }
 
-    void writeElem(char ch) {
+    void write_elem(char ch) {
         if (size >= buffer.length) {
             flush();
         }
         buffer[size++] = ch;
     }
 
-    void writeElem(string s) {
+    void write_elem(string s) {
         while (s.length > 0) {
             auto a = min(s.length, buffer.length - size);
             buffer[size .. size + a] = s[0 .. a];
@@ -58,13 +58,13 @@ private:
         }
     }
 
-    void writeElem(bool b) {
-        writeElem(b ? "true" : "false");
+    void write_elem(bool b) {
+        write_elem(b ? "true" : "false");
     }
 
-    void writeElem(S = long)(S value, uint base = 10) if (isInt!S) {
+    void write_elem(S = long)(S value, uint base = 10) if (isInt!S) {
         char[S.sizeof * 8] buf = void;
-        writeElem(itoa(value, buf, base));
+        write_elem(itoa(value, buf, base));
     }
 }
 
