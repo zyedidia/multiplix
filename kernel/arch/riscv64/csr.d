@@ -1,6 +1,8 @@
 module kernel.arch.riscv64.csr;
 
 enum CsrNum {
+    mvendorid = 0xF11,
+    marchid = 0xF12,
     mhartid = 0xF14,
     misa = 0x301,
     mtvec = 0x305,
@@ -43,9 +45,15 @@ enum Sie {
     ssie = 1,
 }
 
-enum Scause {
+enum Cause {
+    // interrupts
     // software timer interrupt
     sti = 0x8000000000000005UL,
+
+    // exceptions
+    breakpoint = 3,
+    ecall_s = 9,
+    ecall_m = 11,
 }
 
 // dfmt off
@@ -60,6 +68,8 @@ template GenCsr(string name) {
 // dfmt on
 
 struct Csr {
+    mixin(GenCsr!("mvendorid"));
+    mixin(GenCsr!("marchid"));
     mixin(GenCsr!("mhartid"));
     mixin(GenCsr!("mtvec"));
     mixin(GenCsr!("misa"));

@@ -95,7 +95,7 @@ local flags = {
     dc = sel(
         conf.dc == "gdc",
         f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections $(flags_gnu(machine))",
-        f"-betterC $flto -Oz -g -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags_llvm(machine)) $(sel(conf.release, '-release', ''))"
+        f"-betterC $flto -Oz -g -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags_llvm(machine)) $(sel(conf.release, '-boundscheck=off', ''))"
     ),
     as := -Os $(flags_gnu(machine)) -xassembler-with-cpp
     ld := -Os -mstrict-align $(flags_gnu(machine)) -nostartfiles -nodefaultlibs -Wl,--gc-sections -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2 -Wl,-plugin-opt=-code-model=$(machine.cmodel)

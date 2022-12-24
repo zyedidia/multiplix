@@ -3,6 +3,8 @@ module test.main;
 import io = ulib.io;
 import kernel.board;
 
+import sbi = kernel.arch.riscv64.sbi;
+
 extern (C) void kmain() {
     Uart.init(115200);
     /* int el; */
@@ -12,7 +14,8 @@ extern (C) void kmain() {
     /* io.writeln("EL: ", el >> 2); */
 
     io.writeln("hello world");
-    Reboot.reboot();
+
+    io.writeln("mvendorid: ", sbi.Base.get_mvendorid());
 
     /* io.writeln("hart: ", Csr.mhartid, " misa: ", Csr.misa); */
 }
