@@ -80,38 +80,48 @@ private SbiRet ecall(uint ext, uint fid) {
 struct Base {
     enum ext = 0x10;
 
+    enum Fid {
+        get_spec_version = 0,
+        get_impl_id = 1,
+        get_impl_version = 2,
+        probe_extension = 3,
+        get_mvendorid = 4,
+        get_marchid = 5,
+        get_mimpid = 6,
+    }
+
     static uint get_spec_version() {
-        auto ret = ecall(ext, 0);
+        auto ret = ecall(ext, Fid.get_spec_version);
         return ret.value;
     }
 
     static uint get_impl_id() {
-        auto ret = ecall(ext, 1);
+        auto ret = ecall(ext, Fid.get_impl_id);
         return ret.value;
     }
 
     static uint get_impl_version() {
-        auto ret = ecall(ext, 2);
+        auto ret = ecall(ext, Fid.get_impl_version);
         return ret.value;
     }
 
     static bool probe_extension(uint extid) {
-        auto ret = ecall(ext, 3, extid);
+        auto ret = ecall(ext, Fid.probe_extension, extid);
         return ret.value != 0;
     }
 
     static uint get_mvendorid() {
-        auto ret = ecall(ext, 4);
+        auto ret = ecall(ext, Fid.get_mvendorid);
         return ret.value;
     }
 
     static uint get_marchid() {
-        auto ret = ecall(ext, 5);
+        auto ret = ecall(ext, Fid.get_marchid);
         return ret.value;
     }
 
     static uint get_mimpid() {
-        auto ret = ecall(ext, 6);
+        auto ret = ecall(ext, Fid.get_mimpid);
         return ret.value;
     }
 }
