@@ -13,7 +13,7 @@ extern (C) {
         uint* bss = &_kbss_start;
         uint* bss_end = &_kbss_end;
         while (bss < bss_end) {
-            volatileStore(bss++, 0);
+            volatile_st(bss++, 0);
         }
         kmain();
     }

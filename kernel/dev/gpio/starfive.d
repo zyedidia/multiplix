@@ -15,9 +15,9 @@ struct StarfiveGpio(uintptr base) {
             return;
         }
 
-        volatileStore(&gpo[pin].val, 1);
+        volatile_st(&gpo[pin].val, 1);
         // enable is active low
-        volatileStore(&gpo[pin].en, 0);
+        volatile_st(&gpo[pin].en, 0);
     }
 
     static void clear(uint pin) {
@@ -25,7 +25,7 @@ struct StarfiveGpio(uintptr base) {
             return;
         }
 
-        volatileStore(&gpo[pin].val, 0);
+        volatile_st(&gpo[pin].val, 0);
     }
 
     static void write(uint pin, uint value) {

@@ -168,7 +168,7 @@ import ldc.attributes;
 
 @(section("copyin")) void copyin(ubyte* dst, ubyte[] src) {
     for (uint i = 0; i < src.length; i++) {
-        volatileStore(&dst[i], src[i]);
+        volatile_st(&dst[i], src[i]);
     }
     insn_fence();
     auto main = cast(void function()) dst;
@@ -176,7 +176,7 @@ import ldc.attributes;
 }
 @(section("copyin2")) void copyin2(ubyte* dst, ubyte[] src) {
     for (uint i = 0; i < src.length; i++) {
-        volatileStore(&dst[i], src[i]);
+        volatile_st(&dst[i], src[i]);
     }
     insn_fence();
     auto main = cast(void function()) dst;

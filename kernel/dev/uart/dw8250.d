@@ -12,59 +12,59 @@ struct Dw8250(uintptr base) {
     // Receive buffer register
     @property static uint rbr() {
         enum off = base + 0x0;
-        return volatileLoad(cast(uint*) off);
+        return volatile_ld(cast(uint*) off);
     }
     // Divisor latch low
     @property static uint dll() {
         enum off = base + 0x0;
-        return volatileLoad(cast(uint*) off);
+        return volatile_ld(cast(uint*) off);
     }
     // Divisor latch high
     @property static uint dlh() {
         enum off = base + 0x4;
-        return volatileLoad(cast(uint*) off);
+        return volatile_ld(cast(uint*) off);
     }
     // Line control register
     @property static uint lcr() {
         enum off = base + 0xc;
-        return volatileLoad(cast(uint*) off);
+        return volatile_ld(cast(uint*) off);
     }
     // Line status register
     @property static uint lsr() {
         enum off = base + 0x14;
-        return volatileLoad(cast(uint*) off);
+        return volatile_ld(cast(uint*) off);
     }
     // UART status register
     @property static uint usr() {
         enum off = base + 0x14;
-        return volatileLoad(cast(uint*) off);
+        return volatile_ld(cast(uint*) off);
     }
 
     // Write registers
     // Transmit holding register
     @property static void thr(uint b) {
         enum off = base + 0x0;
-        volatileStore(cast(uint*) off, b);
+        volatile_st(cast(uint*) off, b);
     }
     // Divisor latch low
     @property static void dll(uint b) {
         enum off = base + 0x0;
-        volatileStore(cast(uint*) off, b);
+        volatile_st(cast(uint*) off, b);
     }
     // Divisor latch high
     @property static void dlh(uint b) {
         enum off = base + 0x4;
-        volatileStore(cast(uint*) off, b);
+        volatile_st(cast(uint*) off, b);
     }
     // Line control register
     @property static void lcr(uint b) {
         enum off = base + 0xc;
-        volatileStore(cast(uint*) off, b);
+        volatile_st(cast(uint*) off, b);
     }
     // Fifo control register
     @property static void fcr(uint b) {
         enum off = base + 0x8;
-        volatileStore(cast(uint*) off, b);
+        volatile_st(cast(uint*) off, b);
     }
 
     enum Lcr {

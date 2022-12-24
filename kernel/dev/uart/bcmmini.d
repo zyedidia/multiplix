@@ -42,38 +42,38 @@ struct BcmMiniUart(uintptr base) {
 
         memory_fence();
 
-        volatileStore(aux_enables, volatileLoad(aux_enables) | enable_uart);
+        volatile_st(aux_enables, volatile_ld(aux_enables) | enable_uart);
 
         memory_fence();
 
-        volatileStore(&uart.cntl, 0);
-        volatileStore(&uart.ier, 0);
-        volatileStore(&uart.lcr, 0b11);
-        volatileStore(&uart.mcr, 0);
-        volatileStore(&uart.iir, iir_reset | clear_fifos);
-        volatileStore(&uart.baud, System.gpu_freq / (baud * 8) - 1);
-        volatileStore(&uart.cntl, rx_enable | tx_enable);
+        volatile_st(&uart.cntl, 0);
+        volatile_st(&uart.ier, 0);
+        volatile_st(&uart.lcr, 0b11);
+        volatile_st(&uart.mcr, 0);
+        volatile_st(&uart.iir, iir_reset | clear_fifos);
+        volatile_st(&uart.baud, System.gpu_freq / (baud * 8) - 1);
+        volatile_st(&uart.cntl, rx_enable | tx_enable);
 
         memory_fence();
     }
 
     static bool rx_empty() {
-        return bits.get(volatileLoad(&uart.stat), 0) == 0;
+        return bits.get(volatile_ld(&uart.stat), 0) == 0;
     }
 
     static uint rx_sz() {
-        return bits.get(volatileLoad(&uart.stat), 19, 16);
+        return bits.get(volatile_ld(&uart.stat), 19, 16);
     }
 
     static bool can_tx() {
-        return bits.get(volatileLoad(&uart.stat), 1) != 0;
+        return bits.get(volatile_ld(&uart.stat), 1) != 0;
     }
 
     static ubyte rx() {
         memory_fence();
         while (rx_empty()) {
         }
-        ubyte c = volatileLoad(&uart.io) & 0xff;
+        ubyte c = volatile_ld(&uart.io) & 0xff;
         memory_fence();
         return c;
     }
@@ -82,13 +82,13 @@ struct BcmMiniUart(uintptr base) {
         memory_fence();
         while (!can_tx()) {
         }
-        volatileStore(&uart.io, c & 0xff);
+        volatile_st(&uart.io, c & 0xff);
         memory_fence();
     }
 
     static bool tx_empty() {
         memory_fence();
-        return bits.get(volatileLoad(&uart.stat), 9) == 1;
+        return bits.get(volatile_ld(&uart.stat), 9) == 1;
     }
 
     static void tx_flush() {
