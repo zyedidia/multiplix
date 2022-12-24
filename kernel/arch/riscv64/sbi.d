@@ -125,3 +125,19 @@ struct Base {
         return ret.value;
     }
 }
+
+struct Timer {
+    enum ext = 0x54494D45;
+
+    enum Fid {
+        set_timer = 0,
+    }
+
+    static bool supported() {
+        return Base.probe_extension(ext);
+    }
+
+    static void set_timer(ulong val) {
+        ecall(ext, Fid.set_timer, val);
+    }
+}
