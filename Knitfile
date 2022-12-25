@@ -153,13 +153,13 @@ local obj = {
     bootloader = knit.join(
         knit.extrepl(src.bootloader, ".d", ".o"),
         {
-            f"kernel/arch/$(machine.arch)/monitorstart.o",
+            f"kernel/arch/$(machine.arch)/monitorasm.o",
         }
     ),
     test = knit.join(
         knit.extrepl(src.test, ".d", ".o"),
         {
-            f"kernel/arch/$(machine.arch)/monitorstart.o",
+            f"kernel/arch/$(machine.arch)/monitorasm.o",
         }
     ),
 }
