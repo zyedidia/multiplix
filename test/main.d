@@ -5,6 +5,9 @@ import kernel.board;
 
 import sbi = kernel.arch.riscv64.sbi;
 
+import kernel.arch.riscv64.csr;
+import kernel.arch.riscv64.monitor.boot;
+
 extern (C) void kmain() {
     Uart.init(115200);
     /* int el; */
@@ -12,6 +15,8 @@ extern (C) void kmain() {
     /*     "mrs %0, CurrentEL" : "=r"(el); */
     /* } */
     /* io.writeln("EL: ", el >> 2); */
+
+    enter_smode();
 
     io.writeln("hello world");
 
