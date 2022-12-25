@@ -12,4 +12,7 @@ alias Reboot = BcmReboot!(DeviceBase + 0x10001c, DeviceBase + 0x100024);
 
 struct System {
     enum gpu_freq = 250 * 1000 * 1000;
+
+    private enum mb(ulong n) = 1024 * 1024 * n;
+    enum memsize_physical = mb!(512);
 }

@@ -6,6 +6,8 @@ import core.sync;
 import kernel.board : Uart;
 import kernel.timer : Timer;
 
+import arch = kernel.arch;
+
 import crc = ulib.crc32;
 import io = ulib.io;
 
@@ -130,6 +132,10 @@ bool overlaps(ubyte* d1, size_t sz1, ubyte* d2, size_t sz2) {
 }
 
 extern (C) void kmain() {
+    version (kenter) {
+        arch.enter_kernel();
+    }
+
     // move copyin to a new location, which cannot overlap with [entry,
     // entry+nbytes) or [boot.data, boot.data+nbytes) or the stack
     ubyte* new_copyin = &_kheap_start;
@@ -145,15 +151,25 @@ extern (C) void kmain() {
         BootData boot = unpack();
     }
 
+    version (kboot) {
+        // We are booting the kernel, so enable virtual memory.
+        arch.kernel_setup();
+        import vm = kernel.vm;
+        // Entry is a high kernel address, so convert it to the physical
+        // address for checking overlap.
+        auto phys_entry = cast(ubyte*) vm.kpa2pa(cast(uintptr) boot.entry);
+    } else {
+        auto phys_entry = boot.entry;
+    }
+
     size_t nbytes = boot.data.length;
 
-    while (overlaps(new_copyin, copyin_size, boot.entry, nbytes) ||
+    while (overlaps(new_copyin, copyin_size, phys_entry, nbytes) ||
             overlaps(new_copyin, copyin_size, &boot.data[0], nbytes)) {
         new_copyin += nbytes + (nbytes % 16);
     }
 
     memcpy(new_copyin, cast(ubyte*)&copyin, copyin_size);
-
     insn_fence();
 
     // call the new copyin that has been moved

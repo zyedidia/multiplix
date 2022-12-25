@@ -124,7 +124,7 @@ local lib = knit.rglob("libd", "*.d")
 local kernel = knit.join(
     knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
     knit.rglob("kernel/dev", "*.d"),
-    knit.glob("kernel/*.d"),
+    knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
     {
         "kernel/arch/package.d",
         "kernel/board/package.d",
@@ -142,6 +142,13 @@ local src = {
         lib,
         kernel,
         knit.rglob("test", "*.d")
+    ),
+    kernel = knit.join(
+        lib,
+        kernel,
+        {
+            "kernel/main.d",
+        }
     )
 }
 
@@ -162,27 +169,38 @@ local obj = {
             f"kernel/arch/$(machine.arch)/monitorasm.o",
         }
     ),
+    kernel = knit.join(
+        knit.extrepl(src.kernel, ".d", ".o"),
+        {
+            f"kernel/arch/$(machine.arch)/kernelasm.o",
+        }
+    ),
 }
 
 local link = {
     bootloader = f"link/$(machine.board)/bootloader.ld",
+    kernel = f"link/$(machine.board)/kernel.ld",
     extra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)"),
 }
 
 local bootversion = sel(cli.payload == nil, "uart", "payload")
+local boottype = sel(tobool(cli.kboot), "-d-version=kboot", "")
+local bootenter = sel(tobool(cli.kenter), "-d-version=kenter", "")
 
 local kernel = r{
     $ bootloader/main.o:D[.deps/bootloader/main.dep]: bootloader/main.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/bootloader/main.dep -d-version=$bootversion
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/bootloader/main.dep -d-version=$bootversion $boottype $bootenter
     $ bootloader/payload.o: bootloader/payload.s
         $(tools.cc) $(flags.as) -c -o $output $input -DPAYLOAD=$(cli.payload)
     $ bootloader.elf: $(obj.bootloader) $(link.bootloader)[I]
         $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
     $ test.elf: $(obj.test) $(link.bootloader)[I]
         $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
+    $ kernel.elf: $(obj.kernel) $(link.kernel)[I]
+        $(tools.cc) $(flags.ld) -T$(link.kernel) $(link.extra) $input -o $output
     $ qemu-%:VB: %.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -kernel $input
-    $ qemu-gdb:VB: test.elf
+    $ qemu-gdb-%:VB: %.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -s -S -kernel $input &
         $(tools.gdb) -ex "file $input" -ex "target remote localhost:1234"
 }

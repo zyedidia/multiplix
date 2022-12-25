@@ -50,6 +50,17 @@ alias memory_fence = () {
     }
 };
 
+pragma(inline, true)
+alias vm_fence = () {
+    version (RISCV64) {
+        asm {
+            "sfence.vma";
+        }
+    } else version (AArch64) {
+        assert(0, "TODO: VM fence aarch64");
+    }
+};
+
 /// Used to introduce happens-before edges between operations.
 pragma(LDC_fence)
     void llvm_memory_fence(AtomicOrdering ordering = DefaultOrdering,

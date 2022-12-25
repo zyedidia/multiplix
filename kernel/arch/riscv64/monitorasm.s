@@ -18,7 +18,16 @@ _halt:
 	wfi
 	j _halt
 
-.section ".text"
+.section ".text.enter_smode"
+.globl _enter_smode
+_enter_smode:
+	la t0, entry
+	csrw mepc, t0
+	mret
+entry:
+	ret
+
+.section ".text.monitorvec"
 .globl monitorvec
 .align 4
 monitorvec:

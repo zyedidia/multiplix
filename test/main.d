@@ -13,18 +13,17 @@ import kernel.arch.aarch64.monitor.boot;
 
 extern (C) void kmain() {
     Uart.init(115200);
-    /* int el; */
-    /* asm { */
-    /*     "mrs %0, CurrentEL" : "=r"(el); */
-    /* } */
-    /* io.writeln("EL: ", el >> 2); */
 
     /* enter_smode(); */
+
+    io.writeln("address of kmain: ", &kmain);
+
+    io.writeln("entering el1, from el: ", SysReg.currentel >> 2);
 
     enter_el1();
 
     io.writeln("hello world");
-    io.writeln("current el: ", SysReg.currentel);
+    io.writeln("current el: ", SysReg.currentel >> 2);
 
     asm {
         "smc 0";

@@ -1,5 +1,4 @@
 .section ".text.boot"
-
 .globl _start
 _start:
 	// install the trap handler
@@ -21,6 +20,17 @@ _hlt:
 
 	bl dstart
 	b _hlt
+
+.section ".text.enter_el1"
+.globl _enter_el1
+_enter_el1:
+	mov x0, sp
+	msr sp_el1, x0
+	ldr x0, =entry
+	msr elr_el3, x0
+	eret
+entry:
+	ret
 
 .macro PROLOGUE
 sub sp, sp, #192
@@ -53,7 +63,7 @@ add sp, sp, #192
 eret
 .endm
 
-.section ".text"
+.section ".text.monitorvec"
 .globl monitorvec
 .balign 2048
 monitorvec:

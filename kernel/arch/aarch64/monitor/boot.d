@@ -4,10 +4,9 @@ import kernel.arch.aarch64.sysreg;
 
 import bits = ulib.bits;
 
-extern (C) extern __gshared ubyte _el1_entrypoint;
+extern (C) void _enter_el1();
 
 void enter_el1() {
-    pragma(LDC_never_inline);
     // We want 'eret' to jump to _el1_entrypoint, so we write it to elr_el3.
     // TODO: not sure why this doesn't work, have to use inline asm for this instead
     /* SysReg.elr_el3 = cast(uintptr) &_el1_entrypoint; */
@@ -21,13 +20,5 @@ void enter_el1() {
     // Configure EL2 to run in aarch64 non-secure mode.
     SysReg.scr_el3 = Scr.reserved | Scr.rw_aarch64 | Scr.ns;
 
-    asm {
-        // perform the switch and jump to _el1_entrypoint
-        "mov x0, sp" : : : "x0";
-        "msr sp_el1, x0";
-        "ldr x0, =_el1_entrypoint" : : : "x0";
-        "msr elr_el3, x0";
-        "eret";
-        "_el1_entrypoint:";
-    }
+    _enter_el1();
 }

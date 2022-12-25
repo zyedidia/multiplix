@@ -4,11 +4,9 @@ import kernel.arch.riscv64.csr;
 
 import bits = ulib.bits;
 
-extern (C) extern __gshared ubyte _smode_entrypoint;
+extern (C) void _enter_smode();
 
 void enter_smode() {
-    // We want 'mret' to jump to _smode_entrypoint, so we write it to mepc.
-    Csr.mepc = cast(uintptr) &_smode_entrypoint;
     // Write S-mode to mstatus.MPP.
     Csr.mstatus = bits.write(Csr.mstatus, 12, 11, Priv.s);
     // Disable paging.
@@ -23,9 +21,6 @@ void enter_smode() {
     Csr.pmpcfg0 = 0b0_0_01_111;
     Csr.pmpaddr0 = 0xffff_ffff_ffff;
 
-    asm {
-        // perform the switch and jump to _smode_entrypoint
-        "mret";
-        "_smode_entrypoint:";
-    }
+    // Call asm function that performs actual transition.
+    _enter_smode();
 }
