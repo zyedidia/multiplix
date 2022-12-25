@@ -3,6 +3,8 @@ module test.main;
 import io = ulib.io;
 import kernel.board;
 
+import kernel.arch.aarch64.sysreg;
+
 /* import sbi = kernel.arch.riscv64.sbi; */
 /*  */
 /* import kernel.arch.riscv64.csr; */
@@ -19,6 +21,7 @@ extern (C) void kmain() {
     /* enter_smode(); */
 
     io.writeln("hello world");
+    io.writeln("current el: ", SysReg.currentel);
 
     asm {
         "smc 0";

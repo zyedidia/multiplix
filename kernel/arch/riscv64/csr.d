@@ -71,12 +71,12 @@ enum Cause {
 
 // dfmt off
 template GenCsr(string name) {
-    const char[] GenCsr = "@property static uintptr " ~ name ~ "() {" ~
-        "return rdcsr!(CsrNum." ~ name ~ ")();" ~
-    "}\n" ~
-    "@property static void " ~ name ~ "(uintptr v) {" ~
-        "wrcsr!(CsrNum." ~ name ~ ")(v);" ~
-    "}\n";
+    const char[] GenCsr = `@property static uintptr ` ~ name ~ `() {
+        return rdcsr!(CsrNum.` ~ name ~ `)();
+    }
+    @property static void ` ~ name ~ `(uintptr v) {
+        wrcsr!(CsrNum.` ~ name ~ `)(v);
+    }`;
 }
 // dfmt on
 
