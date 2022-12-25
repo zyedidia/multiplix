@@ -4,6 +4,7 @@ import io = ulib.io;
 import kernel.board;
 
 import kernel.arch.aarch64.sysreg;
+import kernel.arch.aarch64.monitor.boot;
 
 /* import sbi = kernel.arch.riscv64.sbi; */
 /*  */
@@ -19,6 +20,8 @@ extern (C) void kmain() {
     /* io.writeln("EL: ", el >> 2); */
 
     /* enter_smode(); */
+
+    enter_el1();
 
     io.writeln("hello world");
     io.writeln("current el: ", SysReg.currentel);
