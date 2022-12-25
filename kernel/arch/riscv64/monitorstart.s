@@ -64,17 +64,17 @@ monitorvec:
 	# call the trap handler
 	call monitortrap
 
-	# TODO: no need to reload any callee-saved registers
+	# no need to reload any callee-saved registers
 
 	# restore registers.
 	ld ra, 0(sp)
-	ld sp, 8(sp)
+	# ld sp, 8(sp)
 	# no need to reload tp/gp
 	ld t0, 32(sp)
 	ld t1, 40(sp)
 	ld t2, 48(sp)
-	ld s0, 56(sp)
-	ld s1, 64(sp)
+	# ld s0, 56(sp)
+	# ld s1, 64(sp)
 	ld a0, 72(sp)
 	ld a1, 80(sp)
 	ld a2, 88(sp)
@@ -83,16 +83,16 @@ monitorvec:
 	ld a5, 112(sp)
 	ld a6, 120(sp)
 	ld a7, 128(sp)
-	ld s2, 136(sp)
-	ld s3, 144(sp)
-	ld s4, 152(sp)
-	ld s5, 160(sp)
-	ld s6, 168(sp)
-	ld s7, 176(sp)
-	ld s8, 184(sp)
-	ld s9, 192(sp)
-	ld s10, 200(sp)
-	ld s11, 208(sp)
+	# ld s2, 136(sp)
+	# ld s3, 144(sp)
+	# ld s4, 152(sp)
+	# ld s5, 160(sp)
+	# ld s6, 168(sp)
+	# ld s7, 176(sp)
+	# ld s8, 184(sp)
+	# ld s9, 192(sp)
+	# ld s10, 200(sp)
+	# ld s11, 208(sp)
 	ld t3, 216(sp)
 	ld t4, 224(sp)
 	ld t5, 232(sp)
