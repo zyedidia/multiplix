@@ -2,7 +2,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-    .text 0xffffffc000000000 : {
+    .text 0xffffffc000004000 : {
         _kcode_start = .;
         KEEP(*(.text.boot))  
         *(.text*) 

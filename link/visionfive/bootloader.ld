@@ -2,7 +2,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-    .text 0x84000000 : {
+    .text 0x80000000 : {
         _kcode_start = .;
         KEEP(*(.text.boot))  
         *(.text*) 
@@ -38,6 +38,12 @@ SECTIONS
         . += 4K;
     }
     PROVIDE(_kstack = . - 16);
+
+    ASSERT((. - ADDR(.text) <= 0x4000), "boot code is larger than 4 pages!")
+
+    .payload : {
+        *(.payload*)
+    }
 
     . = ALIGN(16);
     _kheap_start = .;

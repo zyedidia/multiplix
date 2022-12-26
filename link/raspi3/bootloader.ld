@@ -7,21 +7,22 @@ SECTIONS
         KEEP(*(.text.boot))  
         *(.text*) 
         _kcode_end = .;
-        . = ALIGN(8);
     }
     .rodata : {
+        . = ALIGN(8);
         _krodata_start = .;
         *(.rodata*)
         _krodata_end = .;
     }
     .data : { 
+        . = ALIGN(8);
         _kdata_start = .;
         *(.data*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         _kdata_end = .;
     } 
     .bss : {
-        . = ALIGN(4);
+        . = ALIGN(8);
         _kbss_start = .;
         *(.bss*)
         *(COMMON)
@@ -34,6 +35,12 @@ SECTIONS
         . += 4K;
     }
     PROVIDE(_kstack = . - 16);
+
+    ASSERT((. - ADDR(.text) <= 0x4000), "boot code is larger than 4 pages!")
+
+    .payload : {
+        *(.payload*)
+    }
 
     . = ALIGN(16);
     _kheap_start = .;
