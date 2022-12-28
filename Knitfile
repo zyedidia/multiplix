@@ -50,7 +50,7 @@ function flags_llvm(machine)
     local prefix = prefixes[machine.arch]
     local flags := -mtriple=$(prefix)
     if machine.arch == "aarch64" then
-        flags = flags .. f" -mcpu=$(machine.mcpu) -mattr=$(machine.mattr)"
+        flags = flags .. f" -mcpu=$(machine.mcpu) -mattr=$(machine.mattr),-sve,-fp-armv8"
     elseif machine.arch == "riscv64" then
         flags = flags .. f" -mattr=$(machine.mattr) -code-model=$(machine.cmodel)"
     end
@@ -95,7 +95,7 @@ local flags = {
     dc = sel(
         conf.dc == "gdc",
         f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections $(flags_gnu(machine))",
-        f"-betterC $flto -Oz -g -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags_llvm(machine)) $(sel(conf.release, '-boundscheck=off', ''))"
+        f"-betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags_llvm(machine)) $(sel(conf.release, '-boundscheck=off', '')) -disable-simplify-libcalls --disable-simplify-drtcalls"
     ),
     as := -Os $(flags_gnu(machine)) -xassembler-with-cpp
     ld := -Os -mstrict-align $(flags_gnu(machine)) -nostartfiles -nodefaultlibs -Wl,--gc-sections -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2 -Wl,-plugin-opt=-code-model=$(machine.cmodel)

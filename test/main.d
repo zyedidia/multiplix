@@ -20,14 +20,14 @@ extern (C) void kmain() {
 
     io.writeln("entering el1, from el: ", SysReg.currentel >> 2);
 
-    enter_el1();
+    /* enter_el1(); */
 
     io.writeln("hello world");
     io.writeln("current el: ", SysReg.currentel >> 2);
 
-    asm {
-        "smc 0";
-    }
+    /* asm { */
+    /*     "smc 0"; */
+    /* } */
 
     /* io.writeln("mvendorid: ", sbi.Base.get_mvendorid()); */
 

@@ -103,7 +103,7 @@ func (l *ElfLoader) Load(data []byte) ([]Segment, uint64, error) {
 
 			segs = append(segs, Segment{
 				addr: p.Vaddr,
-				data: data,
+				data: data[f.Entry-p.Vaddr:],
 			})
 		}
 	}

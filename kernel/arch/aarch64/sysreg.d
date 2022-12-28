@@ -18,7 +18,14 @@ template GenSysReg(string name) {
 // dfmt on
 
 struct SysReg {
-    mixin(GenSysReg!("currentel"));
+    @property static uintptr currentel() {
+        uintptr val;
+        asm {
+            "mrs %0, currentel" : "=r"(val);
+        }
+        return val;
+    }
+    /* mixin(GenSysReg!("currentel")); */
 
     mixin(GenSysReg!("elr_el3"));
     mixin(GenSysReg!("spsr_el3"));
@@ -28,6 +35,13 @@ struct SysReg {
 
     mixin(GenSysReg!("sctlr_el1"));
     mixin(GenSysReg!("sp_el1"));
+    mixin(GenSysReg!("ttbr0_el1"));
+    mixin(GenSysReg!("ttbr1_el1"));
+    mixin(GenSysReg!("tcr_el1"));
+    mixin(GenSysReg!("mair_el1"));
+    mixin(GenSysReg!("id_aa64mmfr0_el1"));
+
+    mixin(GenSysReg!("S3_1_C15_C2_1"));
 }
 
 enum Sctlr {
@@ -40,6 +54,14 @@ enum Sctlr {
     mmu_enabled = (1 << 0),
 
     nommu = reserved | ee_little_endian | icache_disabled | dcache_disabled | mmu_disabled,
+}
+
+struct Tcr {
+    enum t0sz(uint val) = val;
+    enum t1sz(uint val) = val << 16;
+    enum ips_36 = 0b010UL << 32;
+    enum tg0_4kb = 0b00UL << 14;
+    enum tg1_4kb = 0b10UL << 30;
 }
 
 enum Hcr {
