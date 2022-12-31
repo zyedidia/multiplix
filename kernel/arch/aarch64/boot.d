@@ -10,19 +10,20 @@ shared Pagetable tbl_lo;
 shared Pagetable tbl_hi;
 
 void kernel_setup() {
-    // device mode
-    SysReg.mair_el1 = 0b0000_0000;
+    SysReg.mair_el1 = (Mair.device_ngnrne << 8) | Mair.normal_cacheable;
 
+    // Map all memory as device (mair 1) for now. Once we can do finer-grained
+    // mapping in the kernel (with an allocator), we can enable caching for
+    // normal memory regions.
     Pagetable* pgtbl_lo = cast(Pagetable*) &tbl_lo;
-    pgtbl_lo.map_giga(0, 0, 0);
-    pgtbl_lo.map_giga(sys.gb!(1), sys.gb!(1), 0);
+    pgtbl_lo.map_giga(0, 0, Ap.krw, 1);
+    pgtbl_lo.map_giga(sys.gb!(1), sys.gb!(1), Ap.krw, 1);
 
     Pagetable* pgtbl_hi = cast(Pagetable*) &tbl_hi;
-    pgtbl_hi.map_giga(vm.pa2ka(0), 0, 0);
-    pgtbl_hi.map_giga(vm.pa2ka(sys.gb!(1)), sys.gb!(1), 0);
+    pgtbl_hi.map_giga(vm.pa2ka(0), 0, Ap.krw, 1);
+    pgtbl_hi.map_giga(vm.pa2ka(sys.gb!(1)), sys.gb!(1), Ap.krw, 1);
 
-    /* SysReg.tcr_el1 = 0x1B51B351B; */
-    SysReg.tcr_el1 = Tcr.t0sz!(25) | Tcr.t1sz!(25) | Tcr.tg0_4kb | Tcr.tg1_4kb | Tcr.ips_36;
+    SysReg.tcr_el1 = Tcr.t0sz!(25) | Tcr.t1sz!(25) | Tcr.tg0_4kb | Tcr.tg1_4kb | Tcr.ips_36 | Tcr.irgn | Tcr.orgn | Tcr.sh;
 
     SysReg.ttbr0_el1 = cast(uintptr) pgtbl_lo | 1;
     SysReg.ttbr1_el1 = cast(uintptr) pgtbl_hi | 1;
@@ -33,7 +34,7 @@ void kernel_setup() {
     }
 
     /* SysReg.S3_1_C15_C2_1 = SysReg.S3_1_C15_C2_1 | (1 << 6); // enable CPUECTLR.SMPEN */
-    SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1; // enable mmu
+    SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1 | (1 << 12) | (1 << 2); // enable mmu and caches
 
     asm { "isb"; }
 }

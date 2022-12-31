@@ -32,17 +32,21 @@ struct Pte {
     }
 }
 
+enum Ap {
+    krw = 0b00,
+}
+
 struct Pagetable {
     align(4096) Pte[512] ptes;
 
-    void map_giga(uintptr va, uintptr pa, uint perm) {
+    void map_giga(uintptr va, uintptr pa, ubyte perm, ubyte mair) {
         auto idx = bits.get(va, 38, 30);
         ptes[idx].addr = pa >> 12;
         ptes[idx].valid = 1;
         ptes[idx].table = 0;
-        ptes[idx].ap = 0b00;
+        ptes[idx].ap = perm;
         ptes[idx].af = 1;
         ptes[idx].sh = 0b11;
-        ptes[idx].index = 0;
+        ptes[idx].index = mair;
     }
 }

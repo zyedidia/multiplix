@@ -41,6 +41,7 @@ struct SysReg {
     mixin(GenSysReg!("mair_el1"));
     mixin(GenSysReg!("id_aa64mmfr0_el1"));
 
+    // CPUECTLR
     mixin(GenSysReg!("S3_1_C15_C2_1"));
 }
 
@@ -56,12 +57,23 @@ enum Sctlr {
     nommu = reserved | ee_little_endian | icache_disabled | dcache_disabled | mmu_disabled,
 }
 
+enum Mair {
+    device_ngnrne = 0b0000_0000,
+    // Memory: normal outer write-through non-transient read-allocate
+    // write-allocate, inner write-through non-transiant read-allocate
+    // write-allocate.
+    normal_cacheable = 0b1011_1011,
+}
+
 struct Tcr {
     enum t0sz(uint val) = val;
     enum t1sz(uint val) = val << 16;
     enum ips_36 = 0b010UL << 32;
     enum tg0_4kb = 0b00UL << 14;
     enum tg1_4kb = 0b10UL << 30;
+    enum irgn = (0b10 << 8) | (0b10 << 24);
+    enum orgn = (0b10 << 10) | (0b10 << 26);
+    enum sh = (0b11 << 12) | (0b11 << 28);
 }
 
 enum Hcr {

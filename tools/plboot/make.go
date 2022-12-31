@@ -33,6 +33,10 @@ func (p *makeCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		return subcommands.ExitFailure
 	}
 	data, err := os.ReadFile(f.Args()[0])
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return subcommands.ExitFailure
+	}
 	l := &ElfLoader{
 		Expand: false,
 	}
