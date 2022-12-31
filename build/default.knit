@@ -1,4 +1,4 @@
-local conf = include("conf.knit")
+local _, conf = pcall(include, "conf.knit")
 
 return {
     board = cli.board or conf.board or "visionfive",
