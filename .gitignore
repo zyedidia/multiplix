@@ -10,3 +10,4 @@ TODO.txt
 .deps
 *.boot
 *.bin.out
+*.payload

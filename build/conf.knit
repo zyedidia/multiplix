@@ -1,0 +1,6 @@
+return {
+    board = cli.board or "visionfive",
+    lto = sel(cli.lto == nil, true, tobool(cli.lto)),
+    release = cli.release or false,
+    entry = cli.entry,
+}

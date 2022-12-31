@@ -10,9 +10,6 @@ shared Pagetable tbl_lo;
 shared Pagetable tbl_hi;
 
 void kernel_setup() {
-    pragma(LDC_never_inline);
-
-    import io = ulib.io;
     // device mode
     SysReg.mair_el1 = 0b0000_0000;
 
@@ -36,7 +33,6 @@ void kernel_setup() {
     }
 
     /* SysReg.S3_1_C15_C2_1 = SysReg.S3_1_C15_C2_1 | (1 << 6); // enable CPUECTLR.SMPEN */
-    io.writeln("hi");
     SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1; // enable mmu
 
     asm { "isb"; }

@@ -42,7 +42,9 @@ SECTIONS
     ASSERT((. - ADDR(.text) <= 0x4000), "boot code is larger than 4 pages!")
 
     .payload : {
+        . = ALIGN(8);
         *(.payload*)
+        . = ALIGN(8);
     }
 
     . = ALIGN(16);

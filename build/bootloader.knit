@@ -1,0 +1,85 @@
+function sel(cond, t, f)
+    if cond then return t else return f end
+end
+
+local knit = require("knit")
+
+local build = include("build/build.knit")
+local conf = include("build/conf.knit")
+
+local machine = build.machine(conf.board)
+if machine == nil then
+    return "could not find machine for board " .. board
+end
+
+local tools = build.tools(machine)
+local flags = build.flags(machine, conf.lto, conf.release)
+
+local meta = r{
+    $ %.o: %.s
+        $(tools.cc) $(flags.as) $input -c -o $output
+    $ %.o:D[.deps/%.dep]: %.d
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.deps/$match.dep
+    $ %.bin: %.elf
+        $(tools.objcopy) $input -O binary $output
+    $ %.bin.out: %.bin
+        ./firmware/visionfive/fsz.sh $input $output
+    $ %.payload: %.elf
+        plboot make -o $output $input
+    $ %.list: %.elf
+        $(tools.objdump) -D $input > $output
+}
+
+local lib = knit.rglob("libd", "*.d")
+
+local kernel = knit.join(
+    knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
+    knit.rglob("kernel/dev", "*.d"),
+    knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
+    {
+        "kernel/arch/package.d",
+        "kernel/board/package.d",
+        f"kernel/board/$(machine.board).d",
+    }
+)
+
+local src = knit.join(
+    lib,
+    kernel,
+    knit.rglob("bootloader", "*.d")
+)
+
+if cli.payload ~= nil then
+    src = knit.join(src, {"bootloader/payload.o"})
+else
+    cli.payload = ""
+end
+
+local obj = knit.join(
+    knit.extrepl(src, ".d", ".o"),
+    {
+        f"kernel/arch/$(machine.arch)/monitorasm.o",
+    }
+)
+
+local link = f"link/$(machine.board)/bootloader.ld"
+local linkextra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)")
+
+local boot = {
+    version = sel(cli.payload == "", "uart", "payload"),
+    kboot = sel(tobool(cli.kboot), "-d-version=kboot", ""),
+    kenter = sel(tobool(cli.kenter), "-d-version=kenter", ""),
+}
+
+return b{
+    $ all:V: bootloader.bin
+
+    $ bootloader/main.o:D[.deps/bootloader/main.dep]: bootloader/main.d
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.deps/bootloader/main.dep -d-version=$(boot.version) $(boot.kboot) $(boot.kenter)
+    $ bootloader/payload.o: bootloader/payload.s $(cli.payload)
+        $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(cli.payload)
+    $ bootloader.elf: $(obj) $(link)[I]
+        $(tools.cc) $(flags.ld) -T$(link) $(linkextra) $input -o $output
+
+    meta
+}

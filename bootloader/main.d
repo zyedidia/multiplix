@@ -132,8 +132,6 @@ bool overlaps(ubyte* d1, size_t sz1, ubyte* d2, size_t sz2) {
 }
 
 extern (C) void kmain() {
-    import kernel.arch.aarch64.sysreg;
-
     version (kenter) {
         arch.enter_kernel();
     }
@@ -153,8 +151,6 @@ extern (C) void kmain() {
         BootData boot = unpack();
     }
 
-    io.writeln("about to enable mmu");
-
     version (kboot) {
         // We are booting the kernel, so enable virtual memory.
         arch.kernel_setup();
@@ -165,8 +161,6 @@ extern (C) void kmain() {
     } else {
         auto phys_entry = boot.entry;
     }
-
-    io.writeln("enabled mmu");
 
     size_t nbytes = boot.data.length;
 

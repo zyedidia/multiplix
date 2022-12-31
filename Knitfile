@@ -4,116 +4,36 @@ function sel(cond, t, f)
     if cond then return t else return f end
 end
 
-local prefixes = {
-    aarch64 = "aarch64-none-elf",
-    riscv64 = "riscv64-unknown-elf",
-}
+local build = include("build/build.knit")
+local conf = include("build/conf.knit")
 
-local conf = {
-    dc = "ldc",
-    board = cli.board or "visionfive",
-    lto = sel(cli.lto == nil, true, tobool(cli.lto)),
-    release = cli.release or false,
-    entry = cli.entry,
-}
-
-local machines = {
-    raspi3 = {
-        board = "raspi3",
-        march = "armv8-a+crc",
-        mcpu = "cortex-a53",
-        mattr = "+strict-align",
-        arch = "aarch64",
-        qemu = "-M raspi3b -serial null -serial mon:stdio",
-    },
-    visionfive = {
-        board = "visionfive",
-        mabi = "lp64",
-        march = "rv64imac",
-        mattr = "+m,+a,+c,+relax",
-        arch = "riscv64",
-        mcmodel = "medany",
-        qemu = "-M virt -bios none -smp 2 -m 2G",
-    },
-    virt_riscv64 = {
-        board = "virt_riscv64",
-        mabi = "lp64",
-        march = "rv64imac",
-        mattr = "+m,+a,+c,+relax",
-        arch = "riscv64",
-        mcmodel = "medany",
-        qemu = "-M virt -bios none -smp 4 -m 2G",
-    }
-}
-
-function flags_llvm(machine)
-    local prefix = prefixes[machine.arch]
-    local flags := -mtriple=$(prefix)
-    if machine.arch == "aarch64" then
-        flags = flags .. f" -mcpu=$(machine.mcpu) -mattr=$(machine.mattr),-sve,-fp-armv8"
-    elseif machine.arch == "riscv64" then
-        flags = flags .. f" -mattr=$(machine.mattr) -code-model=$(machine.cmodel)"
-    end
-    return flags
+local machine = build.machine(conf.board)
+if machine == nil then
+    return "could not find machine for board " .. board
 end
 
-function flags_gnu(machine)
-    local flags := -march=$(machine.march)
-    if machine.arch == "aarch64" then
-        flags = flags .. f" -mcpu=$(machine.mcpu)"
-    elseif machine.arch == "riscv64" then
-        flags = flags .. f" -mcmodel=$(machine.mcmodel) -mabi=$(machine.mabi)"
-    end
-    return flags
-end
-
-local machine = machines[conf.board]
-local prefix = prefixes[machine.arch]
-
-if machine.mcmodel == "medany" then
-    machine.cmodel = "medium"
-else
-    machine.cmodel = "small"
-end
-
-local tools = {
-    dc = "ldc2",
-    cc := $prefix-gcc
-    as := $prefix-as
-    ld := $prefix-ld
-    cpp := $prefix-cpp
-    objcopy := $prefix-objcopy
-    objdump := $prefix-objdump
-    gdb := gdb-multiarch
-    qemu := qemu-system-$(machine.arch)
-}
-
-local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
-local flto = sel(conf.lto, "-flto=thin", "")
-
-local flags = {
-    dc = sel(
-        conf.dc == "gdc",
-        f"-fno-exceptions -fno-rtti -O3 -nostartfiles -nostdlib -mabi=$(machine.mabi) -march=$(machine.march) -mcmodel=$(machine.mcmodel) -ffunction-sections -fdata-sections $(flags_gnu(machine))",
-        f"-betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags_llvm(machine)) $(sel(conf.release, '-boundscheck=off', '')) -disable-simplify-libcalls --disable-simplify-drtcalls"
-    ),
-    as := -Os $(flags_gnu(machine)) -xassembler-with-cpp
-    ld := -Os -mstrict-align $(flags_gnu(machine)) -nostartfiles -nodefaultlibs -Wl,--gc-sections -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2 -Wl,-plugin-opt=-code-model=$(machine.cmodel)
-    qemu := $(machine.qemu) -nographic
-}
-
-local dco = sel(conf.dc == "gdc", "o", "of")
+local tools = build.tools(machine)
+local flags = build.flags(machine, conf.lto, conf.release)
 
 local meta = r{
     $ %.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
     $ %.o:D[.deps/%.dep]: %.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/$match.dep
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.deps/$match.dep
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
+    $ %.boot.elf:B: %.payload
+        knit -f build/bootloader.knit kboot=1 kenter=1 payload=$input bootloader.elf board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
+        mv bootloader.elf $output
+    $ %.boot.bin:B: %.payload
+        knit -f build/bootloader.knit kboot=1 kenter=1 payload=$input bootloader.bin board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
+        mv bootloader.bin $output
+    $ %.boot.list:B: %.payload
+        knit -f build/bootloader.knit kboot=1 kenter=1 payload=$input bootloader.list board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
+        mv bootloader.list $output
     $ %.bin.out: %.bin
         ./firmware/visionfive/fsz.sh $input $output
-    $ %.boot: %.elf
+    $ %.payload: %.elf
         plboot make -o $output $input
     $ %.list: %.elf
         $(tools.objdump) -D $input > $output
@@ -133,16 +53,6 @@ local kernel = knit.join(
 )
 
 local src = {
-    bootloader = knit.join(
-        lib,
-        kernel,
-        knit.rglob("bootloader", "*.d")
-    ),
-    test = knit.join(
-        lib,
-        kernel,
-        knit.rglob("test", "*.d")
-    ),
     kernel = knit.join(
         lib,
         kernel,
@@ -152,23 +62,7 @@ local src = {
     )
 }
 
-if cli.payload ~= nil then
-    src.bootloader = knit.join(src.bootloader, {"bootloader/payload.o"})
-end
-
 local obj = {
-    bootloader = knit.join(
-        knit.extrepl(src.bootloader, ".d", ".o"),
-        {
-            f"kernel/arch/$(machine.arch)/monitorasm.o",
-        }
-    ),
-    test = knit.join(
-        knit.extrepl(src.test, ".d", ".o"),
-        {
-            f"kernel/arch/$(machine.arch)/monitorasm.o",
-        }
-    ),
     kernel = knit.join(
         knit.extrepl(src.kernel, ".d", ".o"),
         {
@@ -178,29 +72,16 @@ local obj = {
 }
 
 local link = {
-    bootloader = f"link/$(machine.board)/bootloader.ld",
     kernel = f"link/$(machine.board)/kernel.ld",
     extra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)"),
 }
 
-local bootversion = sel(cli.payload == nil, "uart", "payload")
-local boottype = sel(tobool(cli.kboot), "-d-version=kboot", "")
-local bootenter = sel(tobool(cli.kenter), "-d-version=kenter", "")
-
 local kernel = r{
-    $ bootloader/main.o:D[.deps/bootloader/main.dep]: bootloader/main.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -$dco $output -makedeps=.deps/bootloader/main.dep -d-version=$bootversion $boottype $bootenter
-    $ bootloader/payload.o: bootloader/payload.s
-        $(tools.cc) $(flags.as) -c -o $output $input -DPAYLOAD=$(cli.payload)
-    $ bootloader.elf: $(obj.bootloader) $(link.bootloader)[I]
-        $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
-    $ test.elf: $(obj.test) $(link.bootloader)[I]
-        $(tools.cc) $(flags.ld) -T$(link.bootloader) $(link.extra) $input -o $output
     $ kernel.elf: $(obj.kernel) $(link.kernel)[I]
         $(tools.cc) $(flags.ld) -T$(link.kernel) $(link.extra) $input -o $output
-    $ qemu-%:VB: %.elf
+    $ qemu:VB: kernel.boot.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -kernel $input
-    $ qemu-gdb-%:VB: %.elf
+    $ qemu-gdb:VB: kernel.boot.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -s -S -kernel $input &
         $(tools.gdb) -ex "file $input" -ex "target remote localhost:1234"
 }
@@ -208,16 +89,15 @@ local kernel = r{
 local allsrc = knit.rglob(".", "*.d")
 
 return b{
-    $ all:V: bootloader.bin
-
-    $ bootloader:V: bootloader.bin
+    $ all:V: kernel.boot.bin
 
     $ format:VB:
         dfmt -i --brace_style=otbs $allsrc
     $ clean:VB:
+        knit -f build/bootloader.knit :all -t clean
         knit :all -t clean
-        rm -rf .deps
-    $ prog-%:VB: %.elf
+        rm -rf .deps *.list *.bin
+    $ prog:VB: kernel.boot.elf
         plboot prog $input
 
     kernel,

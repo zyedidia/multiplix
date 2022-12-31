@@ -1,0 +1,108 @@
+local build = {}
+
+function build.prefix(arch)
+    local prefixes = {
+        aarch64 = "aarch64-none-elf",
+        riscv64 = "riscv64-unknown-elf",
+    }
+    return prefixes[arch]
+end
+
+function build.machine(board)
+    local machines = {
+        raspi3 = {
+            board = "raspi3",
+            march = "armv8-a+crc",
+            mcpu = "cortex-a53",
+            mattr = "+strict-align",
+            arch = "aarch64",
+            qemu = "-M raspi3b -serial null -serial mon:stdio",
+        },
+        visionfive = {
+            board = "visionfive",
+            mabi = "lp64",
+            march = "rv64imac",
+            mattr = "+m,+a,+c,+relax",
+            arch = "riscv64",
+            mcmodel = "medany",
+            qemu = "-M virt -bios none -smp 2 -m 2G",
+        },
+        virt_riscv64 = {
+            board = "virt_riscv64",
+            mabi = "lp64",
+            march = "rv64imac",
+            mattr = "+m,+a,+c,+relax",
+            arch = "riscv64",
+            mcmodel = "medany",
+            qemu = "-M virt -bios none -smp 4 -m 2G",
+        }
+    }
+    local m = machines[board]
+    if m == nil then
+        return nil
+    end
+    if m.mcmodel == "medany" then
+        m.cmodel = "medium"
+    else
+        m.cmodel = "small"
+    end
+    return m
+end
+
+function build.flags_llvm(machine)
+    local prefix = build.prefix(machine.arch)
+
+    local flags = {
+        aarch64 := -mtriple=$prefix -mcpu=$(machine.mcpu) -mattr=$(machine.mattr),-sve,-fp-armv8
+        riscv64 := -mtriple=$prefix -mattr=$(machine.mattr) -code-model=$(machine.cmodel)
+    }
+    return flags[machine.arch]
+end
+
+function build.flags_gnu(machine)
+    local flags = {
+        aarch64 := -march=$(machine.march) -mcpu=$(machine.mcpu)
+        riscv64 := -march=$(machine.march) -mcmodel=$(machine.mcmodel) -mabi=$(machine.mabi)
+    }
+    return flags[machine.arch]
+end
+
+function build.tools(machine)
+    local prefix = build.prefix(machine.arch)
+    return {
+        dc = "ldc2",
+        cc := $prefix-gcc
+        as := $prefix-as
+        ld := $prefix-ld
+        cpp := $prefix-cpp
+        objcopy := $prefix-objcopy
+        objdump := $prefix-objdump
+        gdb := gdb-multiarch
+        qemu := qemu-system-$(machine.arch)
+    }
+end
+
+function build.flags(machine, lto, release)
+    local knit = require("knit")
+    local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
+    local flto = sel(lto, "-flto=thin", "")
+    local ltoflags := -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2
+    if machine.arch == "riscv64" then
+        ltoflags = ltoflags .. f" -Wl,-plugin-opt=-code-model=$(machine.cmodel)"
+    end
+    ltoflags = sel(lto, ltoflags, "")
+
+    local flags = {
+        llvm = build.flags_llvm(machine),
+        gnu = build.flags_gnu(machine),
+    }
+
+    return {
+        dc := -betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-boundscheck=off', '')) -fno-plt
+        as := -Os $(flags.gnu) -xassembler-with-cpp
+        ld := -Os -mstrict-align $(flags.gnu) -nostartfiles -nodefaultlibs $ltoflags -Wl,--gc-sections
+        qemu := $(machine.qemu) -nographic
+    }
+end
+
+return build
