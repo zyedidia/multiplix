@@ -1,18 +1,24 @@
 module kernel.board.raspi3;
 
-enum DeviceBase = 0x3f000000;
-
 import kernel.dev.uart.bcmmini;
 import kernel.dev.gpio.bcm;
 import kernel.dev.reboot.bcmreboot;
 
-alias Uart = BcmMiniUart!(DeviceBase + 0x215000);
-alias Gpio = BcmGpio!(DeviceBase + 0x200000);
-alias Reboot = BcmReboot!(DeviceBase + 0x10001c, DeviceBase + 0x100024);
-
 struct System {
     enum gpu_freq = 250 * 1000 * 1000;
 
+    enum device_base = 0x3f000000;
+
+    struct MemRange {
+        uintptr start;
+        size_t sz;
+    }
+
     private enum mb(ulong n) = 1024 * 1024 * n;
-    enum memsize_physical = mb!(512);
+    enum MemRange mem = MemRange(0, mb!(512));
+    enum MemRange device = MemRange(device_base, mb!(1024));
 }
+
+alias Uart = BcmMiniUart!(System.device_base + 0x215000);
+alias Gpio = BcmGpio!(System.device_base + 0x200000);
+alias Reboot = BcmReboot!(System.device_base + 0x10001c, System.device_base + 0x100024);

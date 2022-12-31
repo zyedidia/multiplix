@@ -14,5 +14,11 @@ struct System {
     enum cpu_freq = 1 * 1000 * 1000 * 1000;
     enum cpu_freq_mhz = cpu_freq / (1000 * 1000);
 
-    enum memsize_physical = sys.gb!(4);
+    struct MemRange {
+        uintptr start;
+        size_t sz;
+    }
+
+    enum MemRange device = MemRange(0, sys.gb!(2));
+    enum MemRange mem = MemRange(sys.gb!(2), sys.gb!(2));
 }

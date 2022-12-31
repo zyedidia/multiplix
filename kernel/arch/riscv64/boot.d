@@ -16,11 +16,17 @@ shared Pagetable39 kpagetable;
 // running this function it is possible to jump to high kernel addresses.
 void kernel_setup() {
     // Set up an identity-mapped pagetable.
+
+    auto map_region = (System.MemRange range, Pagetable39* pt) {
+        for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
+            pt.map_giga(addr, addr, Perm.krwx);
+            pt.map_giga(sys.highmem_base + addr, addr, Perm.krwx);
+        }
+    };
+
     Pagetable39* pgtbl = cast(Pagetable39*) &kpagetable;
-    for (size_t addr = 0; addr < System.memsize_physical; addr += sys.gb!(1)) {
-        pgtbl.map_giga(addr, addr, Perm.krwx);
-        pgtbl.map_giga(sys.highmem_base + addr, addr, Perm.krwx);
-    }
+    map_region(System.device, pgtbl);
+    map_region(System.mem, pgtbl);
 
     // Enable virtual memory with identity-mapped pagetable.
     Csr.satp = pgtbl.satp(0);
