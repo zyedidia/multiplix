@@ -11,3 +11,4 @@ TODO.txt
 *.boot
 *.bin.out
 *.payload
+conf.knit

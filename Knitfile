@@ -5,7 +5,7 @@ function sel(cond, t, f)
 end
 
 local build = include("build/build.knit")
-local conf = include("build/conf.knit")
+local conf = include("build/default.knit")
 
 local machine = build.machine(conf.board)
 if machine == nil then
