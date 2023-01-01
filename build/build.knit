@@ -16,7 +16,15 @@ function build.machine(board)
             mcpu = "cortex-a53",
             mattr = "+strict-align",
             arch = "aarch64",
-            qemu = "-M raspi3b -serial null -serial mon:stdio",
+            qemu = "-M raspi3ap -serial null -serial mon:stdio",
+        },
+        raspi4 = {
+            board = "raspi4",
+            march = "armv8-a+crc",
+            mcpu = "cortex-a72",
+            mattr = "+strict-align",
+            arch = "aarch64",
+            qemu = "-M raspi4b -serial null -serial mon:stdio" -- doesn't exist
         },
         visionfive = {
             board = "visionfive",
@@ -25,7 +33,7 @@ function build.machine(board)
             mattr = "+m,+a,+c,+relax",
             arch = "riscv64",
             mcmodel = "medany",
-            qemu = "-M virt -bios none -smp 2 -m 2G",
+            qemu = "-M visionfive -bios none -smp 2 -m 2G", -- doesn't exist
         },
         virt_riscv64 = {
             board = "virt_riscv64",
@@ -98,7 +106,7 @@ function build.flags(machine, lto, release)
     }
 
     return {
-        dc := -betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-boundscheck=off', '')) -fno-plt
+        dc := -betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt
         as := -Os $(flags.gnu) -xassembler-with-cpp
         ld := -Os -mstrict-align $(flags.gnu) -nostartfiles -nodefaultlibs $ltoflags -Wl,--gc-sections
         qemu := $(machine.qemu) -nographic
