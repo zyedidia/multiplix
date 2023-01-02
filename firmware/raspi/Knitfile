@@ -1,0 +1,39 @@
+local knit = require("knit")
+
+function sel(cond, t, f)
+    if cond then return t else return f end
+end
+
+local build = include("../../build/build.knit")
+local conf = include("../../build/default.knit")
+
+local machine = build.machine(conf.board)
+if machine == nil then
+    return "could not find machine for board " .. board
+end
+
+local defines = ""
+if conf.board == "raspi4" then
+    defines = "-DBCM2711=1"
+end
+
+local tools = build.tools(machine)
+local flags = build.flags(machine, false, conf.release)
+
+local meta = r{
+    $ %.o: %.s
+        $(tools.cc) $(flags.as) $defines $input -c -o $output
+    $ %.bin: %.elf
+        $(tools.objcopy) $input -O binary $output
+    $ %.list: %.elf
+        $(tools.objdump) -D $input > $output
+}
+
+return b{
+    $ all:V: armstub8.bin
+
+    $ armstub8.elf: armstub8.o link.ld[I]
+        $(tools.cc) $(flags.ld) -Wl,--section-start=.text=0x0 $input -o $output
+
+    meta
+}

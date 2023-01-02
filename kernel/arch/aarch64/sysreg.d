@@ -25,12 +25,20 @@ struct SysReg {
         }
         return val;
     }
+    @property static uintptr mpidr_el1() {
+        uintptr val;
+        asm {
+            "mrs %0, mpidr_el1" : "=r"(val);
+        }
+        return val;
+    }
     /* mixin(GenSysReg!("currentel")); */
 
     mixin(GenSysReg!("elr_el3"));
     mixin(GenSysReg!("spsr_el3"));
     mixin(GenSysReg!("scr_el3"));
 
+    mixin(GenSysReg!("spsr_el2"));
     mixin(GenSysReg!("hcr_el2"));
 
     mixin(GenSysReg!("sctlr_el1"));

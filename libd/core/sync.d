@@ -32,7 +32,7 @@ alias insn_fence = () {
         }
     } else version (AArch64) {
         asm {
-            "dsb sy";
+            "isb sy";
         }
     }
 };

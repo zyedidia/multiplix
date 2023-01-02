@@ -1,25 +1,45 @@
 .section ".text.boot"
 .globl _start
 _start:
+	// check processor ID is zero (executing on main core), else hang
+	mrs x1, mpidr_el1
+	and x1, x1, #0xff
+	cbz x1, _primary_boot
+	// we're not on the main core, so wait to be booted
+_wait:
+	wfe
+	isb sy
+	// load entrypoint and go back to waiting if it is zero
+	adr x4, secondary_core
+	ldr x1, [x4]
+	cbz x1, _wait
+	// load stack = secondary_core[8] + mpidr_el1 * 4096
+	ldr x2, [x4, #8]
+	mrs x3, mpidr_el1
+	lsl x3, x3, #12
+	add x2, x2, x3
+	mov sp, x2
+	// install trap handler
+	ldr x1, =monitorvec
+	msr vbar_el3, x1
+	br x1
+	b _hlt
+_primary_boot:
 	// install the trap handler
 	ldr x1, =monitorvec
 	msr vbar_el3, x1
-
-    // check processor ID is zero (executing on main core), else hang
-    mrs     x1, mpidr_el1
-    and     x1, x1, #3
-    cbz     x1, 1f
-    // we're not on the main core, so hang in an infinite wait loop
-_hlt:
-    wfe
-    b       _hlt
-1:
-
-    ldr     x1, =_kstack
-    mov     sp, x1
-
+	// load stack
+	ldr x1, =_kstack
+	mov sp, x1
 	bl dstart
+_hlt:
+	wfe
 	b _hlt
+
+.globl secondary_core
+secondary_core:
+	.quad 0 // entry point
+	.quad 0 // stack base
 
 .section ".text.enter_el1"
 .globl _enter_el1

@@ -4,19 +4,46 @@
 _start:
 	.option push
 	.option norelax
-	la sp, _kstack
 	la gp, __global_pointer$
 	.option pop
+	# only boot core 0
+	csrr t0, mhartid
+	bnez t0, _wait
 	# install the trap handler
 	la t0, monitorvec
 	csrw mtvec, t0
-	# only boot core 0
-	csrr t0, mhartid
-	bne t0, zero, _halt
+	la sp, _kstack
 	call dstart
-_halt:
+	j _hlt
+_wait:
+	la t0, _wakeup
+	csrw mtvec, t0
+_waitagain:
 	wfi
-	j _halt
+_wakeup:
+	fence.i
+	la t1, secondary_core
+	ld t0, 0(t1)
+	# entry is 0x0, go back to waiting
+	beqz t0, _waitagain
+	# set sp = secondary_core[8] + mhartid * 4096
+	ld sp, 8(t1)
+	csrr t1, mhartid
+	slli t1, t1, 12
+	add sp, sp, t1
+	# install trap handler
+	la t1, monitorvec
+	csrw mtvec, t1
+	csrw mepc, t0 # write entry to mepc so we mret there
+	mret
+_hlt:
+	wfi
+	j _hlt
+
+.globl secondary_core
+secondary_core:
+	.quad 0 # entry point
+	.quad 0 # stack base
 
 .section ".text.enter_smode"
 .globl _enter_smode
