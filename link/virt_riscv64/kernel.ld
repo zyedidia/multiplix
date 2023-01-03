@@ -53,12 +53,6 @@ SECTIONS
     }
 
     . = ALIGN(16);
-    .kstack : {
-        . += 4K;
-    }
-    PROVIDE(_kstack = . - 16);
-
-    . = ALIGN(16);
     _kheap_start = .;
 
     /DISCARD/ : { *(.comment .note .eh_frame) }

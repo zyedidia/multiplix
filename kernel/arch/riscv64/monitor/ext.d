@@ -4,6 +4,7 @@ import kernel.arch.riscv64.regs;
 
 import kernel.arch.riscv64.monitor.base;
 import kernel.arch.riscv64.monitor.timer;
+import kernel.arch.riscv64.monitor.hart;
 
 import sbi = kernel.arch.riscv64.sbi;
 
@@ -31,6 +32,8 @@ Handler ext_handler(uint extid) {
             return &ExtBase.handler;
         case sbi.Timer.ext:
             return &ExtTimer.handler;
+        case sbi.Hart.ext:
+            return &ExtHart.handler;
         default:
             return null;
     }

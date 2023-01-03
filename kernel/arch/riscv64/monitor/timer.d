@@ -11,10 +11,8 @@ struct ExtTimer {
         switch (fid) {
             case sbi.Timer.Fid.set_timer:
                 ulong stime_value = regs.a0;
-
                 ulong id = Csr.mhartid;
                 *Clint.mtimecmp(id) = *Clint.mtime + stime_value;
-
                 break;
             default:
                 return false;

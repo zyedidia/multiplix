@@ -1,6 +1,7 @@
 module kernel.arch.riscv64.monitor.boot;
 
 import kernel.arch.riscv64.csr;
+import kernel.board;
 
 import bits = ulib.bits;
 
@@ -23,4 +24,26 @@ void enter_smode() {
 
     // Call asm function that performs actual transition.
     _enter_smode();
+}
+
+extern (C) extern void monitorvec();
+extern (C) extern uintptr rd_tp();
+extern (C) extern uintptr rd_gp();
+extern (C) extern shared ubyte _kheap_start;
+
+struct ScratchFrame {
+    uintptr sp;
+    uintptr tp;
+    uintptr gp;
+    uintptr trap_sp;
+}
+
+__gshared ScratchFrame[System.ncores] frames;
+
+void init() {
+    Csr.mtvec = cast(uintptr) &monitorvec;
+
+    auto id = Csr.mhartid;
+    frames[id] = ScratchFrame(cast(uintptr) &_kheap_start + 4096 * (id + 1), rd_tp(), rd_gp(), 0);
+    Csr.mscratch = cast(uintptr) &frames[id];
 }

@@ -33,13 +33,7 @@ SECTIONS
         _kbss_end = .;
     }
 
-    . = ALIGN(16);
-    .kstack : {
-        . += 4K;
-    }
-    PROVIDE(_kstack = . - 16);
-
-    ASSERT((. - ADDR(.text) <= 0x4000), "boot code is larger than 4 pages!")
+    ASSERT((. - ADDR(.text) <= 0x8000), "boot code is larger than 8 pages!")
 
     .payload : {
         . = ALIGN(8);

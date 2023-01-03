@@ -39,15 +39,17 @@ alias insn_fence = () {
 
 pragma(inline, true)
 alias memory_fence = () {
-    version (RISCV64) {
-        asm {
-            "fence";
-        }
-    } else version (AArch64) {
-        asm {
-            "dsb sy";
-        }
-    }
+    llvm_memory_fence();
+
+    /* version (RISCV64) { */
+    /*     asm { */
+    /*         "fence"; */
+    /*     } */
+    /* } else version (AArch64) { */
+    /*     asm { */
+    /*         "dmb sy"; */
+    /*     } */
+    /* } */
 };
 
 pragma(inline, true)

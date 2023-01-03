@@ -141,3 +141,16 @@ struct Timer {
         ecall(ext, Fid.set_timer, val);
     }
 }
+
+struct Hart {
+    enum ext = 0x48534D;
+
+    enum Fid {
+        start = 0,
+    }
+
+    static uint start(uint hartid, uintptr addr, uintptr opaque) {
+        auto r = ecall(ext, Fid.start, hartid, addr, opaque);
+        return r.error;
+    }
+}

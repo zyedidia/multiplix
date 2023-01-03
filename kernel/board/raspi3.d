@@ -6,7 +6,7 @@ import kernel.dev.reboot.bcmreboot;
 
 struct System {
     enum gpu_freq = 250 * 1000 * 1000;
-
+    enum ncores = 4;
     enum device_base = 0x3f000000;
 
     struct MemRange {

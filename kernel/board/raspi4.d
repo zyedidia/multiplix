@@ -8,6 +8,7 @@ import sys = kernel.sys;
 
 struct System {
     enum gpu_freq = 250 * 1000 * 1000;
+    enum ncores = 4;
 
     enum device_base = 0xfe000000;
 

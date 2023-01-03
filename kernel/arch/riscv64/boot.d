@@ -10,26 +10,27 @@ import kernel.board;
 import sys = kernel.sys;
 
 // Early pagetable (only maps gigapages since we don't have an allocator yet).
-shared Pagetable39 kpagetable;
+__gshared Pagetable39 kpagetable;
 
 // Sets up identity-mapped virtual memory and enables interrupts in SIE. After
 // running this function it is possible to jump to high kernel addresses.
-void kernel_setup() {
-    // Set up an identity-mapped pagetable.
+void kernel_setup(bool primary) {
+    if (primary) {
+        // Set up an identity-mapped pagetable.
+        auto map_region = (System.MemRange range, Pagetable39* pt) {
+            for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
+                pt.map_giga(addr, addr, Perm.krwx);
+                pt.map_giga(sys.highmem_base + addr, addr, Perm.krwx);
+            }
+        };
 
-    auto map_region = (System.MemRange range, Pagetable39* pt) {
-        for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
-            pt.map_giga(addr, addr, Perm.krwx);
-            pt.map_giga(sys.highmem_base + addr, addr, Perm.krwx);
-        }
-    };
-
-    Pagetable39* pgtbl = cast(Pagetable39*) &kpagetable;
-    map_region(System.device, pgtbl);
-    map_region(System.mem, pgtbl);
+        Pagetable39* pgtbl = cast(Pagetable39*) &kpagetable;
+        map_region(System.device, pgtbl);
+        map_region(System.mem, pgtbl);
+    }
 
     // Enable virtual memory with identity-mapped pagetable.
-    Csr.satp = pgtbl.satp(0);
+    Csr.satp = kpagetable.satp(0);
     vm_fence();
 
     // Prepare to enable interrupts (only will be enabled when sstatus is

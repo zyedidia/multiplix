@@ -2,48 +2,28 @@
 
 .globl _start
 _start:
+	csrr a0, mhartid
 	.option push
 	.option norelax
 	la gp, __global_pointer$
 	.option pop
-	# only boot core 0
-	csrr t0, mhartid
-	bnez t0, _wait
-	# install the trap handler
-	la t0, monitorvec
-	csrw mtvec, t0
-	la sp, _kstack
+	la sp, _kheap_start
+	addi t0, a0, 1
+	slli t0, t0, 12 # t0 = (hartid + 1) * 4096
+	add sp, sp, t0  # sp = _kheap_start + (hartid + 1) * 4096
 	call dstart
-	j _hlt
-_wait:
-	la t0, _wakeup
-	csrw mtvec, t0
-_waitagain:
-	wfi
-_wakeup:
-	fence.i
-	la t1, secondary_core
-	ld t0, 0(t1)
-	# entry is 0x0, go back to waiting
-	beqz t0, _waitagain
-	# set sp = secondary_core[8] + mhartid * 4096
-	ld sp, 8(t1)
-	csrr t1, mhartid
-	slli t1, t1, 12
-	add sp, sp, t1
-	# install trap handler
-	la t1, monitorvec
-	csrw mtvec, t1
-	csrw mepc, t0 # write entry to mepc so we mret there
-	mret
 _hlt:
 	wfi
 	j _hlt
 
-.globl secondary_core
-secondary_core:
-	.quad 0 # entry point
-	.quad 0 # stack base
+.globl rd_tp
+rd_tp:
+	mv a0, tp
+	ret
+.globl rd_gp
+rd_gp:
+	mv a0, gp
+	ret
 
 .section ".text.enter_smode"
 .globl _enter_smode
@@ -58,6 +38,11 @@ entry:
 .globl monitorvec
 .align 4
 monitorvec:
+	csrrw t0, mscratch, t0
+	# store sp to trap_sp
+	sd sp, 24(t0)
+	ld sp, 0(t0)
+
 	# make room to save registers.
 	addi sp, sp, -256
 
@@ -94,6 +79,20 @@ monitorvec:
 	sd t5, 232(sp)
 	sd t6, 240(sp)
 
+	# save t0 (stored in mscratch)
+	csrr t1, mscratch
+	sd t1, 32(sp)
+	# save sp (stored in trap_sp)
+	ld t1, 24(t0)
+	sd t1, 8(sp)
+
+	# load monitor gp and tp from scratch frame
+	ld tp, 8(t0)
+	ld gp, 16(t0)
+
+	# restore scratch pointer
+	csrw mscratch, t0
+
 	# pass a pointer to the registers to the handler
 	mv a0, sp
 
@@ -104,8 +103,9 @@ monitorvec:
 
 	# restore registers.
 	ld ra, 0(sp)
-	# ld sp, 8(sp)
-	# no need to reload tp/gp
+	# restore sp later
+	ld gp, 16(sp)
+	ld tp, 24(sp)
 	ld t0, 32(sp)
 	ld t1, 40(sp)
 	ld t2, 48(sp)
@@ -134,6 +134,9 @@ monitorvec:
 	ld t5, 232(sp)
 	ld t6, 240(sp)
 
-	addi sp, sp, 256
+	csrrw t0, mscratch, t0
+	# restore sp from trap_sp
+	ld sp, 24(t0)
+	csrrw t0, mscratch, t0
 
 	mret

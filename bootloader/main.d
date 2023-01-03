@@ -5,6 +5,7 @@ import core.sync;
 
 import kernel.board : Uart;
 import kernel.timer : Timer;
+import kernel.spinlock;
 
 import arch = kernel.arch;
 
@@ -12,6 +13,9 @@ import crc = ulib.crc32;
 import io = ulib.io;
 
 import ulib.memory;
+
+__gshared bool primary = true;
+shared Spinlock bootlock;
 
 extern (C) {
     extern shared ubyte __start_copyin, __stop_copyin;
@@ -131,7 +135,10 @@ bool overlaps(ubyte* d1, size_t sz1, ubyte* d2, size_t sz2) {
     return d1 < d2 + sz2 && d2 < d1 + sz1;
 }
 
-extern (C) void kmain() {
+extern (C) void kmain(int coreid) {
+    arch.monitor_init();
+
+    bootlock.lock();
     version (kenter) {
         arch.enter_kernel();
     }
@@ -153,7 +160,7 @@ extern (C) void kmain() {
 
     version (kboot) {
         // We are booting the kernel, so enable virtual memory.
-        arch.kernel_setup();
+        arch.kernel_setup(primary);
         import vm = kernel.vm;
         // Entry is a high kernel address, so convert it to the physical
         // address for checking overlap.
@@ -161,6 +168,26 @@ extern (C) void kmain() {
     } else {
         auto phys_entry = boot.entry;
     }
+
+    if (!primary) {
+        // Secondary core can jump directly to the entry because the primary
+        // core already copied the payload there.
+        insn_fence();
+        bootlock.unlock();
+        auto fn = cast(void function(int)) boot.entry;
+        fn(coreid);
+        while (1) {}
+    }
+
+    /* primary = false; */
+    /*  */
+    /* for (uint i = 0; i < boot.data.length; i++) { */
+    /*     volatile_st(boot.entry + i, boot.data[i]); */
+    /* } */
+    /* insn_fence(); */
+    /* bootlock.unlock(); */
+    /* auto main = cast(void function(int)) boot.entry; */
+    /* main(coreid); */
 
     size_t nbytes = boot.data.length;
 
@@ -172,29 +199,33 @@ extern (C) void kmain() {
     memcpy(new_copyin, cast(ubyte*)&copyin, copyin_size);
     insn_fence();
 
-    // call the new copyin that has been moved
-    auto fn = cast(void function(ubyte*, ubyte[])) new_copyin;
-    fn(boot.entry, boot.data);
+    // done booting the primary core, all further cores will be secondary
+    primary = false;
 
-    while (1) {
-    }
+    // call the new copyin that has been moved
+    auto copyfn = cast(void function(void delegate() shared, ubyte*, ubyte[], int)) new_copyin;
+    copyfn(&bootlock.unlock, boot.entry, boot.data, coreid);
+
+    while (1) {}
 }
 
 import ldc.attributes;
 
-@(section("copyin")) void copyin(ubyte* dst, ubyte[] src) {
+@(section("copyin")) void copyin(void delegate() shared unlock, ubyte* dst, ubyte[] src, int coreid) {
     for (uint i = 0; i < src.length; i++) {
         volatile_st(&dst[i], src[i]);
     }
     insn_fence();
-    auto main = cast(void function()) dst;
-    main();
+    unlock();
+    auto main = cast(void function(int)) dst;
+    main(coreid);
 }
-@(section("copyin2")) void copyin2(ubyte* dst, ubyte[] src) {
+@(section("copyin2")) void copyin2(void delegate() shared unlock, ubyte* dst, ubyte[] src, int coreid) {
     for (uint i = 0; i < src.length; i++) {
         volatile_st(&dst[i], src[i]);
     }
     insn_fence();
-    auto main = cast(void function()) dst;
-    main();
+    unlock();
+    auto main = cast(void function(int)) dst;
+    main(coreid);
 }

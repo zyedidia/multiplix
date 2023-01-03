@@ -11,6 +11,7 @@ alias Reboot = QemuSyscon!(0x100000);
 struct System {
     enum cpu_freq = 1 * 1000 * 1000 * 1000;
     enum cpu_freq_mhz = cpu_freq / (1000 * 1000);
+    enum ncores = 4;
 
     struct MemRange {
         uintptr start;

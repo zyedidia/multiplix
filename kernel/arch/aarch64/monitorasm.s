@@ -2,9 +2,9 @@
 .globl _start
 _start:
 	// check processor ID is zero (executing on main core), else hang
-	mrs x1, mpidr_el1
-	and x1, x1, #0xff
-	cbz x1, _primary_boot
+	mrs x0, mpidr_el1
+	and x0, x0, #0xff
+	cbz x0, _primary_boot
 	// we're not on the main core, so wait to be booted
 _wait:
 	wfe
@@ -22,6 +22,7 @@ _wait:
 	// install trap handler
 	ldr x1, =monitorvec
 	msr vbar_el3, x1
+	// x0 contains mpidr_el1 & 0xff
 	br x1
 	b _hlt
 _primary_boot:

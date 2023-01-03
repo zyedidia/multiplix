@@ -18,6 +18,7 @@ extern (C) void monitortrap(Regs* regs) {
             Csr.mepc = mepc + 4;
             break;
         default:
+            io.writeln("core: ", Csr.mhartid, ", cause: ", mcause, ", epc: ", cast(void*) mepc);
             assert(0, "monitortrap: unknown cause");
     }
 }
