@@ -1,15 +1,20 @@
 .section ".text.boot"
+
 .globl _start
 _start:
-	mrs x1, mpidr_el1
-	and x1, x1, #0xff
-	cbz x1, _primary_boot
-_hlt:
-	wfe
-	b _hlt
-_primary_boot:
 	bl _set_sp_el3
+	mrs x0, mpidr_el1
+	and x0, x0, #0xff
+	cbz x0, _primary_boot
+	adr x1, wakeup
+_spin:
+	wfe
+	ldrsw x2, [x1]
+	cbz x2, _spin
+_primary_boot:
 	bl dstart
+_hlt:
+	b _hlt
 
 _set_sp_el3:
 	// set stack = _kheap_start + (coreid + 1) * 4096
@@ -21,6 +26,10 @@ _set_sp_el3:
 	add x1, x1, x2
 	mov sp, x1
 	ret
+
+.globl wakeup
+wakeup:
+	.int 0
 
 .section ".text.enter_el1"
 .globl _enter_el1

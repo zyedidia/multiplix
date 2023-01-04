@@ -3,11 +3,8 @@ module kernel.dstart;
 import core.volatile;
 
 import kernel.board;
-import kernel.spinlock;
 
-shared Spinlock startlock;
-
-__gshared ubyte primary = 1;
+__gshared uint primary = 1;
 
 extern (C) {
     extern __gshared uint _kbss_start, _kbss_end;
@@ -15,8 +12,11 @@ extern (C) {
     void kmain(int coreid);
 
     void dstart(int coreid) {
-        startlock.lock();
-
+        // We use volatile for loading/storing primary because it is essential
+        // that primary not be stored in the BSS (since it is used before BSS
+        // initialization). Otherwise the compiler will actually invert primary
+        // so that it can be stored in the BSS (seems like an aggressive
+        // optimization?).
         if (volatile_ld(&primary)) {
             uint* bss = &_kbss_start;
             uint* bss_end = &_kbss_end;
@@ -26,8 +26,6 @@ extern (C) {
             Uart.init(115200);
             volatile_st(&primary, 0);
         }
-
-        startlock.unlock();
 
         kmain(coreid);
     }

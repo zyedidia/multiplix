@@ -5,7 +5,6 @@ import core.sync;
 
 import kernel.board : Uart;
 import kernel.timer : Timer;
-import kernel.spinlock;
 
 import arch = kernel.arch;
 
@@ -15,7 +14,6 @@ import io = ulib.io;
 import ulib.memory;
 
 __gshared bool primary = true;
-shared Spinlock bootlock;
 
 extern (C) extern __gshared ubyte _kheap_start;
 
@@ -131,7 +129,6 @@ __gshared BootData bootdat;
 extern (C) void kmain(int coreid) {
     arch.monitor_init();
 
-    bootlock.lock();
     version (kenter) {
         arch.enter_kernel();
     }
@@ -146,7 +143,6 @@ extern (C) void kmain(int coreid) {
         // core already copied the payload there.
         insn_fence();
         auto fn = cast(void function(int)) bootdat.entry;
-        bootlock.unlock();
         fn(coreid);
         return;
     }
@@ -165,6 +161,5 @@ extern (C) void kmain(int coreid) {
     }
     insn_fence();
     auto main = cast(void function(int)) boot.entry;
-    bootlock.unlock();
     main(coreid);
 }

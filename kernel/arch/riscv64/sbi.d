@@ -147,10 +147,15 @@ struct Hart {
 
     enum Fid {
         start = 0,
+        start_all_cores = 128,
     }
 
     static uint start(uint hartid, uintptr addr, uintptr opaque) {
         auto r = ecall(ext, Fid.start, hartid, addr, opaque);
         return r.error;
+    }
+
+    static void start_all_cores() {
+        ecall(ext, Fid.start_all_cores);
     }
 }

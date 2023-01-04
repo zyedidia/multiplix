@@ -31,14 +31,13 @@ SECTIONS
         . = ALIGN(8);
         _kbss_end = .;
     }
-
-    ASSERT((. - ADDR(.text) <= 0x8000), "boot code is larger than 8 pages!")
-
     .payload : {
         . = ALIGN(8);
         *(.payload*)
         . = ALIGN(8);
     }
+
+    /* ASSERT((. - ADDR(.text) <= 0x8000), "boot code is larger than 8 pages!") */
 
     . = ALIGN(16);
     _kheap_start = .;

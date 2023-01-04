@@ -11,10 +11,19 @@ _start:
 	addi t0, a0, 1
 	slli t0, t0, 12 # t0 = (hartid + 1) * 4096
 	add sp, sp, t0  # sp = _kheap_start + (hartid + 1) * 4096
+	beqz a0, _primary_boot
+	la t0, wakeup
+_spin:
+	lw t1, 0(t0)
+	beqz t1, _spin
+_primary_boot:
 	call dstart
 _hlt:
-	wfi
 	j _hlt
+
+.globl wakeup
+wakeup:
+	.int 0
 
 .globl rd_tp
 rd_tp:

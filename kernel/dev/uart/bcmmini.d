@@ -35,16 +35,16 @@ struct BcmMiniUart(uintptr base) {
     enum uart = cast(AuxPeriphs*)(base + 0x40);
 
     static void init(uint baud) {
-        memory_fence();
+        device_fence();
 
         Gpio.set_func(Gpio.PinType.tx, Gpio.FuncType.alt5);
         Gpio.set_func(Gpio.PinType.rx, Gpio.FuncType.alt5);
 
-        memory_fence();
+        device_fence();
 
         volatile_st(aux_enables, volatile_ld(aux_enables) | enable_uart);
 
-        memory_fence();
+        device_fence();
 
         volatile_st(&uart.cntl, 0);
         volatile_st(&uart.ier, 0);
@@ -54,7 +54,7 @@ struct BcmMiniUart(uintptr base) {
         volatile_st(&uart.baud, System.gpu_freq / (baud * 8) - 1);
         volatile_st(&uart.cntl, rx_enable | tx_enable);
 
-        memory_fence();
+        device_fence();
     }
 
     static bool rx_empty() {
@@ -70,24 +70,24 @@ struct BcmMiniUart(uintptr base) {
     }
 
     static ubyte rx() {
-        memory_fence();
+        device_fence();
         while (rx_empty()) {
         }
         ubyte c = volatile_ld(&uart.io) & 0xff;
-        memory_fence();
+        device_fence();
         return c;
     }
 
     static void tx(ubyte c) {
-        memory_fence();
+        device_fence();
         while (!can_tx()) {
         }
         volatile_st(&uart.io, c & 0xff);
-        memory_fence();
+        device_fence();
     }
 
     static bool tx_empty() {
-        memory_fence();
+        device_fence();
         return bits.get(volatile_ld(&uart.stat), 9) == 1;
     }
 

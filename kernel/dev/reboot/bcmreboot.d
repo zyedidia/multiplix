@@ -11,7 +11,7 @@ struct BcmReboot(uintptr pm_rstc, uintptr pm_wdog) {
 
     static void reboot() {
         Uart.tx_flush();
-        memory_fence();
+        device_fence();
 
         enum pm_password = 0x5a000000;
         enum pm_rstc_wrcfg_full_reset = 0x20;

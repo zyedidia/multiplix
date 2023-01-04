@@ -1,14 +1,26 @@
 module kernel.main;
 
+import core.sync;
+
 import io = ulib.io;
 
 import kernel.board;
-import kernel.spinlock;
+import kernel.timer;
+import arch = kernel.arch;
 
-shared Spinlock lock;
+__gshared bool primary = true;
 
 extern (C) void kmain(int coreid) {
-    lock.lock();
+    if (primary) {
+        primary = false;
+        device_fence();
+        arch.Cpu.start_all_cores();
+    }
+
+    Timer.delay_us(1000 * 100 * coreid);
     io.writeln("entered kmain at: ", &kmain, " core: ", coreid);
-    lock.unlock();
+
+    if (coreid == System.ncores - 1) {
+        Reboot.reboot();
+    }
 }

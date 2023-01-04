@@ -38,6 +38,7 @@ struct SysReg {
     mixin(GenSysReg!("spsr_el3"));
     mixin(GenSysReg!("scr_el3"));
     mixin(GenSysReg!("vbar_el3"));
+    mixin(GenSysReg!("esr_el3"));
 
     mixin(GenSysReg!("spsr_el2"));
     mixin(GenSysReg!("hcr_el2"));
@@ -93,4 +94,8 @@ enum Scr {
     reserved = (3 << 4),
     rw_aarch64 = (1 << 10),
     ns = (1 << 0),
+}
+
+enum Exception {
+    smc = 0b010111,
 }
