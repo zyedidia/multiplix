@@ -91,6 +91,9 @@ local allsrc = knit.rglob(".", "*.d")
 return b{
     $ all:V: kernel.boot.bin
 
+    $ bootloader.elf:B:
+        knit -f build/bootloader.knit kboot=1 kenter=1 bootloader.elf board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
+
     $ format:VB:
         dfmt -i --brace_style=otbs $allsrc
     $ clean:VB:

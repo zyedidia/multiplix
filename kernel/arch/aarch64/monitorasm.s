@@ -1,52 +1,35 @@
 .section ".text.boot"
 .globl _start
 _start:
-	// check processor ID is zero (executing on main core), else hang
-	mrs x0, mpidr_el1
-	and x0, x0, #0xff
-	cbz x0, _primary_boot
-	// we're not on the main core, so wait to be booted
-_wait:
-	wfe
-	isb sy
-	// load entrypoint and go back to waiting if it is zero
-	adr x4, secondary_core
-	ldr x1, [x4]
-	cbz x1, _wait
-	// load stack = secondary_core[8] + mpidr_el1 * 4096
-	ldr x2, [x4, #8]
-	mrs x3, mpidr_el1
-	lsl x3, x3, #12
-	add x2, x2, x3
-	mov sp, x2
-	// install trap handler
-	ldr x1, =monitorvec
-	msr vbar_el3, x1
-	// x0 contains mpidr_el1 & 0xff
-	br x1
-	b _hlt
-_primary_boot:
-	// install the trap handler
-	ldr x1, =monitorvec
-	msr vbar_el3, x1
-	// load stack
-	ldr x1, =_kstack
-	mov sp, x1
-	bl dstart
+	mrs x1, mpidr_el1
+	and x1, x1, #0xff
+	cbz x1, _primary_boot
 _hlt:
 	wfe
 	b _hlt
+_primary_boot:
+	bl _set_sp_el3
+	bl dstart
 
-.globl secondary_core
-secondary_core:
-	.quad 0 // entry point
-	.quad 0 // stack base
+_set_sp_el3:
+	// set stack = _kheap_start + (coreid + 1) * 4096
+	mrs x0, mpidr_el1
+	and x0, x0, #0xff
+	ldr x1, =_kheap_start
+	add x2, x0, #1
+	lsl x2, x2, #12
+	add x1, x1, x2
+	mov sp, x1
+	ret
 
 .section ".text.enter_el1"
 .globl _enter_el1
 _enter_el1:
 	mov x0, sp
 	msr sp_el1, x0
+	mov x3, lr // x3 is not modified by _set_sp_el3
+	bl _set_sp_el3 // reset el3 stack pointer
+	mov lr, x3
 	ldr x0, =entry
 	msr elr_el3, x0
 	eret

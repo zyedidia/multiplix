@@ -37,6 +37,7 @@ struct SysReg {
     mixin(GenSysReg!("elr_el3"));
     mixin(GenSysReg!("spsr_el3"));
     mixin(GenSysReg!("scr_el3"));
+    mixin(GenSysReg!("vbar_el3"));
 
     mixin(GenSysReg!("spsr_el2"));
     mixin(GenSysReg!("hcr_el2"));

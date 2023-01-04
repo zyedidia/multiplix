@@ -22,3 +22,10 @@ void enter_el1() {
 
     _enter_el1();
 }
+
+extern (C) extern void monitorvec();
+
+void init() {
+    // Install the trap handler.
+    SysReg.vbar_el3 = cast(uintptr) &monitorvec;
+}
