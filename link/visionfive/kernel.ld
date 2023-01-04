@@ -15,13 +15,16 @@ SECTIONS
         . = ALIGN(8);
     }
     .rodata : {
+        . = ALIGN(8);
         _krodata_start = .;
         __global_pointer$ = . + 0x800;
         *(.rodata*)
         *(.srodata*)
+        . = ALIGN(8);
         _krodata_end = .;
     }
     .data : { 
+        . = ALIGN(8);
         _kdata_start = .;
         *(.sdata*)
         *(.data*)
@@ -38,6 +41,7 @@ SECTIONS
         _kbss_end = .;
     }
     .tdata : { 
+        . = ALIGN(8);
         _tdata_start = .;
         *(.tdata*)
         . = ALIGN(8);

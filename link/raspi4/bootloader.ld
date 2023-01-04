@@ -6,12 +6,14 @@ SECTIONS
         _kcode_start = .;
         KEEP(*(.text.boot))  
         *(.text*) 
+        . = ALIGN(8);
         _kcode_end = .;
     }
     .rodata : {
         . = ALIGN(8);
         _krodata_start = .;
         *(.rodata*)
+        . = ALIGN(8);
         _krodata_end = .;
     }
     .data : { 
@@ -29,12 +31,6 @@ SECTIONS
         . = ALIGN(8);
         _kbss_end = .;
     }
-
-    . = ALIGN(16);
-    .kstack : {
-        . += 4K;
-    }
-    PROVIDE(_kstack = . - 16);
 
     ASSERT((. - ADDR(.text) <= 0x8000), "boot code is larger than 8 pages!")
 

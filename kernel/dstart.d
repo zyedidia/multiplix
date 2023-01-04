@@ -5,9 +5,9 @@ import core.volatile;
 import kernel.board;
 import kernel.spinlock;
 
-shared Spinlock bootlock;
+shared Spinlock startlock;
 
-__gshared bool primary = true;
+__gshared ubyte primary = 1;
 
 extern (C) {
     extern __gshared uint _kbss_start, _kbss_end;
@@ -15,20 +15,19 @@ extern (C) {
     void kmain(int coreid);
 
     void dstart(int coreid) {
-        bootlock.lock();
+        startlock.lock();
 
-        if (primary) {
+        if (volatile_ld(&primary)) {
             uint* bss = &_kbss_start;
             uint* bss_end = &_kbss_end;
             while (bss < bss_end) {
                 volatile_st(bss++, 0);
             }
             Uart.init(115200);
-
-            primary = false;
+            volatile_st(&primary, 0);
         }
 
-        bootlock.unlock();
+        startlock.unlock();
 
         kmain(coreid);
     }

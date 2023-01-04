@@ -10,6 +10,7 @@ enum CsrNum {
     mideleg = 0x303,
     mie = 0x304,
     mtvec = 0x305,
+    mcounteren = 0x306,
     mscratch = 0x340,
     mepc = 0x341,
     mcause = 0x342,
@@ -87,6 +88,7 @@ struct Csr {
     mixin(GenCsr!("marchid"));
     mixin(GenCsr!("mhartid"));
     mixin(GenCsr!("mtvec"));
+    mixin(GenCsr!("mcounteren"));
     mixin(GenCsr!("misa"));
     mixin(GenCsr!("medeleg"));
     mixin(GenCsr!("mideleg"));

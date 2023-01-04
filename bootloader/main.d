@@ -17,11 +17,7 @@ import ulib.memory;
 __gshared bool primary = true;
 shared Spinlock bootlock;
 
-extern (C) {
-    extern shared ubyte __start_copyin, __stop_copyin;
-    extern shared ubyte __start_copyin2, __stop_copyin2;
-    extern __gshared ubyte _kheap_start;
-}
+extern (C) extern __gshared ubyte _kheap_start;
 
 struct BootData {
     ubyte* entry;
@@ -130,10 +126,7 @@ version (uart) {
     }
 }
 
-bool overlaps(ubyte* d1, size_t sz1, ubyte* d2, size_t sz2) {
-    // (StartA <= EndB) and (EndA >= StartB)
-    return d1 < d2 + sz2 && d2 < d1 + sz1;
-}
+__gshared BootData bootdat;
 
 extern (C) void kmain(int coreid) {
     arch.monitor_init();
@@ -143,89 +136,35 @@ extern (C) void kmain(int coreid) {
         arch.enter_kernel();
     }
 
-    // move copyin to a new location, which cannot overlap with [entry,
-    // entry+nbytes) or [boot.data, boot.data+nbytes) or the stack
-    ubyte* new_copyin = &_kheap_start;
-    size_t copyin_size = &__stop_copyin - &__start_copyin;
-    size_t copyin2_size = &__stop_copyin2 - &__start_copyin2;
-
-    assert(copyin_size == copyin2_size, "copyin is not PIC (size mismatch)");
-    assert(memcmp(&copyin, &copyin2, copyin_size) == 0, "copyin is not PIC (code mismatch)");
-
-    version (uart) {
-        BootData boot = recv();
-    } else {
-        BootData boot = unpack();
-    }
-
     version (kboot) {
         // We are booting the kernel, so enable virtual memory.
         arch.kernel_setup(primary);
-        import vm = kernel.vm;
-        // Entry is a high kernel address, so convert it to the physical
-        // address for checking overlap.
-        auto phys_entry = cast(ubyte*) vm.kpa2pa(cast(uintptr) boot.entry);
-    } else {
-        auto phys_entry = boot.entry;
     }
 
     if (!primary) {
         // Secondary core can jump directly to the entry because the primary
         // core already copied the payload there.
         insn_fence();
+        auto fn = cast(void function(int)) bootdat.entry;
         bootlock.unlock();
-        auto fn = cast(void function(int)) boot.entry;
         fn(coreid);
-        while (1) {}
+        return;
     }
 
-    /* primary = false; */
-    /*  */
-    /* for (uint i = 0; i < boot.data.length; i++) { */
-    /*     volatile_st(boot.entry + i, boot.data[i]); */
-    /* } */
-    /* insn_fence(); */
-    /* bootlock.unlock(); */
-    /* auto main = cast(void function(int)) boot.entry; */
-    /* main(coreid); */
-
-    size_t nbytes = boot.data.length;
-
-    while (overlaps(new_copyin, copyin_size, phys_entry, nbytes) ||
-            overlaps(new_copyin, copyin_size, &boot.data[0], nbytes)) {
-        new_copyin += nbytes + (nbytes % 16);
+    version (uart) {
+        BootData boot = recv();
+    } else {
+        BootData boot = unpack();
     }
+    bootdat = boot;
 
-    memcpy(new_copyin, cast(ubyte*)&copyin, copyin_size);
-    insn_fence();
-
-    // done booting the primary core, all further cores will be secondary
     primary = false;
 
-    // call the new copyin that has been moved
-    auto copyfn = cast(void function(void delegate() shared, ubyte*, ubyte[], int)) new_copyin;
-    copyfn(&bootlock.unlock, boot.entry, boot.data, coreid);
-
-    while (1) {}
-}
-
-import ldc.attributes;
-
-@(section("copyin")) void copyin(void delegate() shared unlock, ubyte* dst, ubyte[] src, int coreid) {
-    for (uint i = 0; i < src.length; i++) {
-        volatile_st(&dst[i], src[i]);
+    for (uint i = 0; i < boot.data.length; i++) {
+        volatile_st(boot.entry + i, boot.data[i]);
     }
     insn_fence();
-    unlock();
-    auto main = cast(void function(int)) dst;
-    main(coreid);
-}
-@(section("copyin2")) void copyin2(void delegate() shared unlock, ubyte* dst, ubyte[] src, int coreid) {
-    for (uint i = 0; i < src.length; i++) {
-        volatile_st(&dst[i], src[i]);
-    }
-    insn_fence();
-    unlock();
-    auto main = cast(void function(int)) dst;
+    auto main = cast(void function(int)) boot.entry;
+    bootlock.unlock();
     main(coreid);
 }

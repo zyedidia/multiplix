@@ -10,30 +10,27 @@ SECTIONS
         . = ALIGN(8);
     }
     .rodata : {
+        . = ALIGN(8);
         _krodata_start = .;
         *(.rodata*)
+        . = ALIGN(8);
         _krodata_end = .;
     }
     .data : { 
+        . = ALIGN(8);
         _kdata_start = .;
         *(.data*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         _kdata_end = .;
     } 
     .bss : {
-        . = ALIGN(4);
+        . = ALIGN(8);
         _kbss_start = .;
         *(.bss*)
         *(COMMON)
         . = ALIGN(8);
         _kbss_end = .;
     }
-
-    . = ALIGN(16);
-    .kstack : {
-        . += 4K;
-    }
-    PROVIDE(_kstack = . - 16);
 
     . = ALIGN(16);
     _kheap_start = .;

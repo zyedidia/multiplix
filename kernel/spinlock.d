@@ -4,11 +4,13 @@ import core.sync;
 
 // Basic mutual exclusion lock.
 struct Spinlock {
-    shared uint locked;
+    // We use locks to synchronize initializing the BSS, so locks should not be
+    // stored in the BSS.
+    shared uint unlocked = 1;
 
     // Acquire the lock.
     shared void lock() {
-        while (!atomic_cmp_xchg(&locked, 0, 1).exchanged) {
+        while (!atomic_cmp_xchg(&unlocked, 1, 0).exchanged) {
         }
         memory_fence();
     }
@@ -16,6 +18,6 @@ struct Spinlock {
     // Release the lock.
     shared void unlock() {
         memory_fence();
-        atomic_store(0, &locked);
+        atomic_store(1, &unlocked);
     }
 }

@@ -97,7 +97,7 @@ return b{
         knit -f build/bootloader.knit :all -t clean
         knit :all -t clean
         rm -rf .deps *.list *.bin
-    $ prog:VB: kernel.boot.elf
+    $ prog:VB: kernel.elf
         plboot prog $input
 
     kernel,

@@ -29,6 +29,7 @@ void kernel_setup(bool primary) {
         map_region(System.mem, pgtbl);
     }
 
+
     // Enable virtual memory with identity-mapped pagetable.
     Csr.satp = kpagetable.satp(0);
     vm_fence();

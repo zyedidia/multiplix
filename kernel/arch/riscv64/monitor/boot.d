@@ -42,6 +42,7 @@ __gshared ScratchFrame[System.ncores] frames;
 
 void init() {
     Csr.mtvec = cast(uintptr) &monitorvec;
+    Csr.mcounteren = 0b111;
 
     auto id = Csr.mhartid;
     frames[id] = ScratchFrame(cast(uintptr) &_kheap_start + 4096 * (id + 1), rd_tp(), rd_gp(), 0);
