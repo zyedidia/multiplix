@@ -209,7 +209,7 @@ func (p *progCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 
 	result := GetUint(port)
 	if result != BootSuccess {
-		log.Fatal("bootloader error code:", result)
+		log.Fatalf("bootloader error code: %x\n", result)
 	}
 
 	fmt.Println("Boot successful")
