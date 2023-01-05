@@ -8,13 +8,14 @@ function build.prefix(arch)
     return prefixes[arch]
 end
 
-function build.machine(board)
+function build.machine(board, monitor)
+    local tpidr = sel(monitor, "tpidr-el3", "tpidr-el1")
     local machines = {
         raspi3 = {
             board = "raspi3",
             march = "armv8-a+crc",
             mcpu = "cortex-a53",
-            mattr = "+strict-align",
+            mattr = f"+strict-align,+$tpidr",
             arch = "aarch64",
             qemu = "-M raspi3ap -serial null -serial mon:stdio",
         },
@@ -22,7 +23,7 @@ function build.machine(board)
             board = "raspi4",
             march = "armv8-a+crc",
             mcpu = "cortex-a72",
-            mattr = "+strict-align",
+            mattr = f"+strict-align,+$tpidr",
             arch = "aarch64",
             qemu = "-M raspi4b -serial null -serial mon:stdio" -- doesn't exist
         },
@@ -90,8 +91,9 @@ function build.tools(machine)
     }
 end
 
-function build.flags(machine, lto, release)
+function build.flags(machine, lto, release, monitor)
     local knit = require("knit")
+    local version = sel(monitor, "-d-version=monitor", "-d-version=kernel")
     local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
     local flto = sel(lto, "-flto=thin", "")
     local ltoflags := -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2
@@ -106,7 +108,7 @@ function build.flags(machine, lto, release)
     }
 
     return {
-        dc := -betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt
+        dc := -betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt $version
         as := -Os $(flags.gnu) -xassembler-with-cpp
         ld := -Os -mstrict-align $(flags.gnu) -nostartfiles -nodefaultlibs $ltoflags -Wl,--gc-sections
         qemu := $(machine.qemu) -nographic

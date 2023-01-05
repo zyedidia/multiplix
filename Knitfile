@@ -7,13 +7,13 @@ end
 local build = include("build/build.knit")
 local conf = include("build/default.knit")
 
-local machine = build.machine(conf.board)
+local machine = build.machine(conf.board, false)
 if machine == nil then
     return "could not find machine for board " .. board
 end
 
 local tools = build.tools(machine)
-local flags = build.flags(machine, conf.lto, conf.release)
+local flags = build.flags(machine, conf.lto, conf.release, false)
 
 local meta = r{
     $ %.o: %.s
@@ -99,7 +99,7 @@ return b{
     $ clean:VB:
         knit -f build/bootloader.knit :all -t clean
         knit :all -t clean
-        rm -rf .deps *.list *.bin
+        rm -rf .deps *.list *.bin *.bin.out
     $ prog:VB: kernel.elf
         plboot prog $input
 

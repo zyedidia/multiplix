@@ -28,6 +28,21 @@ SECTIONS
         . = ALIGN(8);
         _kdata_end = .;
     } 
+    .tdata : {
+        . = ALIGN(8);
+        _tdata_start = .;
+        *(.tdata*)
+        . = ALIGN(8);
+        _tdata_end = .;
+    }
+    .tbss : {
+        . = ALIGN(8);
+        _tbss_start = .;
+        *(.tbss*)
+        *(COMMON)
+        . = ALIGN(8);
+        _tbss_end = .;
+    }
     .bss : {
         . = ALIGN(8);
         _kbss_start = .;
@@ -36,20 +51,6 @@ SECTIONS
         *(COMMON)
         . = ALIGN(8);
         _kbss_end = .;
-    }
-    .tdata : { 
-        _tdata_start = .;
-        *(.tdata*)
-        . = ALIGN(8);
-        _tdata_end = .;
-    } 
-    .tbss : {
-        . = ALIGN(8);
-        _tbss_start = .;
-        *(.tbss*)
-        *(COMMON)
-        . = ALIGN(16);
-        _tbss_end = .;
     }
 
     . = ALIGN(16);
