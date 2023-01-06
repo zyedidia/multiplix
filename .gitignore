@@ -12,3 +12,4 @@ TODO.txt
 *.bin.out
 *.payload
 conf.knit
+knit-*

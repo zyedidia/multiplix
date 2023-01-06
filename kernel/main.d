@@ -7,22 +7,19 @@ import io = ulib.io;
 import kernel.board;
 import kernel.timer;
 import kernel.cpu;
+import kernel.alloc;
 
 import arch = kernel.arch;
+import sys = kernel.sys;
 
 __gshared bool primary = true;
 
-extern (C) void kmain(int coreid) {
-    if (primary) {
-        primary = false;
-        device_fence();
-        arch.Cpu.start_all_cores();
-    }
-
-    Timer.delay_us(1000 * 100 * coreid);
+extern (C) void kmain(int coreid, ubyte* heap) {
     io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
 
-    if (coreid == System.ncores - 1) {
-        Reboot.reboot();
-    }
+    KrAllocator kr = KrAllocator(heap, sys.mb!(128));
+    void* p = kr.alloc(10);
+    io.writeln("allocated: ", p);
+
+    Reboot.reboot();
 }

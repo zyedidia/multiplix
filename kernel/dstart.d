@@ -17,7 +17,7 @@ extern (C) {
     extern __gshared ubyte _tdata_start, _tdata_end;
     extern __gshared ubyte _tbss_start, _tbss_end;
 
-    void kmain(int coreid);
+    void kmain(int coreid, ubyte* heap);
 
     void dstart(int coreid) {
         // We use volatile for loading/storing primary because it is essential
@@ -36,14 +36,15 @@ extern (C) {
             volatile_st(&primary, 0);
         }
 
-        init_tls(coreid);
+        ubyte* heap = init_tls(coreid);
 
         cpuinfo.coreid = coreid;
 
-        kmain(coreid);
+        kmain(coreid, heap);
     }
 
-    void init_tls(int coreid) {
+    // returns a pointer to the region after all TLS blocks
+    ubyte* init_tls(int coreid) {
         // Note: this function should not be inlined to ensure that the thread
         // pointer is set before any subsequent operations that involve the
         // thread pointer.
@@ -64,6 +65,8 @@ extern (C) {
         memset(tls_start + arch.tcb_size + tdata_size, 0, tbss_size);
 
         arch.set_tls_base(tls_start);
+
+        return cast(ubyte*) (tls_base + tls_size * System.ncores);
     }
 
     void ulib_tx(ubyte c) {

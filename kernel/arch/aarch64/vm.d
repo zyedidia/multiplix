@@ -2,6 +2,12 @@ module kernel.arch.aarch64.vm;
 
 import bits = ulib.bits;
 
+import ulib.option;
+import ulib.memory;
+
+import kernel.vm;
+import kernel.alloc;
+
 // AArch64 MMU configuration with 39-bit virtual addresses and a granule of 4KB.
 
 struct Pte {
@@ -36,8 +42,57 @@ enum Ap {
     krw = 0b00,
 }
 
+private uintptr vpn(uint level, uintptr va) {
+    return (va >> 12+9*level) & bits.mask!uintptr(9);
+}
+
 struct Pagetable {
     align(4096) Pte[512] ptes;
+
+    // Lookup the pte corresponding to 'va'. Stops after the corresponding
+    // level. If 'alloc' is true, allocates new pagetables as necessary.
+    Opt!(Pte*) walk(uintptr va, Pte.Pg endlevel, bool alloc) {
+        Pagetable* pt = &this;
+
+        for (int level = 2; level > endlevel; level--) {
+            Pte* pte = &pt.ptes[vpn(level, va)];
+            if (!pte.table) {
+                return Opt!(Pte*)(pte);
+            } else if (pte.valid) {
+                pt = cast(Pagetable*) pa2ka(pte.addr << 12);
+            } else {
+                if (!alloc) {
+                    return Opt!(Pte*)(null);
+                }
+                auto pg = kallocpage(Pagetable.sizeof);
+                if (!pg.has()) {
+                    return Opt!(Pte*)(null);
+                }
+                pt = cast(Pagetable*) pg.get();
+                memset(pt, 0, Pagetable.sizeof);
+                pte.addr = ka2pa(cast(uintptr) pt) >> 12;
+                pte.valid = 1;
+            }
+        }
+        return Opt!(Pte*)(&pt.ptes[vpn(endlevel, va)]);
+    }
+
+    // Map 'va' to 'pa' with the given page size and permissions. Returns false
+    // if allocation failed.
+    bool map(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm) {
+        auto opte = walk(va, pgtyp, true);
+        if (!opte.has()) {
+            return false;
+        }
+        auto pte = opte.get();
+        pte.addr = pa >> 12;
+        pte.ap = perm;
+        pte.valid = 1;
+        pte.sh = 0b11;
+        pte.af = 1;
+        // TODO: mair index
+        return true;
+    }
 
     void map_giga(uintptr va, uintptr pa, ubyte perm, ubyte mair) {
         auto idx = bits.get(va, 38, 30);

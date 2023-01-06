@@ -4,6 +4,10 @@ import kernel.dev.uart.bcmmini;
 import kernel.dev.gpio.bcm;
 import kernel.dev.reboot.bcmreboot;
 
+import kernel.vm;
+
+import sys = kernel.sys;
+
 struct System {
     enum gpu_freq = 250 * 1000 * 1000;
     enum ncores = 4;
@@ -14,11 +18,10 @@ struct System {
         size_t sz;
     }
 
-    private enum mb(ulong n) = 1024 * 1024 * n;
-    enum MemRange mem = MemRange(0, mb!(512));
-    enum MemRange device = MemRange(device_base, mb!(1024));
+    enum MemRange mem = MemRange(0, sys.mb!(512));
+    enum MemRange device = MemRange(device_base, sys.mb!(1024));
 }
 
-alias Uart = BcmMiniUart!(System.device_base + 0x215000);
-alias Gpio = BcmGpio!(System.device_base + 0x200000);
-alias Reboot = BcmReboot!(System.device_base + 0x10001c, System.device_base + 0x100024);
+alias Uart = BcmMiniUart!(pa2kpa(System.device_base + 0x215000));
+alias Gpio = BcmGpio!(pa2kpa(System.device_base + 0x200000));
+alias Reboot = BcmReboot!(pa2kpa(System.device_base + 0x10001c), pa2kpa(System.device_base + 0x100024));

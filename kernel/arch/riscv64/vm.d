@@ -92,7 +92,7 @@ private uintptr vpn(uint level, uintptr va) {
 struct Pagetable39 {
     align(4096) Pte39[512] ptes;
 
-    // Lookup the pte corresponding to 'pa'. Stops after the corresponding
+    // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
     Opt!(Pte39*) walk(uintptr va, Pte39.Pg endlevel, bool alloc) {
         Pagetable39* pt = &this;

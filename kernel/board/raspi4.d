@@ -4,6 +4,8 @@ import kernel.dev.uart.bcmmini;
 import kernel.dev.gpio.bcm;
 import kernel.dev.reboot.bcmreboot;
 
+import kernel.vm;
+
 import sys = kernel.sys;
 
 struct System {
@@ -22,6 +24,6 @@ struct System {
     enum MemRange device = MemRange(device_base, sys.gb!(1));
 }
 
-alias Uart = BcmMiniUart!(System.device_base + 0x215000);
-alias Gpio = BcmGpio!(System.device_base + 0x200000);
-alias Reboot = BcmReboot!(System.device_base + 0x10001c, System.device_base + 0x100024);
+alias Uart = BcmMiniUart!(pa2kpa(System.device_base + 0x215000));
+alias Gpio = BcmGpio!(pa2kpa(System.device_base + 0x200000));
+alias Reboot = BcmReboot!(pa2kpa(System.device_base + 0x10001c), pa2kpa(System.device_base + 0x100024));

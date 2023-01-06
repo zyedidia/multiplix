@@ -15,8 +15,6 @@ import ulib.memory;
 
 __gshared bool primary = true;
 
-extern (C) extern __gshared ubyte _kheap_start;
-
 struct BootData {
     ubyte* entry;
     ubyte[] data;
@@ -78,7 +76,7 @@ version (uart) {
         Uart.tx((u >> 24) & 0xff);
     }
 
-    BootData recv() {
+    BootData recv(ubyte* heap) {
         Uart.init(115200);
 
         while (true) {
@@ -90,7 +88,7 @@ version (uart) {
             }
         }
 
-        ubyte* base = &_kheap_start;
+        ubyte* base = heap;
         ulong entry = get_ulong();
         uint nbytes = get_uint();
         uint crc_recv = get_uint();
@@ -126,7 +124,7 @@ version (uart) {
 
 __gshared BootData bootdat;
 
-extern (C) void kmain(int coreid) {
+extern (C) void kmain(int coreid, ubyte* heap) {
     arch.monitor_init();
 
     version (kenter) {
@@ -148,7 +146,7 @@ extern (C) void kmain(int coreid) {
     }
 
     version (uart) {
-        BootData boot = recv();
+        BootData boot = recv(heap);
     } else {
         BootData boot = unpack();
     }
