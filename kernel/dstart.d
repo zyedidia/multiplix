@@ -36,6 +36,19 @@ extern (C) {
             volatile_st(&primary, 0);
         }
 
+        init_tls(coreid);
+
+        cpuinfo.coreid = coreid;
+
+        kmain(coreid);
+    }
+
+    void init_tls(int coreid) {
+        // Note: this function should not be inlined to ensure that the thread
+        // pointer is set before any subsequent operations that involve the
+        // thread pointer.
+        pragma(LDC_never_inline);
+
         // set up thread-local storage (tls)
         uintptr stack_base = cast(uintptr) &_kheap_start;
         uintptr tls_base = stack_base + System.ncores * 4096;
@@ -51,10 +64,6 @@ extern (C) {
         memset(tls_start + tdata_size, 0, tbss_size);
 
         arch.set_tls_base(tls_start);
-
-        cpuinfo.coreid = coreid;
-
-        kmain(coreid);
     }
 
     void ulib_tx(ubyte c) {
