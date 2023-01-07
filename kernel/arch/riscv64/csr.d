@@ -85,6 +85,7 @@ enum Cause {
     mti = 0x8000000000000007UL,
 
     // exceptions
+    illegal = 2,
     breakpoint = 3,
     ecall_s = 9,
     ecall_m = 11,

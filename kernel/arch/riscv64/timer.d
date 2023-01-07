@@ -2,6 +2,7 @@ module kernel.arch.riscv64.timer;
 
 import kernel.board;
 import kernel.arch.riscv64.csr;
+import kernel.arch.riscv64.clint;
 
 import sbi = kernel.arch.riscv64.sbi;
 
@@ -27,7 +28,7 @@ struct Timer {
     enum interval = 1000000;
 
     static ulong time() {
-        return Csr.time;
+        return *Clint.mtime;
     }
 
     static void intr() {

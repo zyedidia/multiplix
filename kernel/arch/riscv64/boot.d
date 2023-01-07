@@ -36,7 +36,7 @@ void kernel_setup(bool primary) {
 
     // Prepare to enable interrupts (only will be enabled when sstatus is
     // written as well).
-    Csr.sie = Csr.sie | (1UL << Sie.seie) | (1UL << Sie.stie) | (1UL << Sie.ssie);
+    Csr.sie = (1UL << Sie.stie) | (1UL << Sie.ssie);
 
     // enable SUM bit so supervisor mode can access usermode pages
     // (currently not necessary, so commented out)
