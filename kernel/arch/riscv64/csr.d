@@ -15,6 +15,7 @@ enum CsrNum {
     mepc = 0x341,
     mcause = 0x342,
     mtval = 0x343,
+    mip = 0x344,
 
     pmpcfg0 = 0x3A0,
     pmpaddr0 = 0x3B0,
@@ -56,11 +57,17 @@ enum Sstatus {
     sum = 18,
 }
 
+enum Mip {
+    stip = 5,
+    mtip = 7,
+}
+
 enum Sip {
     ssip = 1,
 }
 
 enum Mie {
+    stie = 5,
     mtie = 7,
 }
 
@@ -74,6 +81,8 @@ enum Cause {
     // interrupts
     // software timer interrupt
     sti = 0x8000000000000005UL,
+    // machine timer interrupt
+    mti = 0x8000000000000007UL,
 
     // exceptions
     breakpoint = 3,
@@ -107,6 +116,7 @@ struct Csr {
     mixin(GenCsr!("mscratch"));
     mixin(GenCsr!("mepc"));
     mixin(GenCsr!("mtval"));
+    mixin(GenCsr!("mip"));
 
     mixin(GenCsr!("pmpcfg0"));
     mixin(GenCsr!("pmpaddr0"));

@@ -6,6 +6,7 @@ import kernel.arch.riscv64.monitor.ext;
 
 import sbi = kernel.arch.riscv64.sbi;
 
+import bits = ulib.bits;
 import io = ulib.io;
 
 extern (C) void monitortrap(Regs* regs) {
@@ -16,6 +17,10 @@ extern (C) void monitortrap(Regs* regs) {
         case Cause.ecall_s, Cause.ecall_m:
             sbi_handler(regs);
             Csr.mepc = mepc + 4;
+            break;
+        case Cause.mti:
+            Csr.mie = bits.clear(Csr.mie, Mie.mtie);
+            Csr.mip = Csr.mip | (1 << Mip.stip);
             break;
         default:
             io.writeln("monitortrap: core: ", Csr.mhartid, ", cause: ", mcause, ", epc: ", cast(void*) mepc);

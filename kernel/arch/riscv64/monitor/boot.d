@@ -9,8 +9,8 @@ extern (C) void _enter_smode();
 
 void enter_smode() {
     // Write S-mode to mstatus.MPP.
-    Csr.mstatus = bits.write(Csr.mstatus, 12, 11, Priv.s) | (1 << Mstatus.mpie);
-    /* Csr.mie = Csr.mie | (1 << Mie.mtie); */
+    Csr.mstatus = bits.write(Csr.mstatus, 12, 11, Priv.s);
+    Csr.mie = (1 << Mie.mtie);
 
     // Disable paging.
     Csr.satp = 0;
