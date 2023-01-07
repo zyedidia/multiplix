@@ -21,5 +21,11 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     void* p = kr.alloc(10);
     io.writeln("allocated: ", p);
 
+    arch.Trap.init();
+    arch.Trap.enable();
+    arch.Timer.intr();
+
+    while (1) {}
+
     Reboot.reboot();
 }

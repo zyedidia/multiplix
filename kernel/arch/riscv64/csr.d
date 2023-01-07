@@ -43,6 +43,12 @@ enum Priv {
     m = 0b11,
 }
 
+enum Mstatus {
+    sie = 1,
+    mie = 3,
+    mpie = 7,
+}
+
 enum Sstatus {
     sie = 1,
     spie = 5,
@@ -52,6 +58,10 @@ enum Sstatus {
 
 enum Sip {
     ssip = 1,
+}
+
+enum Mie {
+    mtie = 7,
 }
 
 enum Sie {
