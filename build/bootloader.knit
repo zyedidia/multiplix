@@ -79,7 +79,7 @@ return b{
     $ bootloader/payload.o: bootloader/payload.s $(cli.payload)
         $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(cli.payload)
     $ bootloader.elf: $(obj) $(link)[I]
-        $(tools.cc) $(flags.ld) -T$(link) $(linkextra) $input -o $output
+        $(tools.ld) $(flags.ld) -T$(link) $(linkextra) $input -o $output
 
     meta
 }

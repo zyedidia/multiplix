@@ -15,7 +15,7 @@ function build.machine(board, monitor)
             board = "raspi3",
             march = "armv8-a+crc",
             mcpu = "cortex-a53",
-            mattr = f"+strict-align,+$tpidr",
+            mattr = f"+strict-align,+$tpidr,-sve,-fp-armv8",
             arch = "aarch64",
             qemu = "-M raspi3ap -serial null -serial mon:stdio",
         },
@@ -23,7 +23,7 @@ function build.machine(board, monitor)
             board = "raspi4",
             march = "armv8-a+crc",
             mcpu = "cortex-a72",
-            mattr = f"+strict-align,+$tpidr",
+            mattr = f"+strict-align,+$tpidr,-sve,-fp-armv8",
             arch = "aarch64",
             qemu = "-M raspi4b -serial null -serial mon:stdio" -- doesn't exist
         },
@@ -62,7 +62,7 @@ function build.flags_llvm(machine)
     local prefix = build.prefix(machine.arch)
 
     local flags = {
-        aarch64 := -mtriple=$prefix -mcpu=$(machine.mcpu) -mattr=$(machine.mattr),-sve,-fp-armv8
+        aarch64 := -mtriple=$prefix -mcpu=$(machine.mcpu) -mattr=$(machine.mattr)
         riscv64 := -mtriple=$prefix -mattr=$(machine.mattr) -code-model=$(machine.cmodel)
     }
     return flags[machine.arch]
@@ -92,13 +92,14 @@ function build.tools(machine)
 end
 
 function build.flags(machine, lto, release, monitor)
+    local prefix = build.prefix(machine.arch)
     local knit = require("knit")
     local version = sel(monitor, "-d-version=monitor", "-d-version=kernel")
     local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
     local flto = sel(lto, "-flto=thin", "")
-    local ltoflags := -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O1
+    local ltoflags := -plugin=$ltoplugin -plugin-opt=thinlto -plugin-opt=O2 -plugin-opt=-mattr=$(machine.mattr)
     if machine.arch == "riscv64" then
-        ltoflags = ltoflags .. f" -Wl,-plugin-opt=-code-model=$(machine.cmodel)"
+        ltoflags = ltoflags .. f" -plugin-opt=-code-model=$(machine.cmodel)"
     end
     ltoflags = sel(lto, ltoflags, "")
 
@@ -110,7 +111,7 @@ function build.flags(machine, lto, release, monitor)
     return {
         dc := -betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt $version
         as := -Os $(flags.gnu) -xassembler-with-cpp
-        ld := -Os -mstrict-align $(flags.gnu) -nostartfiles -nodefaultlibs $ltoflags -Wl,--gc-sections
+        ld := $ltoflags --gc-sections
         qemu := $(machine.qemu) -nographic
     }
 end

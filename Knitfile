@@ -78,7 +78,7 @@ local link = {
 
 local kernel = r{
     $ kernel.elf: $(obj.kernel) $(link.kernel)[I]
-        $(tools.cc) $(flags.ld) -T$(link.kernel) $(link.extra) $input -o $output
+        $(tools.ld) $(flags.ld) -T$(link.kernel) $(link.extra) $input -o $output
     $ qemu:VB: kernel.boot.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -kernel $input
     $ qemu-gdb:VB: kernel.boot.elf
