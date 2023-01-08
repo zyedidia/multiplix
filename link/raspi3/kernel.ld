@@ -12,6 +12,7 @@ SECTIONS
     .rodata : {
         . = ALIGN(8);
         _krodata_start = .;
+        *(.srodata*)
         *(.rodata*)
         . = ALIGN(8);
         _krodata_end = .;
@@ -19,6 +20,7 @@ SECTIONS
     .data : { 
         . = ALIGN(8);
         _kdata_start = .;
+        *(.sdata*)
         *(.data*)
         . = ALIGN(8);
         _kdata_end = .;
@@ -41,6 +43,7 @@ SECTIONS
     .bss : {
         . = ALIGN(8);
         _kbss_start = .;
+        *(.sbss*)
         *(.bss*)
         *(COMMON)
         . = ALIGN(8);

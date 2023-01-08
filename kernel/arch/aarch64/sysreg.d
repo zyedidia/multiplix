@@ -51,8 +51,10 @@ struct SysReg {
     mixin(GenSysReg!("ttbr1_el1"));
     mixin(GenSysReg!("tcr_el1"));
     mixin(GenSysReg!("mair_el1"));
-    mixin(GenSysReg!("id_aa64mmfr0_el1"));
     mixin(GenSysReg!("tpidr_el1"));
+    mixin(GenSysReg!("vbar_el1"));
+
+    mixin(GenSysReg!("daif"));
 
     // CPUECTLR
     mixin(GenSysReg!("S3_1_C15_C2_1"));

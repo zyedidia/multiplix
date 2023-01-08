@@ -96,7 +96,7 @@ function build.flags(machine, lto, release, monitor)
     local version = sel(monitor, "-d-version=monitor", "-d-version=kernel")
     local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
     local flto = sel(lto, "-flto=thin", "")
-    local ltoflags := -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O2
+    local ltoflags := -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=thinlto -Wl,-plugin-opt=O1
     if machine.arch == "riscv64" then
         ltoflags = ltoflags .. f" -Wl,-plugin-opt=-code-model=$(machine.cmodel)"
     end

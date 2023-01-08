@@ -26,5 +26,5 @@ extern (C) void monitor_exception(Regs* regs) {
 }
 
 extern (C) void monitor_interrupt(Regs* regs) {
-    io.writeln("interrupt, elr_el3: ", cast(void*) SysReg.elr_el3);
+    io.writeln("monitor interrupt, elr_el3: ", cast(void*) SysReg.elr_el3);
 }

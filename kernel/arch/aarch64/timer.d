@@ -17,4 +17,8 @@ struct Timer {
             }
         } while (r < t);
     }
+
+    static void intr() {
+
+    }
 }
