@@ -60,9 +60,13 @@ extern (C) {
         size_t tdata_size = &_tdata_end - &_tdata_start;
         size_t tbss_size = &_tbss_end - &_tbss_start;
         // copy tdata into the tls region
-        memcpy(tls_start + arch.tcb_size, &_tdata_start, tdata_size);
+        for (size_t i = 0; i < tdata_size; i++) {
+            volatile_st(tls_start + arch.tcb_size, volatile_ld(&_tdata_start + i));
+        }
         // zero out the tbss
-        memset(tls_start + arch.tcb_size + tdata_size, 0, tbss_size);
+        for (size_t i = 0; i < tbss_size; i++) {
+            volatile_st(tls_start + arch.tcb_size + tdata_size, 0);
+        }
 
         arch.set_tls_base(tls_start);
 

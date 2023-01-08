@@ -109,6 +109,7 @@ version (uart) {
             while (1) {}
         }
         put_uint(BootFlags.BootSuccess);
+        Uart.tx_flush();
 
         return BootData(cast(ubyte*) entry, base[0 .. nbytes]);
     }
