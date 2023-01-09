@@ -21,4 +21,8 @@ struct Timer {
     static void intr() {
 
     }
+
+    static void intr(ulong interval) {
+
+    }
 }

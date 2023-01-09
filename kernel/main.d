@@ -22,6 +22,11 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     void* p = kr.alloc(10);
     io.writeln("allocated: ", p);
 
+    /* if (primary) { */
+    /*     primary = false; */
+    /*     arch.Cpu.start_all_cores(); */
+    /* } */
+
     arch.Trap.init();
     arch.Trap.enable();
 
@@ -32,13 +37,15 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         return ((cast(ulong)ms32) << 32) | ls32;
     }
     volatile_st(cast(uint*) 0x4000_0040, 0b0010);
+    volatile_st(cast(uint*) 0x4000_0044, 0b0010);
+    volatile_st(cast(uint*) 0x4000_0048, 0b0010);
+    volatile_st(cast(uint*) 0x4000_004c, 0b0010);
 
     asm {
         "msr cntp_ctl_el0, %0" :: "r"(1);
-        "msr cntp_tval_el0, %0" :: "r"(1000);
     }
 
-    Timer.delay_nops(1000000000);
+    Timer.delay_ms(10000);
 
     io.writeln("done");
 

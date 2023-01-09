@@ -34,5 +34,10 @@ extern (C) void kernel_exception(Regs* regs) {
 }
 
 extern (C) void kernel_interrupt(Regs* regs) {
-    io.writeln("kernel interrupt");
+    import kernel.cpu;
+    io.writeln("core: ", cpuinfo.coreid, ", kernel interrupt");
+
+    asm {
+        "msr cntp_tval_el0, %0" :: "r"(19200000);
+    }
 }
