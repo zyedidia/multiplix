@@ -2,6 +2,7 @@ module kernel.arch.aarch64.trap;
 
 import kernel.arch.aarch64.sysreg;
 import kernel.arch.aarch64.regs;
+import kernel.arch.aarch64.timer;
 
 import io = ulib.io;
 import bits = ulib.bits;
@@ -36,8 +37,5 @@ extern (C) void kernel_exception(Regs* regs) {
 extern (C) void kernel_interrupt(Regs* regs) {
     import kernel.cpu;
     io.writeln("core: ", cpuinfo.coreid, ", kernel interrupt");
-
-    asm {
-        "msr cntp_tval_el0, %0" :: "r"(19200000);
-    }
+    Timer.intr();
 }

@@ -16,7 +16,6 @@ __gshared bool primary = true;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
-    io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
     /* if (primary) { */
     /*     primary = false; */
     /*     arch.Cpu.start_all_cores(); */
@@ -26,25 +25,15 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     void* p = kr.alloc(10);
     io.writeln("allocated: ", p);
 
+    version (raspi3) {
+        CoreTimer.enable_irq();
+    } else version (raspi4) {
+        CoreTimer.enable_irq();
+    }
 
     arch.Trap.init();
     arch.Trap.enable();
-
-    import core.volatile;
-    ulong rdtime() {
-        uint ls32 = volatile_ld(cast(uint*) 0x4000_001C);
-        uint ms32 = volatile_ld(cast(uint*) 0x4000_0020);
-        return ((cast(ulong)ms32) << 32) | ls32;
-    }
-    volatile_st(cast(uint*) 0x4000_0040, 0b0010);
-    volatile_st(cast(uint*) 0x4000_0044, 0b0010);
-    volatile_st(cast(uint*) 0x4000_0048, 0b0010);
-    volatile_st(cast(uint*) 0x4000_004c, 0b0010);
-
-    asm {
-        "msr cntp_ctl_el0, %0" :: "r"(1);
-        "msr cntp_tval_el0, %0" :: "r"(0);
-    }
+    arch.Timer.intr();
 
     Timer.delay_ms(2000);
 

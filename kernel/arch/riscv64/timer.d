@@ -23,6 +23,10 @@ struct Timer {
 
     enum interval = 1000000;
 
+    static ulong freq() {
+        return 10_000_000;
+    }
+
     static ulong time() {
         return *Clint.mtime;
     }
@@ -31,8 +35,8 @@ struct Timer {
         intr(interval);
     }
 
-    static void intr(ulong interval) {
-        ulong next = time() + interval;
+    static void intr(ulong us) {
+        ulong next = time() + freq() / 1000000 * us;
         sbi.Timer.set_timer(next);
     }
 }

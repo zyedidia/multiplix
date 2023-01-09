@@ -1,5 +1,7 @@
 module kernel.arch.aarch64.timer;
 
+import kernel.arch.aarch64.sysreg;
+
 struct Timer {
     static void delay_us(ulong us) {
         ulong f, t, r;
@@ -18,11 +20,17 @@ struct Timer {
         } while (r < t);
     }
 
-    static void intr() {
-
+    static ulong freq() {
+        return SysReg.cntfrq_el0;
     }
 
-    static void intr(ulong interval) {
+    enum interval = 100000;
+    static void intr() {
+        intr(interval);
+    }
 
+    static void intr(ulong us) {
+        SysReg.cntp_tval_el0 = freq() / 1000000 * us;
+        SysReg.cntp_ctl_el0 = 1;
     }
 }
