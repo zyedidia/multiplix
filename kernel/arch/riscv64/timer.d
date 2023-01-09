@@ -21,10 +21,6 @@ struct Timer {
         delay_cycles(t * System.cpu_freq_mhz);
     }
 
-    static void delay_ms(ulong t) {
-        delay_us(t * 1000);
-    }
-
     enum interval = 1000000;
 
     static ulong time() {

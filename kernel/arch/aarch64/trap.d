@@ -16,11 +16,12 @@ struct Trap {
     // TODO: use daifset and daifclr instead
     // enable/disble fiq and irq
     static void enable() {
-        SysReg.daif = bits.write(SysReg.daif, 9, 6, 0b0011);
+        // setting a bit to 0 unmasks (enables) the irq
+        SysReg.daif = bits.write(SysReg.daif, 9, 6, 0b1100);
     }
 
     static void disable() {
-        SysReg.daif = bits.write(SysReg.daif, 9, 6, 0b0000);
+        SysReg.daif = bits.write(SysReg.daif, 9, 6, 0b1111);
     }
 
     static bool enabled() {

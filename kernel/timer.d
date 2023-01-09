@@ -13,4 +13,8 @@ struct Timer {
     static void delay_us(ulong us) {
         arch.Timer.delay_us(us);
     }
+
+    static void delay_ms(ulong t) {
+        delay_us(t * 1000);
+    }
 }

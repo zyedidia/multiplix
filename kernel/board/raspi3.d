@@ -18,8 +18,8 @@ struct System {
         size_t sz;
     }
 
-    enum MemRange mem = MemRange(0, sys.mb!(512));
-    enum MemRange device = MemRange(device_base, sys.mb!(1024));
+    enum MemRange mem = MemRange(0, sys.gb!(1));
+    enum MemRange device = MemRange(sys.gb!(1), sys.gb!(1));
 }
 
 alias Uart = BcmMiniUart!(pa2kpa(System.device_base + 0x215000));

@@ -77,8 +77,6 @@ version (uart) {
     }
 
     BootData recv(ubyte* heap) {
-        Uart.init(115200);
-
         while (true) {
             put_uint(BootFlags.GetProgInfo);
             Timer.delay_us(100 * 1000); // delay 100ms

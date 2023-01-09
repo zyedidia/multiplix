@@ -18,7 +18,7 @@ if conf.board == "raspi4" then
 end
 
 local tools = build.tools(machine)
-local flags = build.flags(machine, false, conf.release)
+local flags = build.flags(machine, false, conf.release, true)
 
 local meta = r{
     $ %.o: %.s
@@ -33,7 +33,7 @@ return b{
     $ all:V: armstub8.bin
 
     $ armstub8.elf: armstub8.o link.ld[I]
-        $(tools.cc) $(flags.ld) -Wl,--section-start=.text=0x0 $input -o $output
+        $(tools.ld) $(flags.ld) --section-start=.text=0x0 $input -o $output
 
     meta
 }
