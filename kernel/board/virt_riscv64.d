@@ -2,6 +2,7 @@ module kernel.board.virt_riscv64;
 
 import kernel.dev.uart.ns16550;
 import kernel.dev.reboot.qsyscon;
+import kernel.dev.irq.sfclint;
 
 import kernel.vm;
 
@@ -26,3 +27,4 @@ struct System {
 
 alias Uart = Ns16550!(pa2kpa(0x10000000));
 alias Reboot = QemuSyscon!(pa2kpa(0x100000));
+alias Clint = SifiveClint!(pa2kpa(0x200_0000));

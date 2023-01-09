@@ -1,8 +1,9 @@
 module kernel.arch.riscv64.timer;
 
+import core.volatile;
+
 import kernel.board;
 import kernel.arch.riscv64.csr;
-import kernel.arch.riscv64.clint;
 
 import sbi = kernel.arch.riscv64.sbi;
 
@@ -38,7 +39,7 @@ struct Timer {
     }
 
     static ulong time() {
-        return *Clint.mtime;
+        return volatile_ld(Clint.mtime);
     }
 
     static void intr() {

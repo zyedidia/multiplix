@@ -1,10 +1,4 @@
-module kernel.arch.riscv64.clint;
-
-import kernel.vm;
-
-// Clint location for the Sifive U74MC core complex.
-// TODO: make this a device and move it into the board definition.
-alias Clint = SifiveClint!(pa2ka(0x0200_0000));
+module kernel.dev.irq.sfclint;
 
 struct SifiveClint(uintptr base) {
     enum ulong* mtime = cast(ulong*) (base + 0xBFF8);

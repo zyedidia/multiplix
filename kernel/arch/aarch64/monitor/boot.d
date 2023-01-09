@@ -7,10 +7,6 @@ import bits = ulib.bits;
 extern (C) void _enter_el1();
 
 void enter_el1() {
-    // We want 'eret' to jump to _el1_entrypoint, so we write it to elr_el3.
-    // TODO: not sure why this doesn't work, have to use inline asm for this instead
-    /* SysReg.elr_el3 = cast(uintptr) &_el1_entrypoint; */
-
     // Set spsr to return to EL1 with SP0.
     SysReg.spsr_el3 = 0b0111_00_0101;
     // Prepare EL1 with MMU and caches disabled.
