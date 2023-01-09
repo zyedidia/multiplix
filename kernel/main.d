@@ -17,15 +17,15 @@ __gshared bool primary = true;
 extern (C) void kmain(int coreid, ubyte* heap) {
     io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
     io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
+    /* if (primary) { */
+    /*     primary = false; */
+    /*     arch.Cpu.start_all_cores(); */
+    /* } */
 
     KrAllocator kr = KrAllocator(heap, sys.mb!(128));
     void* p = kr.alloc(10);
     io.writeln("allocated: ", p);
 
-    /* if (primary) { */
-    /*     primary = false; */
-    /*     arch.Cpu.start_all_cores(); */
-    /* } */
 
     arch.Trap.init();
     arch.Trap.enable();
@@ -43,9 +43,10 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     asm {
         "msr cntp_ctl_el0, %0" :: "r"(1);
+        "msr cntp_tval_el0, %0" :: "r"(0);
     }
 
-    Timer.delay_ms(10000);
+    Timer.delay_ms(2000);
 
     io.writeln("done");
 
