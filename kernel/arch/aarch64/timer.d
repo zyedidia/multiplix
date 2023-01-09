@@ -4,19 +4,13 @@ import kernel.arch.aarch64.sysreg;
 
 struct Timer {
     static void delay_us(ulong us) {
-        ulong f, t, r;
+        ulong r = void;
         // get the current counter frequency
-        asm {
-            // read the current counter
-            "mrs %0, cntfrq_el0" : "=r"(f);
-            // calculate expire value for counter
-            "mrs %0, cntpct_el0" : "=r"(t);
-        }
+        ulong f = SysReg.cntfrq_el0;
+        ulong t = SysReg.cntpct_el0;
         t += ((f / 1000) * us) / 1000;
         do {
-            asm {
-                "mrs %0, cntpct_el0" : "=r"(r);
-            }
+            r = SysReg.cntpct_el0;
         } while (r < t);
     }
 
