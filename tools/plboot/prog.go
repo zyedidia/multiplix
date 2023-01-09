@@ -128,9 +128,7 @@ func (p *progCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	var l Loader
 
 	if strings.HasSuffix(binfile, ".elf") {
-		l = &ElfLoader{
-			Expand: false,
-		}
+		l = &ElfLoader{}
 	} else if strings.HasSuffix(binfile, ".ihex") || strings.HasSuffix(binfile, ".hex") {
 		l = &IntelHexLoader{
 			Entry: BaseAddr,

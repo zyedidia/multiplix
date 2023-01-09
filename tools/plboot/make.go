@@ -37,9 +37,7 @@ func (p *makeCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		fmt.Fprintln(os.Stderr, err)
 		return subcommands.ExitFailure
 	}
-	l := &ElfLoader{
-		Expand: false,
-	}
+	l := &ElfLoader{}
 	segs, entry, err := l.Load(data)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

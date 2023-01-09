@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"debug/elf"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
+	"sort"
 
 	"github.com/marcinbor85/gohex"
 )
@@ -70,9 +72,22 @@ func (l *IntelHexLoader) Load(data []byte) ([]Segment, uint64, error) {
 }
 
 type ElfLoader struct {
-	Expand bool
 }
 
+// adapted from the tinygo objcopy: https://github.com/tinygo-org/tinygo/blob/release/builder/objcopy.go
+
+type progSlice []*elf.Prog
+
+func (s progSlice) Len() int           { return len(s) }
+func (s progSlice) Less(i, j int) bool { return s[i].Paddr < s[j].Paddr }
+func (s progSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+// maxPadBytes is the maximum allowed bytes to be padded in a rom extraction
+// this value is currently defined by Nintendo Switch Page Alignment (4096 bytes)
+const maxPadBytes = 4095
+
+// extractROM extracts a firmware image and the first load address from the
+// given ELF file. It tries to emulate the behavior of objcopy.
 func (l *ElfLoader) Load(data []byte) ([]Segment, uint64, error) {
 	r := bytes.NewReader(data)
 	f, err := elf.NewFile(r)
@@ -81,32 +96,72 @@ func (l *ElfLoader) Load(data []byte) ([]Segment, uint64, error) {
 	}
 	defer f.Close()
 
-	if f.Type != elf.ET_EXEC {
-		return nil, 0, fmt.Errorf("invalid elf file type: %v", f.Type)
-	}
+	// The GNU objcopy command does the following for firmware extraction (from
+	// the man page):
+	// > When objcopy generates a raw binary file, it will essentially produce a
+	// > memory dump of the contents of the input object file. All symbols and
+	// > relocation information will be discarded. The memory dump will start at
+	// > the load address of the lowest section copied into the output file.
 
-	segs := make([]Segment, 0, len(f.Progs))
-	for _, p := range f.Progs {
-		if p.Type == elf.PT_LOAD {
-			var data []byte
-			if l.Expand {
-				data = make([]byte, p.Memsz)
-			} else {
-				data = make([]byte, p.Filesz)
-			}
-			fdata := make([]byte, p.Filesz)
-			n, err := p.ReadAt(fdata, 0)
-			if err != nil && err != io.EOF {
-				return nil, 0, err
-			}
-			copy(data, fdata[:n])
-
-			segs = append(segs, Segment{
-				addr: p.Vaddr,
-				data: data[f.Entry-p.Vaddr:],
-			})
+	// Find the lowest section address.
+	startAddr := ^uint64(0)
+	for _, section := range f.Sections {
+		if section.Type != elf.SHT_PROGBITS || section.Flags&elf.SHF_ALLOC == 0 {
+			continue
+		}
+		if section.Addr < startAddr {
+			startAddr = section.Addr
 		}
 	}
 
-	return segs, f.Entry, nil
+	progs := make(progSlice, 0, 2)
+	for _, prog := range f.Progs {
+		if prog.Type != elf.PT_LOAD || prog.Filesz == 0 || prog.Off == 0 {
+			continue
+		}
+		progs = append(progs, prog)
+	}
+	if len(progs) == 0 {
+		return nil, 0, errors.New("file does not contain ROM segments")
+	}
+	sort.Sort(progs)
+
+	var rom []byte
+	for _, prog := range progs {
+		romEnd := progs[0].Paddr + uint64(len(rom))
+		if prog.Paddr > romEnd && prog.Paddr < romEnd+16 {
+			// Sometimes, the linker seems to insert a bit of padding between
+			// segments. Simply zero-fill these parts.
+			rom = append(rom, make([]byte, prog.Paddr-romEnd)...)
+		}
+		if prog.Paddr != progs[0].Paddr+uint64(len(rom)) {
+			diff := prog.Paddr - (progs[0].Paddr + uint64(len(rom)))
+			if diff > maxPadBytes {
+				return nil, 0, errors.New("ROM segments are non-contiguous")
+			}
+			// Pad the difference
+			rom = append(rom, make([]byte, diff)...)
+		}
+		data, err := io.ReadAll(prog.Open())
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to extract segment from ELF file: %w", err)
+		}
+		rom = append(rom, data...)
+	}
+	if progs[0].Paddr < startAddr {
+		// The lowest memory address is before the first section. This means
+		// that there is some extra data loaded at the start of the image that
+		// should be discarded.
+		// Example: ELF files where .text doesn't start at address 0 because
+		// there is a bootloader at the start.
+		return []Segment{Segment{
+			addr: progs[0].Paddr,
+			data: rom[startAddr-progs[0].Paddr:],
+		}}, startAddr, nil
+	} else {
+		return []Segment{Segment{
+			addr: progs[0].Paddr,
+			data: rom,
+		}}, progs[0].Paddr, nil
+	}
 }
