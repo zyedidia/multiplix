@@ -26,11 +26,9 @@ uintptr kpa2pa(uintptr kpa) {
 // Converts a physical address to a kernel address if in the kernel, or a
 // physical address if in the monitor (where kernel addresses don't exist).
 uintptr pa2kpa(uintptr pa) {
-    // TODO: fix the build system so we can have this working correctly
-    return pa;
-    /* version (monitor) { */
-    /*     return pa; */
-    /* } else { */
-    /*     return pa2ka(pa); */
-    /* } */
+    version (monitor) {
+        return pa;
+    } else {
+        return pa2ka(pa);
+    }
 }

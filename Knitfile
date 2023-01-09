@@ -16,10 +16,10 @@ local tools = build.tools(machine)
 local flags = build.flags(machine, conf.lto, conf.release, false)
 
 local meta = r{
-    $ %.o: %.s
+    $ .kobj/%.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
-    $ %.o:D[.deps/%.dep]: %.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.deps/$match.dep
+    $ .kobj/%.o:D[.deps/%.dep]: %.d
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.kobj/deps/$match.dep
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
     $ %.boot.elf:B: %.payload
@@ -70,6 +70,7 @@ local obj = {
         }
     ),
 }
+obj.kernel = knit.prefix(".kobj/", obj.kernel)
 
 local link = {
     kernel = f"link/$(machine.board)/kernel.ld",

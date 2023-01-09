@@ -13,3 +13,5 @@ TODO.txt
 *.payload
 conf.knit
 knit-*
+.kobj
+.bootobj

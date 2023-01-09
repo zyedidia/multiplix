@@ -16,10 +16,10 @@ local tools = build.tools(machine)
 local flags = build.flags(machine, conf.lto, conf.release, true)
 
 local meta = r{
-    $ %.o: %.s
+    $ .bootobj/%.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
-    $ %.o:D[.deps/%.dep]: %.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.deps/$match.dep
+    $ .bootobj/%.o:D[.deps/%.dep]: %.d
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/$match.dep
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
     $ %.bin.out: %.bin
@@ -61,6 +61,7 @@ local obj = knit.join(
         f"kernel/arch/$(machine.arch)/monitorasm.o",
     }
 )
+obj = knit.prefix(".bootobj/", obj)
 
 local link = f"link/$(machine.board)/bootloader.ld"
 local linkextra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)")
@@ -74,9 +75,9 @@ local boot = {
 return b{
     $ all:V: bootloader.bin
 
-    $ bootloader/main.o:D[.deps/bootloader/main.dep]: bootloader/main.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.deps/bootloader/main.dep -d-version=$(boot.version) $(boot.kboot) $(boot.kenter)
-    $ bootloader/payload.o: bootloader/payload.s $(cli.payload)
+    $ .bootobj/bootloader/main.o:D[.deps/bootloader/main.dep]: bootloader/main.d
+        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$(boot.version) $(boot.kboot) $(boot.kenter)
+    $ .bootobj/bootloader/payload.o: bootloader/payload.s $(cli.payload)
         $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(cli.payload)
     $ bootloader.elf: $(obj) $(link)[I]
         $(tools.ld) $(flags.ld) -T$(link) $(linkextra) $input -o $output
