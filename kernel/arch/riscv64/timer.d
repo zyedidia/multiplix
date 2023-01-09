@@ -17,14 +17,24 @@ struct Timer {
         }
     }
 
-    static void delay_us(ulong t) {
-        delay_cycles(t * System.cpu_freq_mhz);
+    private static void delay_time(ulong t) {
+        ulong rb = Csr.time;
+        while (1) {
+            ulong ra = Csr.time;
+            if ((ra - rb) >= t) {
+                break;
+            }
+        }
     }
 
-    enum interval = 1000000;
+    static void delay_us(ulong t) {
+        delay_time(t * (System.mtime_freq / 1_000_000));
+    }
+
+    enum interval = 100000;
 
     static ulong freq() {
-        return 10_000_000;
+        return System.mtime_freq;
     }
 
     static ulong time() {

@@ -13,6 +13,8 @@ struct System {
     enum cpu_freq_mhz = cpu_freq / (1000 * 1000);
     enum ncores = 2;
 
+    enum mtime_freq = 6_250_000;
+
     struct MemRange {
         uintptr start;
         size_t sz;

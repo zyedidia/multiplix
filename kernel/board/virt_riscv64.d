@@ -12,6 +12,9 @@ struct System {
     enum cpu_freq_mhz = cpu_freq / (1000 * 1000);
     enum ncores = 4;
 
+    // best guess for qemu
+    enum mtime_freq = 3_580_000 * 2;
+
     struct MemRange {
         uintptr start;
         size_t sz;

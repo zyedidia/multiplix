@@ -16,14 +16,14 @@ __gshared bool primary = true;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
-    /* if (primary) { */
-    /*     primary = false; */
-    /*     arch.Cpu.start_all_cores(); */
-    /* } */
 
-    KrAllocator kr = KrAllocator(heap, sys.mb!(128));
-    void* p = kr.alloc(10);
-    io.writeln("allocated: ", p);
+    if (primary) {
+        KrAllocator kr = KrAllocator(heap, sys.mb!(128));
+
+        // boot up the other cores
+        /* primary = false; */
+        /* arch.Cpu.start_all_cores(); */
+    }
 
     version (raspi3) {
         CoreTimer.enable_irq();
@@ -38,13 +38,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     Timer.delay_ms(2000);
 
     io.writeln("done");
-
-    /* auto start = rdtime(); */
-    /* Timer.delay_us(10000); */
-    /* io.writeln(rdtime() - start); */
-    /* Timer.delay_us(1000000); */
-
-    /* arch.Timer.intr(); */
 
     Reboot.reboot();
 }
