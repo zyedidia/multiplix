@@ -40,6 +40,7 @@ _enter_smode:
 	la t0, entry
 	csrw mepc, t0
 	mret
+.align 4
 entry:
 	ret
 

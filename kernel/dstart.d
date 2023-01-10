@@ -25,8 +25,8 @@ extern (C) {
         // initialization). Otherwise the compiler will actually invert primary
         // so that it can be stored in the BSS (seems like an aggressive
         // optimization?).
-        /* bool maincpu = volatile_ld(&primary) == 1; */
-        if (volatile_ld(&primary)) {
+        bool maincpu = volatile_ld(&primary) == 1;
+        if (maincpu) {
             uint* bss = &_kbss_start;
             uint* bss_end = &_kbss_end;
             while (bss < bss_end) {
@@ -40,7 +40,7 @@ extern (C) {
         ubyte* heap = init_tls(coreid);
 
         cpuinfo.coreid = coreid;
-        /* cpuinfo.primary = maincpu; */
+        cpuinfo.primary = maincpu;
 
         kmain(coreid, heap);
     }
