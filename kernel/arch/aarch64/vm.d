@@ -1,6 +1,7 @@
 module kernel.arch.aarch64.vm;
 
 import bits = ulib.bits;
+import io = ulib.io;
 
 import ulib.option;
 import ulib.memory;
@@ -51,12 +52,12 @@ struct Pagetable {
 
     // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
-    Opt!(Pte*) walk(uintptr va, Pte.Pg endlevel, bool alloc) {
+    Opt!(Pte*) walk(A)(uintptr va, Pte.Pg endlevel, bool alloc, A* allocator) {
         Pagetable* pt = &this;
 
         for (int level = 2; level > endlevel; level--) {
             Pte* pte = &pt.ptes[vpn(level, va)];
-            if (!pte.table) {
+            if (pte.valid && !pte.table) {
                 return Opt!(Pte*)(pte);
             } else if (pte.valid) {
                 pt = cast(Pagetable*) pa2ka(pte.addr << 12);
@@ -64,7 +65,7 @@ struct Pagetable {
                 if (!alloc) {
                     return Opt!(Pte*)(null);
                 }
-                auto pg = kallocpage(Pagetable.sizeof);
+                auto pg = kalloc(allocator, Pagetable.sizeof);
                 if (!pg.has()) {
                     return Opt!(Pte*)(null);
                 }
@@ -72,6 +73,9 @@ struct Pagetable {
                 memset(pt, 0, Pagetable.sizeof);
                 pte.addr = ka2pa(cast(uintptr) pt) >> 12;
                 pte.valid = 1;
+                pte.table = 1;
+                io.writeln(cast(void*) pte);
+                io.writeln(cast(void*) pte.data);
             }
         }
         return Opt!(Pte*)(&pt.ptes[vpn(endlevel, va)]);
@@ -79,8 +83,8 @@ struct Pagetable {
 
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
-    bool map(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm) {
-        auto opte = walk(va, pgtyp, true);
+    bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm, ubyte mair, A* allocator) {
+        auto opte = walk(va, pgtyp, true, allocator);
         if (!opte.has()) {
             return false;
         }
@@ -88,9 +92,10 @@ struct Pagetable {
         pte.addr = pa >> 12;
         pte.ap = perm;
         pte.valid = 1;
+        pte.table = 0;
         pte.sh = 0b11;
         pte.af = 1;
-        // TODO: mair index
+        pte.index = mair;
         return true;
     }
 

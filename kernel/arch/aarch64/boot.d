@@ -1,5 +1,7 @@
 module kernel.arch.aarch64.boot;
 
+import core.sync;
+
 import kernel.arch.aarch64.sysreg;
 import kernel.arch.aarch64.vm;
 
@@ -12,26 +14,22 @@ shared Pagetable tbl_lo;
 shared Pagetable tbl_hi;
 
 void kernel_setup(bool primary) {
+    // Load normal into index 0 and device into index 1.
     SysReg.mair_el1 = (Mair.device_ngnrne << 8) | Mair.normal_cacheable;
 
     if (primary) {
-        auto map_region = (System.MemRange range, Pagetable* pt) {
+        void map_region(System.MemRange range, Pagetable* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
-                // Map all memory as device (mair 1) for now. Once we can do finer-grained
-                // mapping in the kernel (with an allocator), we can enable caching for
-                // normal memory regions.
-                pt.map_giga(addr, addr, Ap.krw, 1);
-                pt.map_giga(sys.highmem_base + addr, addr, Ap.krw, 1);
+                pt.map_giga(addr, addr, Ap.krw, range.type);
+                pt.map_giga(vm.pa2ka(addr), addr, Ap.krw, range.type);
             }
-        };
+        }
 
         Pagetable* pgtbl_lo = cast(Pagetable*) &tbl_lo;
-        map_region(System.device, pgtbl_lo);
-        map_region(System.mem, pgtbl_lo);
+        map_region(System.early, pgtbl_lo);
 
         Pagetable* pgtbl_hi = cast(Pagetable*) &tbl_hi;
-        map_region(System.device, pgtbl_hi);
-        map_region(System.mem, pgtbl_hi);
+        map_region(System.early, pgtbl_hi);
     }
 
     SysReg.tcr_el1 = Tcr.t0sz!(25) | Tcr.t1sz!(25) | Tcr.tg0_4kb | Tcr.tg1_4kb | Tcr.ips_36 | Tcr.irgn | Tcr.orgn | Tcr.sh;
@@ -47,4 +45,27 @@ void kernel_setup(bool primary) {
     SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1 | (1 << 12) | (1 << 2); // enable mmu and caches
 
     asm { "isb"; }
+}
+
+shared Pagetable ktbl_hi;
+
+void kernel_setup_alloc(A)(bool primary, A* allocator) {
+    pragma(LDC_never_inline);
+    if (primary) {
+        void map_region (System.MemRange range, Pagetable* pt) {
+            for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
+                assert(pt.map(addr, addr, Pte.Pg.mega, Ap.krw, range.type, allocator));
+                assert(pt.map(vm.pa2ka(addr), addr, Pte.Pg.mega, Ap.krw, range.type, allocator));
+            }
+        }
+
+        foreach (r; System.mem_ranges) {
+            map_region(r, cast(Pagetable*) &ktbl_hi);
+        }
+    }
+
+    SysReg.ttbr1_el1 = vm.ka2pa(cast(uintptr) &ktbl_hi | 1);
+
+    vm_fence();
+    insn_fence();
 }

@@ -2,6 +2,7 @@ module kernel.alloc;
 
 import ulib.option;
 
+// K&R allocator
 struct KrAllocator {
     struct Header {
         align(16)
@@ -92,18 +93,44 @@ struct KrAllocator {
     }
 }
 
-Opt!(void*) kallocpage(size_t sz) {
-    return Opt!(void*)(null);
+// Bump allocator (does not support free)
+struct BumpAllocator(size_t alignment = 16) {
+    private static uintptr align_off(uintptr ptr, size_t algn) {
+        return ((~ptr) + 1) & (algn - 1);
+    }
+
+    this(uintptr base, size_t size) {
+        assert(base + size >= base);
+        this.base = base;
+        this.end = base + size;
+        assert(this.base % alignment == 0);
+        assert(this.end % alignment == 0);
+    }
+
+    void* alloc_ptr(size_t sz) {
+        assert(sz + align_off(sz, alignment) >= sz);
+        sz += align_off(sz, alignment);
+        assert(base + sz >= base);
+        if (base + sz >= end) {
+            return null;
+        }
+
+        void* ptr = cast(void*) base;
+        base += sz;
+        return ptr;
+    }
+
+    void free_ptr(void* ptr) {
+        // no free
+    }
+
+private:
+    uintptr base;
+    uintptr end;
 }
 
-Opt!(void*) kallocpage() {
-    return Opt!(void*)(null);
-}
-
-import ulib.alloc;
-
-Opt!(T*) kalloc(T)() {
-    return Opt!(T*)(null);
+Opt!(void*) kalloc(A)(A* allocator, size_t sz) {
+    return Opt!(void*)(allocator.alloc(sz));
 }
 
 void kfree(void* ptr) {

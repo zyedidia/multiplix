@@ -18,7 +18,7 @@ local flags = build.flags(machine, conf.lto, conf.release, false)
 local meta = r{
     $ .kobj/%.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
-    $ .kobj/%.o:D[.deps/%.dep]: %.d
+    $ .kobj/%.o:D[.kobj/deps/%.dep]: %.d
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.kobj/deps/$match.dep
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
@@ -100,7 +100,7 @@ return b{
     $ clean:VB:
         knit -f build/bootloader.knit :all -t clean
         knit :all -t clean
-        rm -rf .deps *.list *.bin *.bin.out
+        rm -rf *.list *.bin *.bin.out
     $ prog:VB: kernel.elf
         plboot prog $input
 

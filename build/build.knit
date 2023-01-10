@@ -96,7 +96,7 @@ function build.flags(machine, lto, release, monitor)
     local knit = require("knit")
     local version = sel(monitor, "-d-version=monitor", "-d-version=kernel")
     local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
-    local flto = sel(lto, "-flto=thin", "")
+    local flto = sel(lto, "-flto=full", "")
     local ltoflags := -plugin=$ltoplugin -plugin-opt=O2 -plugin-opt=-mattr=$(machine.mattr)
     if machine.arch == "riscv64" then
         ltoflags = ltoflags .. f" -plugin-opt=-code-model=$(machine.cmodel)"
@@ -109,7 +109,7 @@ function build.flags(machine, lto, release, monitor)
     }
 
     return {
-        dc := -betterC $flto -Oz -gc -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt $version
+        dc := -betterC $flto -Oz -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt $version
         as := -Os $(flags.gnu) -xassembler-with-cpp
         ld := $ltoflags --gc-sections
         qemu := $(machine.qemu) -nographic

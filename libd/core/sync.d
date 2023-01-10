@@ -57,7 +57,9 @@ alias vm_fence = () {
             "sfence.vma";
         }
     } else version (AArch64) {
-        assert(0, "TODO: VM fence aarch64");
+        asm {
+            "tlbi alle1";
+        }
     }
 };
 

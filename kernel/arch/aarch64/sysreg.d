@@ -83,6 +83,10 @@ enum Mair {
     // write-allocate, inner write-through non-transiant read-allocate
     // write-allocate.
     normal_cacheable = 0b1011_1011,
+
+    // index depends on how we load mair_el1
+    normal_idx = 0,
+    device_idx = 1,
 }
 
 struct Tcr {

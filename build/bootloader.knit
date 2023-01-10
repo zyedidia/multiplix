@@ -18,7 +18,7 @@ local flags = build.flags(machine, conf.lto, conf.release, true)
 local meta = r{
     $ .bootobj/%.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
-    $ .bootobj/%.o:D[.deps/%.dep]: %.d
+    $ .bootobj/%.o:D[.bootobj/deps/%.dep]: %.d
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/$match.dep
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
@@ -75,7 +75,7 @@ local boot = {
 return b{
     $ all:V: bootloader.bin
 
-    $ .bootobj/bootloader/main.o:D[.deps/bootloader/main.dep]: bootloader/main.d
+    $ .bootobj/bootloader/main.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
         $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$(boot.version) $(boot.kboot) $(boot.kenter)
     $ .bootobj/bootloader/payload.o: bootloader/payload.s $(cli.payload)
         $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(cli.payload)
