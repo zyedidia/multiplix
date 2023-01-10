@@ -19,9 +19,9 @@ struct Timer {
     }
 
     private static void delay_time(ulong t) {
-        ulong rb = Csr.time;
+        ulong rb = volatile_ld(Clint.mtime);
         while (1) {
-            ulong ra = Csr.time;
+            ulong ra = volatile_ld(Clint.mtime);
             if ((ra - rb) >= t) {
                 break;
             }
