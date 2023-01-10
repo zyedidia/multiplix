@@ -9,8 +9,6 @@ import arch = kernel.arch;
 
 import ulib.memory;
 
-__gshared uint primary = 1;
-
 extern (C) {
     extern __gshared uint _kbss_start, _kbss_end;
     extern __gshared ubyte _kheap_start;
@@ -25,8 +23,7 @@ extern (C) {
         // initialization). Otherwise the compiler will actually invert primary
         // so that it can be stored in the BSS (seems like an aggressive
         // optimization?).
-        bool maincpu = volatile_ld(&primary) == 1;
-        if (maincpu) {
+        if (coreid == 0) {
             uint* bss = &_kbss_start;
             uint* bss_end = &_kbss_end;
             while (bss < bss_end) {
@@ -34,13 +31,12 @@ extern (C) {
             }
 
             Uart.init(115200);
-            volatile_st(&primary, 0);
         }
 
         ubyte* heap = init_tls(coreid);
 
         cpuinfo.coreid = coreid;
-        cpuinfo.primary = maincpu;
+        cpuinfo.primary = coreid == 0;
 
         kmain(coreid, heap);
     }

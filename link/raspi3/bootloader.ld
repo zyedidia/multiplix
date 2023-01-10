@@ -54,8 +54,10 @@ SECTIONS
 
     /* ASSERT((. - ADDR(.text) <= 0x8000), "boot code is larger than 8 pages!") */
 
-    . = ALIGN(16);
-    _kheap_start = .;
+    .heap : {
+        . = ALIGN(16);
+        _kheap_start = .;
+    }
 
     /DISCARD/ : { *(.comment .note .eh_frame) }
 }

@@ -50,8 +50,10 @@ SECTIONS
         _kbss_end = .;
     }
 
-    . = ALIGN(16);
-    _kheap_start = .;
+    .heap : {
+        . = ALIGN(16);
+        _kheap_start = .;
+    }
 
     /DISCARD/ : { *(.comment .note .eh_frame) }
 }
