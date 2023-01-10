@@ -20,11 +20,15 @@ shared Spinlock lock;
 extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         pgalloc = BumpAllocator!(4096)(heap, sys.mb!(128));
-        arch.kernel_setup_alloc(true, &pgalloc);
+        version (AArch64) {
+            arch.kernel_setup_alloc(true, &pgalloc);
+        }
         // boot up the other cores
         arch.Cpu.start_all_cores();
     } else {
-        arch.kernel_setup_alloc(false, &pgalloc);
+        version (AArch64) {
+            arch.kernel_setup_alloc(false, &pgalloc);
+        }
     }
 
     /* Timer.delay_ms(100 * coreid); */
