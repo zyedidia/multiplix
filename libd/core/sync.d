@@ -58,7 +58,7 @@ alias vm_fence = () {
         }
     } else version (AArch64) {
         asm {
-            "tlbi alle1";
+            "tlbi vmalle1";
         }
     }
 };

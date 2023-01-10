@@ -79,9 +79,6 @@ enum Sctlr {
 
 enum Mair {
     device_ngnrne = 0b0000_0000,
-    // Memory: normal outer write-through non-transient read-allocate
-    // write-allocate, inner write-through non-transiant read-allocate
-    // write-allocate.
     normal_cacheable = 0b1011_1011,
 
     // index depends on how we load mair_el1
@@ -95,8 +92,8 @@ struct Tcr {
     enum ips_36 = 0b010UL << 32;
     enum tg0_4kb = 0b00UL << 14;
     enum tg1_4kb = 0b10UL << 30;
-    enum irgn = (0b10 << 8) | (0b10 << 24);
-    enum orgn = (0b10 << 10) | (0b10 << 26);
+    enum irgn = (0b01 << 8) | (0b01 << 24);
+    enum orgn = (0b01 << 10) | (0b01 << 26);
     enum sh = (0b11 << 12) | (0b11 << 28);
 }
 

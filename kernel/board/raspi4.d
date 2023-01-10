@@ -15,14 +15,22 @@ struct System {
 
     enum device_base = 0xfe000000;
 
+    enum MemType : ubyte {
+        normal = 0,
+        device = 1,
+    }
+
     struct MemRange {
         uintptr start;
         size_t sz;
+        MemType type;
     }
 
-    enum MemRange mem = MemRange(0, sys.gb!(2));
-    /* enum MemRange mem2 = MemRange(sys.gb!(4), sys.gb!(10)); */
-    enum MemRange device = MemRange(device_base, sys.gb!(1));
+    enum MemRange early = MemRange(0, sys.gb!(8), MemType.device);
+    enum MemRange[] mem_ranges = [
+        MemRange(0, sys.gb!(1), MemType.normal),
+        MemRange(device_base, sys.mb!(28), MemType.device),
+    ];
 }
 
 alias Uart = BcmMiniUart!(pa2kpa(System.device_base + 0x215000));

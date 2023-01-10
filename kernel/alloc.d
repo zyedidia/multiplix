@@ -99,7 +99,9 @@ struct BumpAllocator(size_t alignment = 16) {
         return ((~ptr) + 1) & (algn - 1);
     }
 
-    this(uintptr base, size_t size) {
+    this(ubyte* heap_start, size_t size) {
+        uintptr base = cast(uintptr) heap_start;
+        base += align_off(base, alignment);
         assert(base + size >= base);
         this.base = base;
         this.end = base + size;
@@ -107,7 +109,7 @@ struct BumpAllocator(size_t alignment = 16) {
         assert(this.end % alignment == 0);
     }
 
-    void* alloc_ptr(size_t sz) {
+    void* alloc(size_t sz) {
         assert(sz + align_off(sz, alignment) >= sz);
         sz += align_off(sz, alignment);
         assert(base + sz >= base);
@@ -120,7 +122,7 @@ struct BumpAllocator(size_t alignment = 16) {
         return ptr;
     }
 
-    void free_ptr(void* ptr) {
+    void free(void* ptr) {
         // no free
     }
 

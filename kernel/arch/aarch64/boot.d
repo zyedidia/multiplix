@@ -10,12 +10,11 @@ import kernel.board;
 import vm = kernel.vm;
 import sys = kernel.sys;
 
-shared Pagetable tbl_lo;
-shared Pagetable tbl_hi;
+shared Pagetable tbl;
 
 void kernel_setup(bool primary) {
     // Load normal into index 0 and device into index 1.
-    SysReg.mair_el1 = (Mair.device_ngnrne << 8) | Mair.normal_cacheable;
+    SysReg.mair_el1 = (Mair.device_ngnrne << Mair.device_idx * 8) | (Mair.normal_cacheable << Mair.normal_idx * 8);
 
     if (primary) {
         void map_region(System.MemRange range, Pagetable* pt) {
@@ -25,24 +24,22 @@ void kernel_setup(bool primary) {
             }
         }
 
-        Pagetable* pgtbl_lo = cast(Pagetable*) &tbl_lo;
-        map_region(System.early, pgtbl_lo);
-
-        Pagetable* pgtbl_hi = cast(Pagetable*) &tbl_hi;
-        map_region(System.early, pgtbl_hi);
+        Pagetable* pgtbl = cast(Pagetable*) &tbl;
+        map_region(System.early, pgtbl);
     }
 
     SysReg.tcr_el1 = Tcr.t0sz!(25) | Tcr.t1sz!(25) | Tcr.tg0_4kb | Tcr.tg1_4kb | Tcr.ips_36 | Tcr.irgn | Tcr.orgn | Tcr.sh;
 
-    SysReg.ttbr0_el1 = cast(uintptr) &tbl_lo | 1;
-    SysReg.ttbr1_el1 = cast(uintptr) &tbl_hi | 1;
+    SysReg.ttbr0_el1 = cast(uintptr) &tbl;
+    SysReg.ttbr1_el1 = cast(uintptr) &tbl;
 
     asm {
         "dsb ish";
         "isb";
     }
 
-    SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1 | (1 << 12) | (1 << 2); // enable mmu and caches
+    vm_fence();
+    SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1; // enable mmu but no caches
 
     asm { "isb"; }
 }
@@ -50,7 +47,6 @@ void kernel_setup(bool primary) {
 shared Pagetable ktbl_hi;
 
 void kernel_setup_alloc(A)(bool primary, A* allocator) {
-    pragma(LDC_never_inline);
     if (primary) {
         void map_region (System.MemRange range, Pagetable* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
@@ -64,8 +60,10 @@ void kernel_setup_alloc(A)(bool primary, A* allocator) {
         }
     }
 
-    SysReg.ttbr1_el1 = vm.ka2pa(cast(uintptr) &ktbl_hi | 1);
-
     vm_fence();
+    SysReg.ttbr1_el1 = vm.ka2pa(cast(uintptr) &ktbl_hi);
     insn_fence();
+    vm_fence();
+
+    SysReg.sctlr_el1 = SysReg.sctlr_el1 | (1 << 12) | (1 << 2); // enable caches
 }

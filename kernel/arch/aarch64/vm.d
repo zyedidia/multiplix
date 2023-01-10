@@ -74,8 +74,6 @@ struct Pagetable {
                 pte.addr = ka2pa(cast(uintptr) pt) >> 12;
                 pte.valid = 1;
                 pte.table = 1;
-                io.writeln(cast(void*) pte);
-                io.writeln(cast(void*) pte.data);
             }
         }
         return Opt!(Pte*)(&pt.ptes[vpn(endlevel, va)]);

@@ -6,9 +6,10 @@ import kernel.board;
 
 struct Cpu {
     int coreid;
+    bool primary;
 }
 
-Cpu cpuinfo = Cpu(42);
+Cpu cpuinfo = Cpu(42, false);
 
 extern (C) {
     extern __gshared ubyte _kheap_start;

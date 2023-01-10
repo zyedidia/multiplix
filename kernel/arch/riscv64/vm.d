@@ -107,14 +107,14 @@ struct Pagetable39 {
                 if (!alloc) {
                     return Opt!(Pte39*)(null);
                 }
-                auto pg = kallocpage(Pagetable39.sizeof);
-                if (!pg.has()) {
-                    return Opt!(Pte39*)(null);
-                }
-                pt = cast(Pagetable39*) pg.get();
-                memset(pt, 0, Pagetable39.sizeof);
-                pte.pa = ka2pa(cast(uintptr) pt);
-                pte.valid = 1;
+                /* auto pg = kallocpage(Pagetable39.sizeof); */
+                /* if (!pg.has()) { */
+                /*     return Opt!(Pte39*)(null); */
+                /* } */
+                /* pt = cast(Pagetable39*) pg.get(); */
+                /* memset(pt, 0, Pagetable39.sizeof); */
+                /* pte.pa = ka2pa(cast(uintptr) pt); */
+                /* pte.valid = 1; */
             }
         }
         return Opt!(Pte39*)(&pt.ptes[vpn(endlevel, va)]);

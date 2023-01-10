@@ -8,39 +8,54 @@ import kernel.board;
 import kernel.timer;
 import kernel.cpu;
 import kernel.alloc;
+import kernel.spinlock;
 
 import arch = kernel.arch;
 import sys = kernel.sys;
 
-__gshared bool primary = true;
+__gshared BumpAllocator!4096 pgalloc;
 
-__gshared KrAllocator kr;
+shared Spinlock lock;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
-    io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
-    if (primary) {
-        kr = KrAllocator(heap, sys.mb!(128));
-        arch.kernel_setup_alloc(true, &kr);
+    if (cpuinfo.primary) {
+        pgalloc = BumpAllocator!(4096)(heap, sys.mb!(128));
+        /* arch.kernel_setup_alloc(true, &pgalloc); */
         // boot up the other cores
-        /* primary = false; */
-        /* arch.Cpu.start_all_cores(); */
+        arch.Cpu.start_all_cores();
     } else {
-        arch.kernel_setup_alloc(false, &kr);
+        /* arch.kernel_setup_alloc(false, &pgalloc); */
     }
 
-    version (raspi3) {
-        CoreTimer.enable_irq();
-    } else version (raspi4) {
-        CoreTimer.enable_irq();
+    Timer.delay_ms(100 * coreid);
+
+    /* lock.lock(); */
+    io.writeln(&cpuinfo.coreid, " ", cpuinfo.coreid);
+    io.writeln(cpuinfo.coreid);
+    io.writeln(cpuinfo.coreid);
+    io.writeln(cpuinfo.coreid);
+    /* io.writeln("entered kmain at: ", &kmain, " core: ", &cpuinfo.coreid, " ", cpuinfo.coreid); */
+    /* io.writeln("entered kmain at: ", &kmain, " core: ", &cpuinfo.coreid, " ", cpuinfo.coreid); */
+    /* io.writeln("entered kmain at: ", &kmain, " core: ", &cpuinfo.coreid, " ", cpuinfo.coreid); */
+    /* io.writeln("entered kmain at: ", &kmain, " core: ", &cpuinfo.coreid, " ", cpuinfo.coreid); */
+    /* lock.unlock(); */
+
+    /* version (raspi3) { */
+    /*     CoreTimer.enable_irq(); */
+    /* } else version (raspi4) { */
+    /*     CoreTimer.enable_irq(); */
+    /* } */
+    /*  */
+    /* arch.Trap.init(); */
+    /* arch.Trap.enable(); */
+    /* arch.Timer.intr(); */
+    /*  */
+    Timer.delay_ms(500);
+    /*  */
+    /* io.writeln("done"); */
+
+    if (cpuinfo.primary) {
+        io.writeln("done");
+        Reboot.reboot();
     }
-
-    arch.Trap.init();
-    arch.Trap.enable();
-    arch.Timer.intr();
-
-    Timer.delay_ms(2000);
-
-    io.writeln("done");
-
-    Reboot.reboot();
 }

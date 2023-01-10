@@ -25,6 +25,7 @@ extern (C) {
         // initialization). Otherwise the compiler will actually invert primary
         // so that it can be stored in the BSS (seems like an aggressive
         // optimization?).
+        /* bool maincpu = volatile_ld(&primary) == 1; */
         if (volatile_ld(&primary)) {
             uint* bss = &_kbss_start;
             uint* bss_end = &_kbss_end;
@@ -39,6 +40,7 @@ extern (C) {
         ubyte* heap = init_tls(coreid);
 
         cpuinfo.coreid = coreid;
+        /* cpuinfo.primary = maincpu; */
 
         kmain(coreid, heap);
     }
@@ -61,11 +63,11 @@ extern (C) {
         size_t tbss_size = &_tbss_end - &_tbss_start;
         // copy tdata into the tls region
         for (size_t i = 0; i < tdata_size; i++) {
-            volatile_st(tls_start + arch.tcb_size, volatile_ld(&_tdata_start + i));
+            volatile_st(tls_start + arch.tcb_size + i, volatile_ld(&_tdata_start + i));
         }
         // zero out the tbss
         for (size_t i = 0; i < tbss_size; i++) {
-            volatile_st(tls_start + arch.tcb_size + tdata_size, 0);
+            volatile_st(tls_start + arch.tcb_size + tdata_size + i, 0);
         }
 
         arch.set_tls_base(tls_start);
