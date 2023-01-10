@@ -25,7 +25,6 @@ struct System {
         MemType type;
     }
 
-    enum MemRange early = MemRange(0, sys.gb!(2), MemType.device);
     enum MemRange[] mem_ranges = [
         MemRange(0, sys.mb!(512), MemType.normal),
         MemRange(device_base, sys.mb!(18), MemType.device),

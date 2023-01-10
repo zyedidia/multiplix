@@ -6,26 +6,31 @@ import kernel.arch.aarch64.sysreg;
 import kernel.arch.aarch64.vm;
 
 import kernel.board;
+import kernel.alloc;
 
 import vm = kernel.vm;
 import sys = kernel.sys;
 
 shared Pagetable tbl;
 
+align(4096) __gshared ubyte[4096 * 4] ptheap;
+
 void kernel_setup(bool primary) {
     // Load normal into index 0 and device into index 1.
     SysReg.mair_el1 = (Mair.device_ngnrne << Mair.device_idx * 8) | (Mair.normal_cacheable << Mair.normal_idx * 8);
 
     if (primary) {
-        void map_region(System.MemRange range, Pagetable* pt) {
-            for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
-                pt.map_giga(addr, addr, Ap.krw, range.type);
-                pt.map_giga(vm.pa2ka(addr), addr, Ap.krw, range.type);
+        auto pgalloc = BumpAllocator!(4096)(&ptheap[0], ptheap.length);
+        void map_region (System.MemRange range, Pagetable* pt) {
+            for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
+                assert(pt.map(addr, addr, Pte.Pg.mega, Ap.krw, range.type, &pgalloc));
+                assert(pt.map(vm.pa2ka(addr), addr, Pte.Pg.mega, Ap.krw, range.type, &pgalloc));
             }
         }
 
-        Pagetable* pgtbl = cast(Pagetable*) &tbl;
-        map_region(System.early, pgtbl);
+        foreach (r; System.mem_ranges) {
+            map_region(r, cast(Pagetable*) &tbl);
+        }
     }
 
     SysReg.tcr_el1 = Tcr.t0sz!(25) | Tcr.t1sz!(25) | Tcr.tg0_4kb | Tcr.tg1_4kb | Tcr.ips_36 | Tcr.irgn | Tcr.orgn | Tcr.sh;
@@ -34,36 +39,14 @@ void kernel_setup(bool primary) {
     SysReg.ttbr1_el1 = cast(uintptr) &tbl;
 
     asm {
-        "dsb ish";
+        "dsb sy";
         "isb";
     }
 
-    vm_fence();
-    SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1; // enable mmu but no caches
+    SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1 | (1 << 2) | (1 << 12); // enable mmu and caches
 
-    asm { "isb"; }
-}
-
-shared Pagetable ktbl_hi;
-
-void kernel_setup_alloc(A)(bool primary, A* allocator) {
-    if (primary) {
-        void map_region (System.MemRange range, Pagetable* pt) {
-            for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
-                assert(pt.map(addr, addr, Pte.Pg.mega, Ap.krw, range.type, allocator));
-                assert(pt.map(vm.pa2ka(addr), addr, Pte.Pg.mega, Ap.krw, range.type, allocator));
-            }
-        }
-
-        foreach (r; System.mem_ranges) {
-            map_region(r, cast(Pagetable*) &ktbl_hi);
-        }
+    asm {
+        "dsb sy";
+        "isb";
     }
-
-    vm_fence();
-    SysReg.ttbr1_el1 = vm.ka2pa(cast(uintptr) &ktbl_hi);
-    insn_fence();
-    vm_fence();
-
-    SysReg.sctlr_el1 = SysReg.sctlr_el1 | (1 << 12) | (1 << 2); // enable caches
 }

@@ -13,25 +13,17 @@ import kernel.spinlock;
 import arch = kernel.arch;
 import sys = kernel.sys;
 
-__gshared BumpAllocator!4096 pgalloc;
-
 shared Spinlock lock;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
-        pgalloc = BumpAllocator!(4096)(heap, sys.mb!(128));
-        version (AArch64) {
-            arch.kernel_setup_alloc(true, &pgalloc);
-        }
         // boot up the other cores
-        arch.Cpu.start_all_cores();
-    } else {
-        version (AArch64) {
-            arch.kernel_setup_alloc(false, &pgalloc);
-        }
+        /* arch.Cpu.start_all_cores(); */
     }
 
     /* Timer.delay_ms(100 * coreid); */
+
+    /* io.writeln("about to lock"); */
 
     lock.lock();
     io.writeln(&cpuinfo.coreid, " ", cpuinfo.coreid);

@@ -79,7 +79,7 @@ enum Sctlr {
 
 enum Mair {
     device_ngnrne = 0b0000_0000,
-    normal_cacheable = 0b1011_1011,
+    normal_cacheable = 0b1111_1111,
 
     // index depends on how we load mair_el1
     normal_idx = 0,

@@ -113,7 +113,7 @@ struct BumpAllocator(size_t alignment = 16) {
         assert(sz + align_off(sz, alignment) >= sz);
         sz += align_off(sz, alignment);
         assert(base + sz >= base);
-        if (base + sz >= end) {
+        if (base + sz > end) {
             return null;
         }
 

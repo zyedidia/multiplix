@@ -60,7 +60,7 @@ struct Pagetable {
             if (pte.valid && !pte.table) {
                 return Opt!(Pte*)(pte);
             } else if (pte.valid) {
-                pt = cast(Pagetable*) pa2ka(pte.addr << 12);
+                pt = cast(Pagetable*) pa2kpa(pte.addr << 12);
             } else {
                 if (!alloc) {
                     return Opt!(Pte*)(null);
@@ -71,7 +71,7 @@ struct Pagetable {
                 }
                 pt = cast(Pagetable*) pg.get();
                 memset(pt, 0, Pagetable.sizeof);
-                pte.addr = ka2pa(cast(uintptr) pt) >> 12;
+                pte.addr = kpa2pa(cast(uintptr) pt) >> 12;
                 pte.valid = 1;
                 pte.table = 1;
             }
