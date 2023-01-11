@@ -9,6 +9,8 @@ import arch = kernel.arch;
 
 import ulib.memory;
 
+__gshared uint primary = 1;
+
 extern (C) {
     extern __gshared uint _kbss_start, _kbss_end;
     extern __gshared ubyte _kheap_start;
@@ -18,12 +20,15 @@ extern (C) {
     void kmain(int coreid, ubyte* heap);
 
     void dstart(int coreid) {
+        ubyte* heap = init_tls(coreid);
+        cpuinfo.coreid = coreid;
+
         // We use volatile for loading/storing primary because it is essential
         // that primary not be stored in the BSS (since it is used before BSS
         // initialization). Otherwise the compiler will actually invert primary
         // so that it can be stored in the BSS (seems like an aggressive
         // optimization?).
-        if (coreid == 0) {
+        if (volatile_ld(&primary)) {
             uint* bss = &_kbss_start;
             uint* bss_end = &_kbss_end;
             while (bss < bss_end) {
@@ -31,12 +36,11 @@ extern (C) {
             }
 
             Uart.init(115200);
+            volatile_st(&primary, 0);
+            cpuinfo.primary = true;
+        } else {
+            cpuinfo.primary = false;
         }
-
-        ubyte* heap = init_tls(coreid);
-
-        cpuinfo.coreid = coreid;
-        cpuinfo.primary = coreid == 0;
 
         kmain(coreid, heap);
     }

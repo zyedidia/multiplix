@@ -2,6 +2,11 @@
 
 .globl _start
 _start:
+	# halt any cores that don't support S-mode
+	csrr a1, misa
+	li t0, (1 << 18)
+	and a1, a1, t0
+	beqz a1, _hlt
 	csrr a0, mhartid
 	.option push
 	.option norelax
@@ -11,7 +16,10 @@ _start:
 	addi t0, a0, 1
 	slli t0, t0, 12 # t0 = (hartid + 1) * 4096
 	add sp, sp, t0  # sp = _kheap_start + (hartid + 1) * 4096
-	beqz a0, _primary_boot
+	la t1, boot_lock
+	li t0, 1
+	amoswap.w.aq t1, t0, (t1) # attempt to acquire the lock
+	beqz t1, _primary_boot
 	la t0, wakeup
 _spin:
 	lw t1, 0(t0)
@@ -19,9 +27,16 @@ _spin:
 _primary_boot:
 	call dstart
 _hlt:
+	wfi
 	j _hlt
 
+.globl boot_lock
+.align 4
+boot_lock:
+	.int 0
+
 .globl wakeup
+.align 4
 wakeup:
 	.int 0
 

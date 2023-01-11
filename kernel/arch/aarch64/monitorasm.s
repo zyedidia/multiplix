@@ -28,6 +28,7 @@ _set_sp_el3:
 	ret
 
 .globl wakeup
+.align 4
 wakeup:
 	.int 0
 
