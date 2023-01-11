@@ -25,14 +25,54 @@ enum SynchronizationScope {
 enum AtomicRmwSizeLimit = size_t.sizeof;
 
 pragma(inline, true)
+alias clean_dcache = (ubyte* start, size_t size) {
+    version (RISCV64) {
+        assert(0, "TODO: clean_dcache");
+    } else version (AArch64) {
+        for (size_t i = 0; i < size; i++) {
+            asm {
+                "dc cvau, %0" :: "r"(start + i);
+            }
+        }
+    }
+};
+
+pragma(inline, true)
+alias clean_icache = (ubyte* start, size_t size) {
+    version (RISCV64) {
+        assert(0, "TODO: clean_icache");
+    } else version (AArch64) {
+        for (size_t i = 0; i < size; i++) {
+            asm {
+                "ic ivau, %0" :: "r"(start + i);
+            }
+        }
+    }
+};
+
+// Synchronize instruction and data memory in range
+pragma(inline, true)
+alias sync_idmem = (ubyte* start, size_t size) {
+    version (RISCV64) {
+        insn_fence();
+    } else version (AArch64) {
+        clean_dcache(start, size);
+        sync_fence();
+        clean_icache(start, size);
+        sync_fence();
+        insn_fence();
+    }
+};
+
+pragma(inline, true)
 alias insn_fence = () {
     version (RISCV64) {
         asm {
-            "fence.i";
+            "fence.i" ::: "memory";
         }
     } else version (AArch64) {
         asm {
-            "isb sy";
+            "isb sy" ::: "memory";
         }
     }
 };
@@ -41,11 +81,24 @@ pragma(inline, true)
 alias device_fence = () {
     version (RISCV64) {
         asm {
-            "fence";
+            "fence" ::: "memory";
         }
     } else version (AArch64) {
         asm {
-            "dsb sy";
+            "dsb sy" ::: "memory";
+        }
+    }
+};
+
+pragma(inline, true)
+alias sync_fence = () {
+    version (RISCV64) {
+        asm {
+            "fence" ::: "memory";
+        }
+    } else version (AArch64) {
+        asm {
+            "dsb ish" ::: "memory";
         }
     }
 };
@@ -54,11 +107,11 @@ pragma(inline, true)
 alias vm_fence = () {
     version (RISCV64) {
         asm {
-            "sfence.vma";
+            "sfence.vma" ::: "memory";
         }
     } else version (AArch64) {
         asm {
-            "tlbi vmalle1";
+            "tlbi vmalle1" ::: "memory";
         }
     }
 };

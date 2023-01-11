@@ -18,22 +18,11 @@ shared Spinlock lock;
 extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         // boot up the other cores
-        /* arch.Cpu.start_all_cores(); */
+        arch.Cpu.start_all_cores();
     }
 
-    /* Timer.delay_ms(100 * coreid); */
-
-    /* io.writeln("about to lock"); */
-
     lock.lock();
-    io.writeln(&cpuinfo.coreid, " ", cpuinfo.coreid);
-    io.writeln(cpuinfo.coreid);
-    io.writeln(cpuinfo.coreid);
-    io.writeln(cpuinfo.coreid);
-    /* io.writeln("entered kmain at: ", &kmain, " core: ", &cpuinfo.coreid, " ", cpuinfo.coreid); */
-    /* io.writeln("entered kmain at: ", &kmain, " core: ", &cpuinfo.coreid, " ", cpuinfo.coreid); */
-    /* io.writeln("entered kmain at: ", &kmain, " core: ", &cpuinfo.coreid, " ", cpuinfo.coreid); */
-    /* io.writeln("entered kmain at: ", &kmain, " core: ", &cpuinfo.coreid, " ", cpuinfo.coreid); */
+    io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
     lock.unlock();
 
     /* version (raspi3) { */

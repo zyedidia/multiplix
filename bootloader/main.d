@@ -156,7 +156,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     for (uint i = 0; i < boot.data.length; i++) {
         volatile_st(boot.entry + i, boot.data[i]);
     }
-    insn_fence();
+    sync_idmem(boot.entry, boot.data.length);
     auto main = cast(void function(int)) boot.entry;
     main(coreid);
 }
