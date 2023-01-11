@@ -13,4 +13,5 @@ void set_tls_base(void* base) {
     } else {
         SysReg.tpidr_el1 = cast(uintptr) base;
     }
+    asm { "" ::: "memory"; }
 }
