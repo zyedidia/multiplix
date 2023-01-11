@@ -1,0 +1,4 @@
+mkimage -f visionfive2-uboot-fit-image.its -A riscv -O u-boot -T firmware bootloader.img
+sx jh7110-recovery.bin < /dev/ttyUSB0 > /dev/ttyUSB0
+2
+sx bootloader.img < /dev/ttyUSB0 > /dev/ttyUSB0

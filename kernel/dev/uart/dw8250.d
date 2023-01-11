@@ -87,17 +87,20 @@ struct Dw8250(uintptr base) {
     }
 
     static void init(int baud) {
-        // dll/dlh cannot be accessed until the uart is not busy
-        while (bits.get(usr, Usr.busy)) {
-        }
+        // Currently not sure how to set up the UART's baud rate properly, but
+        // luckily it seems to be already set up for us by the firmware.
 
-        lcr = bits.set(lcr, Lcr.dlab);
-        dll = 54;
-        dlh = 0;
-        lcr = bits.clear(lcr, Lcr.dlab);
-
-        // enable fifos
-        fcr = bits.set(0, Fcr.fifoen);
+        /* // dll/dlh cannot be accessed until the uart is not busy */
+        /* while (bits.get(usr, Usr.busy)) { */
+        /* } */
+        /*  */
+        /* lcr = bits.set(lcr, Lcr.dlab); */
+        /* dll = 54; */
+        /* dlh = 0; */
+        /* lcr = bits.clear(lcr, Lcr.dlab); */
+        /*  */
+        /* // enable fifos */
+        /* fcr = bits.set(0, Fcr.fifoen); */
     }
 
     static void tx(ubyte b) {

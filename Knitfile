@@ -9,7 +9,7 @@ local conf = include("build/default.knit")
 
 local machine = build.machine(conf.board, false)
 if machine == nil then
-    return "could not find machine for board " .. board
+    return "could not find machine for board " .. conf.board
 end
 
 local tools = build.tools(machine)
