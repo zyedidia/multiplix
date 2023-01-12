@@ -7,6 +7,8 @@ import kernel.board;
 struct Cpu {
     int coreid;
     bool primary;
+    uintptr tls;
+    uintptr stack;
 }
 
 Cpu cpuinfo = Cpu(42, false);

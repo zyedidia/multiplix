@@ -7,7 +7,7 @@ import kernel.arch.aarch64.sysreg;
 // bytes. We do not currently make use of the TCB.
 enum tcb_size = 16;
 
-void set_tls_base(void* base) {
+void set_tls_base(uintptr base) {
     version (monitor) {
         SysReg.tpidr_el3 = cast(uintptr) base;
     } else {

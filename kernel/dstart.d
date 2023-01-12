@@ -20,8 +20,11 @@ extern (C) {
     void kmain(int coreid, ubyte* heap);
 
     void dstart(int coreid) {
-        ubyte* heap = init_tls(coreid);
+        uintptr tls_start, stack_start;
+        ubyte* heap = init_tls(coreid, tls_start, stack_start);
         cpuinfo.coreid = coreid;
+        cpuinfo.tls = tls_start;
+        cpuinfo.stack = stack_start;
 
         // We use volatile for loading/storing primary because it is essential
         // that primary not be stored in the BSS (since it is used before BSS
@@ -46,7 +49,7 @@ extern (C) {
     }
 
     // returns a pointer to the region after all TLS blocks
-    ubyte* init_tls(int coreid) {
+    ubyte* init_tls(int coreid, out uintptr tls_start, out uintptr stack_start) {
         // Note: this function should not be inlined to ensure that the thread
         // pointer is set before any subsequent operations that involve the
         // thread pointer.
@@ -54,20 +57,21 @@ extern (C) {
 
         // set up thread-local storage (tls)
         uintptr stack_base = cast(uintptr) &_kheap_start;
+        uintptr stack_start = stack_base + (coreid + 1) * 4096;
         uintptr tls_base = stack_base + System.ncores * 4096;
 
         size_t tls_size = (&_tbss_end - &_tdata_start) + arch.tcb_size;
         // calculate the start of the tls region for this cpu
-        ubyte* tls_start = cast(ubyte*) (tls_base + tls_size * coreid);
+        tls_start = tls_base + tls_size * coreid;
         size_t tdata_size = &_tdata_end - &_tdata_start;
         size_t tbss_size = &_tbss_end - &_tbss_start;
         // copy tdata into the tls region
         for (size_t i = 0; i < tdata_size; i++) {
-            volatile_st(tls_start + arch.tcb_size + i, volatile_ld(&_tdata_start + i));
+            volatile_st(cast(ubyte*) tls_start + arch.tcb_size + i, volatile_ld(&_tdata_start + i));
         }
         // zero out the tbss
         for (size_t i = 0; i < tbss_size; i++) {
-            volatile_st(tls_start + arch.tcb_size + tdata_size + i, 0);
+            volatile_st(cast(ubyte*) tls_start + arch.tcb_size + tdata_size + i, 0);
         }
 
         arch.set_tls_base(tls_start);

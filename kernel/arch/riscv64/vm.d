@@ -94,7 +94,7 @@ struct Pagetable39 {
 
     // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
-    Opt!(Pte39*) walk(uintptr va, Pte39.Pg endlevel, bool alloc) {
+    Opt!(Pte39*) walk(A)(uintptr va, Pte39.Pg endlevel, bool alloc, A* allocator) {
         Pagetable39* pt = &this;
 
         for (int level = 2; level > endlevel; level--) {
@@ -107,14 +107,14 @@ struct Pagetable39 {
                 if (!alloc) {
                     return Opt!(Pte39*)(null);
                 }
-                /* auto pg = kallocpage(Pagetable39.sizeof); */
-                /* if (!pg.has()) { */
-                /*     return Opt!(Pte39*)(null); */
-                /* } */
-                /* pt = cast(Pagetable39*) pg.get(); */
-                /* memset(pt, 0, Pagetable39.sizeof); */
-                /* pte.pa = ka2pa(cast(uintptr) pt); */
-                /* pte.valid = 1; */
+                auto pg = kalloc(allocator, Pagetable39.sizeof);
+                if (!pg.has()) {
+                    return Opt!(Pte39*)(null);
+                }
+                pt = cast(Pagetable39*) pg.get();
+                memset(pt, 0, Pagetable39.sizeof);
+                pte.pa = ka2pa(cast(uintptr) pt);
+                pte.valid = 1;
             }
         }
         return Opt!(Pte39*)(&pt.ptes[vpn(endlevel, va)]);
@@ -122,8 +122,8 @@ struct Pagetable39 {
 
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
-    bool map(uintptr va, uintptr pa, Pte39.Pg pgtyp, uint perm) {
-        auto opte = walk(va, pgtyp, true);
+    bool map(A)(uintptr va, uintptr pa, Pte39.Pg pgtyp, uint perm, A* allocator) {
+        auto opte = walk(va, pgtyp, true, allocator);
         if (!opte.has()) {
             return false;
         }
