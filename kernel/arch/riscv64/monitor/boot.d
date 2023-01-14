@@ -1,6 +1,7 @@
 module kernel.arch.riscv64.monitor.boot;
 
 import kernel.arch.riscv64.csr;
+import kernel.arch.riscv64.regs;
 import kernel.board;
 
 import bits = ulib.bits;
@@ -29,8 +30,6 @@ void enter_smode() {
 }
 
 extern (C) extern void monitorvec();
-extern (C) extern uintptr rd_tp();
-extern (C) extern uintptr rd_gp();
 extern (C) extern shared ubyte _kheap_start;
 
 struct ScratchFrame {

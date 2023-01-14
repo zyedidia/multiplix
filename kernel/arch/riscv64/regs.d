@@ -33,3 +33,6 @@ struct Regs {
     uintptr t5;
     uintptr t6;
 }
+
+extern (C) extern uintptr rd_tp();
+extern (C) extern uintptr rd_gp();

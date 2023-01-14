@@ -97,7 +97,7 @@ bool load(int W, A)(Proc* proc, immutable ubyte* elfdat, A* allocator, out uintp
 
         // map newly allocated physical space to base va
         for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
-            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, allocator)) {
+            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, true, allocator)) {
                 // TODO: free memory
                 return false;
             }

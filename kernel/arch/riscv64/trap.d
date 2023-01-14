@@ -5,6 +5,9 @@ import kernel.arch.riscv64.timer;
 import kernel.arch.riscv64.regs;
 
 import kernel.proc;
+import kernel.cpu;
+
+import sys = kernel.sys;
 
 import bits = ulib.bits;
 import io = ulib.io;
@@ -62,7 +65,7 @@ extern (C) {
 
         io.writeln("usertrap: scause: ", scause);
 
-        if (scause == Scause.ecall_u) {
+        if (scause == Cause.ecall_u) {
             tf.epc = Csr.sepc + 4;
         }
 

@@ -87,6 +87,7 @@ enum Cause {
     // exceptions
     illegal = 2,
     breakpoint = 3,
+    ecall_u = 8,
     ecall_s = 9,
     ecall_m = 11,
 }

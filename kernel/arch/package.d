@@ -7,6 +7,11 @@ version (RISCV64) {
     import sbi = kernel.arch.riscv64.sbi;
     alias Cpu = sbi.Hart;
 
+    import kernel.arch.riscv64.vm;
+    alias Pagetable = Pagetable39;
+    import regs = kernel.arch.riscv64.regs;
+    alias Regs = regs.Regs;
+
     public import kernel.arch.riscv64;
 } else version (AArch64) {
     import kernel.arch.aarch64.monitor.boot;

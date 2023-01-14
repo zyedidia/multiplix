@@ -57,7 +57,7 @@ extern (C) {
 
         // set up thread-local storage (tls)
         uintptr stack_base = cast(uintptr) &_kheap_start;
-        uintptr stack_start = stack_base + (coreid + 1) * 4096;
+        stack_start = stack_base + (coreid + 1) * 4096;
         uintptr tls_base = stack_base + System.ncores * 4096;
 
         size_t tls_size = (&_tbss_end - &_tdata_start) + arch.tcb_size;
