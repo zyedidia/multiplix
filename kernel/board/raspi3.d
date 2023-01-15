@@ -6,6 +6,7 @@ import kernel.dev.reboot.bcmreboot;
 import kernel.dev.timer.bcmcore;
 
 import kernel.vm;
+import kernel.buddy;
 
 import sys = kernel.sys;
 
@@ -29,6 +30,9 @@ struct System {
         MemRange(0, sys.mb!(512), MemType.normal),
         MemRange(device_base, sys.mb!(18), MemType.device),
     ];
+
+    alias Buddy = BuddyAllocator!(sys.pagesize, sys.mb!(512));
+    static __gshared Buddy allocator;
 }
 
 alias Uart = BcmMiniUart!(pa2kpa(System.device_base + 0x215000));

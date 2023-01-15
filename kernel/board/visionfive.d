@@ -5,6 +5,7 @@ import kernel.dev.gpio.starfive;
 import kernel.dev.reboot.unsupported;
 import kernel.dev.irq.sfclint;
 
+import kernel.buddy;
 import kernel.vm;
 
 import sys = kernel.sys;
@@ -23,6 +24,9 @@ struct System {
 
     enum MemRange device = MemRange(0, sys.gb!(2));
     enum MemRange mem = MemRange(sys.gb!(2), sys.gb!(2));
+
+    alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(4));
+    static __gshared Buddy allocator;
 }
 
 alias Uart = Dw8250!(pa2kpa(0x12440000));

@@ -5,6 +5,7 @@ import kernel.dev.reboot.qsyscon;
 import kernel.dev.irq.sfclint;
 
 import kernel.vm;
+import kernel.buddy;
 
 import sys = kernel.sys;
 
@@ -23,6 +24,9 @@ struct System {
 
     enum MemRange device = MemRange(0, sys.gb!(2));
     enum MemRange mem = MemRange(sys.gb!(2), sys.gb!(4));
+
+    alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(4));
+    static __gshared Buddy allocator;
 }
 
 alias Uart = Ns16550!(pa2kpa(0x10000000));

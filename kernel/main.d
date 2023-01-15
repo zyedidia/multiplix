@@ -17,12 +17,19 @@ shared Spinlock lock;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
+        System.allocator = System.Buddy(cast(uintptr) heap);
+
         // boot up the other cores
         arch.Cpu.start_all_cores();
     }
 
     lock.lock();
     io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
+    lock.unlock();
+
+    void* p = System.allocator.alloc(100);
+    lock.lock();
+    io.writeln("allocated: ", p);
     lock.unlock();
 
     /* version (raspi3) { */

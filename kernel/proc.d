@@ -12,19 +12,19 @@ struct Proc {
     enum stackva = 0x7fff0000;
     enum trapframeva = stackva - sys.pagesize;
 
-    enum State {
-        runnable,
-        running,
-    }
-
-    int pid;
-
-    Trapframe* trapframe;
-
-    Pagetable* pt;
-    State state;
-    ubyte[] code;
-    ubyte[] stack;
+    /* enum State { */
+    /*     runnable, */
+    /*     running, */
+    /* } */
+    /*  */
+    /* int pid; */
+    /*  */
+    /* Trapframe* trapframe; */
+    /*  */
+    /* Pagetable* pt; */
+    /* State state; */
+    /* ubyte[] code; */
+    /* ubyte[] stack; */
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         return false;
@@ -79,13 +79,13 @@ struct Proc {
         /* return true; */
     }
 
-    int getpid() {
-        return pid;
-    }
-
-    void putc(char c) {
-        import io = ulib.io;
-        io.write(c);
-    }
+    /* int getpid() { */
+    /*     return pid; */
+    /* } */
+    /*  */
+    /* void putc(char c) { */
+    /*     import io = ulib.io; */
+    /*     io.write(c); */
+    /* } */
 }
 
