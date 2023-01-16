@@ -15,6 +15,8 @@ import sys = kernel.sys;
 
 shared Spinlock lock;
 
+import ulib.reference;
+
 extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         System.allocator = System.Buddy(cast(uintptr) heap);

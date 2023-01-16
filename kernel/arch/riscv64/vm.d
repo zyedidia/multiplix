@@ -105,11 +105,11 @@ struct Pagetable39 {
                 pt = cast(Pagetable39*) pa2ka(pte.pa);
             } else {
                 if (!alloc) {
-                    return Opt!(Pte39*)(null);
+                    return Opt!(Pte39*).none;
                 }
-                auto pg = kalloc(allocator, Pagetable39.sizeof);
+                auto pg = kalloc_block(allocator, Pagetable39.sizeof);
                 if (!pg.has()) {
-                    return Opt!(Pte39*)(null);
+                    return Opt!(Pte39*).none;
                 }
                 pt = cast(Pagetable39*) pg.get();
                 memset(pt, 0, Pagetable39.sizeof);

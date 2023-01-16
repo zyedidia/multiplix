@@ -131,9 +131,51 @@ private:
     uintptr end;
 }
 
-Opt!(void*) kalloc(A)(A* allocator, size_t sz) {
+import kernel.board;
+import ulib.alloc;
+
+// Allocation API.
+
+Opt!(void*) kalloc_block(A)(A* allocator, size_t sz) {
     return Opt!(void*)(allocator.alloc(sz));
 }
 
+Opt!(T*) kalloc(A, T, Args...)(A* allocator, Args args) {
+    T* p = cast(T*) allocator.alloc(T.sizeof);
+    if (!p) {
+        return Opt!(T*).none;
+    }
+    emplace_init(p, args);
+    return Opt!(T*)(p);
+}
+
+Opt!(T[]) kalloc_array(A, T, Args...)(A* allocator, size_t nelem, Args args) {
+    T* p = cast(T*) allocator.alloc(T.sizeof * nelem);
+    T[] arr = cast(T[]) p[0 .. nelem];
+    for (int i = 0; i < arr.length; i++) {
+        emplace_init(&arr[i], args);
+    }
+    return arr;
+}
+
+void kfree(A)(A* allocator, void* ptr) {
+    allocator.free(ptr);
+}
+
+// Allocation functions using the system allocator.
+
+Opt!(void*) kalloc_block(size_t sz) {
+    return kalloc_block(&System.allocator, sz);
+}
+
+Opt!(T*) kalloc(T, Args...)(Args args) {
+    return kalloc!(typeof(System.allocator), T, Args)(&System.allocator, args);
+}
+
+Opt!(T[]) kalloc_array(T, Args...)(size_t nelem, Args args) {
+    return kalloc_array(typeof(System.allocator), T, Args)(&System.allocator, nelem, args);
+}
+
 void kfree(void* ptr) {
+    kfree(&System.allocator, ptr);
 }

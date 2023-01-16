@@ -90,9 +90,9 @@ bool load(int W, A)(Proc* proc, immutable ubyte* elfdat, A* allocator, out uintp
         assert(ph.vaddr + ph.memsz >= ph.vaddr);
 
         // allocate physical space for segment, and copy it in
-        auto opgs = kallocpage(ph.memsz);
-        assert(opgs.has());
-        ubyte[] code = cast(ubyte[]) opgs.get()[0 .. ph.memsz];
+        auto pgs_ = kalloc_block(ph.memsz);
+        assert(pgs_.has());
+        ubyte[] code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
         memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
 
         // map newly allocated physical space to base va

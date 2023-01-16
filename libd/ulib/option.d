@@ -9,6 +9,10 @@ struct Opt(T) if (isPointer!T) {
         value = s;
     }
 
+    static Opt!T none() {
+        return Opt!T(null);
+    }
+
     bool has() {
         return value != null;
     }

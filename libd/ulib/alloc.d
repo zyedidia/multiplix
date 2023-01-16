@@ -16,6 +16,8 @@ template emplace_init(T, Args...) {
         }
         static if (HasCtor!T) {
             val.__ctor(args);
+        } else {
+            static assert(args.length == 0, "no constructor exists, but arguments were provided");
         }
     }
 }
