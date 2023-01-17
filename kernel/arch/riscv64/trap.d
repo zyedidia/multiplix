@@ -84,12 +84,11 @@ void usertrapret(Proc* p, bool swtch) {
 
     // set up trapframe
     p.trapframe.ktp = cpuinfo.tls;
-    p.trapframe.ksp = cpuinfo.stack + sys.pagesize;
+    p.trapframe.ksp = cpuinfo.stack;
     p.trapframe.kgp = rd_gp();
 
     Csr.sstatus = bits.clear(Csr.sstatus, Sstatus.spp); // force return to usermode
     Csr.sstatus = bits.set(Csr.sstatus, Sstatus.spie); // enable interrupts in user mode
-    io.writeln(cast(void*) Csr.sstatus);
 
     Csr.sepc = p.trapframe.epc;
 

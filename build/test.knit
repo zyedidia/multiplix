@@ -57,7 +57,7 @@ local src = {
         lib,
         kernel,
         {
-            "kernel/main.d",
+            f"test/$(cli.test)/main.d",
         }
     )
 }
@@ -79,34 +79,19 @@ local link = {
 }
 
 local kernel = r{
-    $ kernel.elf: $(obj.kernel) $(link.kernel)[I]
+    $ test-$(cli.test).elf: $(obj.kernel) $(link.kernel)[I]
         $(tools.ld) $(flags.ld) -T$(link.kernel) $(link.extra) $input -o $output
-    $ qemu:VB: kernel.boot.elf
+    $ qemu:VB: test-$(cli.test).boot.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -kernel $input
-    $ qemu-gdb:VB: kernel.boot.elf
+    $ qemu-gdb:VB: test-$(cli.test).boot.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -s -S -kernel $input &
         $(tools.gdb) -ex "file $input" -ex "target remote localhost:1234"
 }
 
 local allsrc = knit.rglob(".", "*.d")
 
-local tests = knit.glob("test/*")
-local testr = r{}
-local alltest = ""
-
-for i, test in ipairs(tests) do
-    testr = testr + r{
-        $ test-$test:VBQ:
-            knit -q -f build/test.knit test=multicore-boot qemu
-    }
-    alltest = alltest .. f" test-$test"
-end
-
 return b{
-    $ all:V: kernel.boot.bin
-
-    $ bootloader.elf:B:
-        knit -f build/bootloader.knit kboot=1 kenter=1 bootloader.elf board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
+    $ all:V: test-$(cli.test).boot.bin
 
     $ format:VB:
         dfmt -i --brace_style=otbs $allsrc
@@ -114,13 +99,11 @@ return b{
         knit -f build/bootloader.knit :all -t clean
         knit :all -t clean
         rm -rf *.list *.bin *.bin.out
-    $ prog:VB: kernel.elf
+    $ prog:VB: test-$(cli.test).elf
         plboot prog $input
     $ lint:VBQ:
         dscanner --styleCheck $allsrc --config .dscanner.ini
-    $ test:VB: $alltest
 
-    testr,
     kernel,
     meta
 }

@@ -4,6 +4,9 @@ import kernel.arch.aarch64.sysreg;
 import kernel.arch.aarch64.regs;
 import kernel.arch.aarch64.timer;
 
+import kernel.proc;
+import kernel.cpu;
+
 import io = ulib.io;
 import bits = ulib.bits;
 
@@ -38,4 +41,48 @@ extern (C) void kernel_interrupt(Regs* regs) {
     import kernel.cpu;
     io.writeln("core: ", cpuinfo.coreid, ", kernel interrupt");
     Timer.intr();
+}
+
+struct Trapframe {
+    uintptr ktpidr;
+    uintptr ksp;
+    uintptr epc;
+    Regs regs;
+    Proc* p;
+}
+
+extern (C) {
+    // userswitch in uservec.s
+    extern void userswitch(Trapframe* tf, uintptr satp);
+    // userret in uservec.s
+    extern void userret(Trapframe* tf);
+    // uservec in uservec.s
+    extern void uservec();
+
+    void usertrap(Trapframe* tf) {
+        io.writeln("usertrap");
+        usertrapret(tf.p, false);
+    }
+}
+
+void usertrapret(Proc* p, bool swtch) {
+    Trap.disable();
+
+    // change vbar
+    /* Csr.stvec = cast(uintptr) &uservec; */
+
+    // set up trapframe
+    p.trapframe.ktpidr = cpuinfo.tls;
+    p.trapframe.ksp = cpuinfo.stack;
+
+    // set elr to p.trapframe.epc
+    /* Csr.sepc = p.trapframe.epc; */
+
+    if (swtch) {
+        userswitch(p.trapframe, p.pt.satp(0));
+    } else {
+        userret(p.trapframe);
+    }
+
+    while (1) {}
 }
