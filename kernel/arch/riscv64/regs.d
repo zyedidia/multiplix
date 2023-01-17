@@ -34,5 +34,15 @@ struct Regs {
     uintptr t6;
 }
 
-extern (C) extern uintptr rd_tp();
-extern (C) extern uintptr rd_gp();
+import ldc.llvmasm;
+uintptr rd_gp() {
+    return __asm!uintptr(
+        "mv $0, gp", "=r"
+    );
+}
+
+uintptr rd_tp() {
+    return __asm!uintptr(
+        "mv $0, tp", "=r"
+    );
+}

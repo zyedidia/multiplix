@@ -67,6 +67,7 @@ local obj = {
         knit.extrepl(src.kernel, ".d", ".o"),
         {
             f"kernel/arch/$(machine.arch)/kernelasm.o",
+            f"kernel/arch/$(machine.arch)/userasm.o",
         }
     ),
 }

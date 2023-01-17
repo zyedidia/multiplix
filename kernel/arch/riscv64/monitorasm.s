@@ -40,15 +40,6 @@ boot_lock:
 wakeup:
 	.int 0
 
-.globl rd_tp
-rd_tp:
-	mv a0, tp
-	ret
-.globl rd_gp
-rd_gp:
-	mv a0, gp
-	ret
-
 .section ".text.enter_smode"
 .globl _enter_smode
 _enter_smode:

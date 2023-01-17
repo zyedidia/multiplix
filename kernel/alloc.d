@@ -1,6 +1,9 @@
 module kernel.alloc;
 
+import ulib.alloc;
 import ulib.option;
+
+import kernel.board;
 
 // K&R allocator
 struct KrAllocator {
@@ -131,9 +134,6 @@ private:
     uintptr end;
 }
 
-import kernel.board;
-import ulib.alloc;
-
 // Allocation API.
 
 Opt!(void*) kalloc_block(A)(A* allocator, size_t sz) {
@@ -158,8 +158,8 @@ Opt!(T[]) kalloc_array(A, T, Args...)(A* allocator, size_t nelem, Args args) {
     return arr;
 }
 
-void kfree(A)(A* allocator, void* ptr) {
-    allocator.free(ptr);
+void kfree(A, T)(A* allocator, T* ptr) {
+    allocator.free(cast(void*) ptr);
 }
 
 // Allocation functions using the system allocator.
@@ -176,6 +176,9 @@ Opt!(T[]) kalloc_array(T, Args...)(size_t nelem, Args args) {
     return kalloc_array(typeof(System.allocator), T, Args)(&System.allocator, nelem, args);
 }
 
-void kfree(void* ptr) {
-    kfree(&System.allocator, ptr);
+void kfree(T)(T* ptr) {
+    static if (HasDtor!T) {
+        ptr.__dtor();
+    }
+    kfree!(typeof(System.allocator), T)(&System.allocator, ptr);
 }

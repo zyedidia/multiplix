@@ -9,47 +9,49 @@ import kernel.timer;
 import kernel.cpu;
 import kernel.alloc;
 import kernel.spinlock;
+import kernel.proc;
 
 import arch = kernel.arch;
 import sys = kernel.sys;
 
 shared Spinlock lock;
 
-import ulib.reference;
+auto hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
+__gshared Proc p;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         System.allocator = System.Buddy(cast(uintptr) heap);
 
         // boot up the other cores
-        arch.Cpu.start_all_cores();
+        /* arch.Cpu.start_all_cores(); */
     }
 
     lock.lock();
     io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
     lock.unlock();
 
-    void* p = System.allocator.alloc(100);
-    lock.lock();
-    io.writeln("allocated: ", p);
-    lock.unlock();
-
-    /* version (raspi3) { */
-    /*     CoreTimer.enable_irq(); */
-    /* } else version (raspi4) { */
-    /*     CoreTimer.enable_irq(); */
-    /* } */
-    /*  */
-    /* arch.Trap.init(); */
-    /* arch.Trap.enable(); */
-    /* arch.Timer.intr(); */
-    /*  */
-    Timer.delay_ms(500);
-    /*  */
-    /* io.writeln("done"); */
-
-    if (cpuinfo.primary) {
-        io.writeln("done");
-        Reboot.reboot();
+    if (!cpuinfo.primary) {
+        // spin secondary cores
+        while (1) {}
     }
+
+    if (!Proc.make(&p, hello_elf)) {
+        io.writeln("could not initialize process");
+        return;
+    }
+
+    arch.usertrapret(&p, true);
+}
+
+void irq() {
+    version (raspi3) {
+        CoreTimer.enable_irq();
+    } else version (raspi4) {
+        CoreTimer.enable_irq();
+    }
+
+    arch.Trap.init();
+    arch.Trap.enable();
+    arch.Timer.intr();
 }

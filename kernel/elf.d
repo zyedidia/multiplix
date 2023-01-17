@@ -2,10 +2,13 @@ module kernel.elf;
 
 import kernel.alloc;
 import kernel.proc;
+import kernel.board;
+import kernel.arch;
 
-import arch = kernel.arch;
 import sys = kernel.sys;
 import vm = kernel.vm;
+
+import ulib.memory;
 
 enum magic = 0x464C457FU; // "\x7ELF" in little endian
 
@@ -73,7 +76,7 @@ int getwidth(ubyte* elfdat) {
     assert(0);
 }
 
-bool load(int W, A)(Proc* proc, immutable ubyte* elfdat, A* allocator, out uintptr entry) {
+bool load(int W)(Proc* proc, immutable ubyte* elfdat, out uintptr entry) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
     assert(elf.magic == magic);
@@ -93,11 +96,12 @@ bool load(int W, A)(Proc* proc, immutable ubyte* elfdat, A* allocator, out uintp
         auto pgs_ = kalloc_block(ph.memsz);
         assert(pgs_.has());
         ubyte[] code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
+        import io = ulib.io;
         memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
 
         // map newly allocated physical space to base va
         for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
-            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, true, allocator)) {
+            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, &System.allocator)) {
                 // TODO: free memory
                 return false;
             }
