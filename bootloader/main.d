@@ -87,9 +87,9 @@ version (uart) {
         }
 
         ubyte* base = heap;
-        ulong entry = get_ulong();
-        uint nbytes = get_uint();
-        uint crc_recv = get_uint();
+        const ulong entry = get_ulong();
+        const uint nbytes = get_uint();
+        const uint crc_recv = get_uint();
 
         put_uint(BootFlags.GetCode);
         put_uint(crc_recv);
@@ -101,7 +101,7 @@ version (uart) {
         for (uint i = 0; i < nbytes; i++) {
             base[i] = Uart.rx();
         }
-        uint crc_calc = crc.crc32(base, nbytes);
+        const uint crc_calc = crc.crc32(base, nbytes);
         if (crc_calc != crc_recv) {
             put_uint(BootFlags.BadCodeCksum);
             while (1) {}

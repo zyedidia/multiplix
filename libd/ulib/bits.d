@@ -44,11 +44,12 @@ T remap(T)(T i, uint from, uint to) {
 }
 
 T remap(T)(T i, uint from_ub, uint from_lb, uint to_ub, uint to_lb) {
+    cast(void) to_ub;
     return get(i, from_ub, from_lb) << to_lb;
 }
 
 T sext(T, UT)(UT x, uint width) {
-    ulong n = (T.sizeof * 8 - 1) - (width-1);
+    const ulong n = (T.sizeof * 8 - 1) - (width-1);
     return (cast(T)(x << n)) >> n;
 }
 

@@ -4,7 +4,7 @@ import core.volatile;
 
 // Driver for ns16550 UART.
 struct Ns16550(uintptr base) {
-    static void init(int baud) {
+    static void setup(int baud) {
     }
 
     // Currently this device is only used via Qemu, so we don't have to

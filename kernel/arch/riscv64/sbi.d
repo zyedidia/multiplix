@@ -138,7 +138,7 @@ struct Timer {
     }
 
     static void set_timer(ulong val) {
-        ecall(ext, Fid.set_timer, val);
+        cast() ecall(ext, Fid.set_timer, val);
     }
 }
 
@@ -156,6 +156,6 @@ struct Hart {
     }
 
     static void start_all_cores() {
-        ecall(ext, Fid.start_all_cores);
+        cast() ecall(ext, Fid.start_all_cores);
     }
 }

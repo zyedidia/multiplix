@@ -38,7 +38,7 @@ extern (C) {
                 volatile_st(bss++, 0);
             }
 
-            Uart.init(115200);
+            Uart.setup(115200);
             volatile_st(&primary, 0);
             cpuinfo.primary = true;
         } else {

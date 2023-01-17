@@ -4,11 +4,11 @@ import kernel.arch.aarch64.sysreg;
 
 struct Timer {
     static void delay_us(ulong us) {
-        ulong r = void;
         // get the current counter frequency
-        ulong f = SysReg.cntfrq_el0;
+        const ulong f = SysReg.cntfrq_el0;
         ulong t = SysReg.cntpct_el0;
         t += ((f / 1000) * us) / 1000;
+        ulong r = void;
         do {
             r = SysReg.cntpct_el0;
         } while (r < t);

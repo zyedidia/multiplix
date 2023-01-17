@@ -45,7 +45,11 @@ struct Proc {
             return false;
         }
         uintptr entryva;
-        bool failed = elf.load!64(proc, binary.ptr, entryva);
+        const bool ok = elf.load!64(proc, binary.ptr, entryva);
+        if (!ok) {
+            // TODO: free memory
+            return false;
+        }
         // map kernel
         for (uintptr pa = 0; pa < System.mem.start + System.mem.sz; pa += sys.gb!(1)) {
             proc.pt.map_giga(vm.pa2ka(pa), pa, Perm.krwx);

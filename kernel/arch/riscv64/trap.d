@@ -15,7 +15,7 @@ import io = ulib.io;
 extern (C) extern void kernelvec();
 
 struct Trap {
-    static void init() {
+    static void setup() {
         Csr.stvec = cast(uintptr) &kernelvec;
     }
 

@@ -9,7 +9,7 @@ static if ((void*).sizeof == 8) {
 } else static if ((void*).sizeof == 4) {
     alias uintptr = uint;
 } else {
-    static assert("pointer size must be 4 or 8 bytes");
+    static assert(0, "pointer size must be 4 or 8 bytes");
 }
 
 void check(bool b) {
@@ -23,14 +23,13 @@ void check(bool b) {
 version (LDC) {
     extern (C) void _d_array_slice_copy(void* dst, size_t dstlen, void* src,
             size_t srclen, size_t elemsz) {
+        cast(void) srclen;
         import ulib.memory : memmove;
-
         memmove(dst, src, dstlen * elemsz);
     }
 } else {
     extern (C) void[] _d_arraycopy(size_t size, void[] from, void[] to) {
         import ulib.memory : memmove;
-
         memmove(to.ptr, from.ptr, to.length * size);
         return to;
     }

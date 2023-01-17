@@ -34,7 +34,7 @@ struct BcmMiniUart(uintptr base) {
     enum aux_enables = cast(uint*)(base + 0x4);
     enum uart = cast(AuxPeriphs*)(base + 0x40);
 
-    static void init(uint baud) {
+    static void setup(uint baud) {
         device_fence();
 
         Gpio.set_func(Gpio.PinType.tx, Gpio.FuncType.alt5);

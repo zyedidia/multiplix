@@ -86,7 +86,7 @@ struct Dw8250(uintptr base) {
         tfnf = 1, // transmit fifo not full
     }
 
-    static void init(int baud) {
+    static void setup(int baud) {
         // Currently not sure how to set up the UART's baud rate properly, but
         // luckily it seems to be already set up for us by the firmware.
 

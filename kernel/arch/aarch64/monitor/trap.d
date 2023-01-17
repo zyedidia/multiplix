@@ -12,7 +12,7 @@ import bits = ulib.bits;
 extern (C) extern __gshared uint wakeup;
 
 extern (C) void monitor_exception(Regs* regs) {
-    auto exc_class = bits.get(SysReg.esr_el3, 31, 26);
+    const auto exc_class = bits.get(SysReg.esr_el3, 31, 26);
 
     switch (exc_class) {
         case Exception.smc:

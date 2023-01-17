@@ -32,7 +32,7 @@ struct System {
     ];
 
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.mb!(512));
-    static __gshared Buddy allocator;
+    __gshared Buddy allocator;
 }
 
 alias Uart = BcmMiniUart!(pa2kpa(System.device_base + 0x215000));

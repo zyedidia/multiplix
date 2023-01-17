@@ -51,7 +51,7 @@ void irq() {
         CoreTimer.enable_irq();
     }
 
-    arch.Trap.init();
+    arch.Trap.setup();
     arch.Trap.enable();
     arch.Timer.intr();
 }

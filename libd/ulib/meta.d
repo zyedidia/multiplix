@@ -27,7 +27,7 @@ template itoa(S) if (isInt!S) {
         }
 
         do {
-            auto rem = num % base;
+            const auto rem = num % base;
             char c = cast(char)((rem > 9) ? (rem - 10) + 'a' : rem + '0');
             str = c ~ str;
             num /= base;

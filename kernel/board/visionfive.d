@@ -26,7 +26,7 @@ struct System {
     enum MemRange mem = MemRange(sys.gb!(2), sys.gb!(2));
 
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(4));
-    static __gshared Buddy allocator;
+    __gshared Buddy allocator;
 }
 
 alias Uart = Dw8250!(pa2kpa(0x12440000));

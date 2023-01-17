@@ -15,7 +15,7 @@ string itoa(S)(S input, char[] buf, uint base = 10) if (isInt!S) {
     }
 
     do {
-        auto rem = num % base;
+        const auto rem = num % base;
         buf[--pos] = cast(char)((rem > 9) ? (rem - 10) + 'a' : rem + '0');
         num /= base;
     }

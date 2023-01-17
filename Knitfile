@@ -104,6 +104,8 @@ return b{
         rm -rf *.list *.bin *.bin.out
     $ prog:VB: kernel.elf
         plboot prog $input
+    $ lint:VBQ:
+        dscanner --styleCheck $allsrc --config .dscanner.ini
 
     kernel,
     meta

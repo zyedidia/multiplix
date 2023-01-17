@@ -41,6 +41,6 @@ struct Cpu {
     }
 
     static void start_all_cores() {
-        smc(Fid.start_all_cores);
+        cast() smc(Fid.start_all_cores);
     }
 }
