@@ -15,6 +15,21 @@ shared Pagetable tbl;
 
 align(4096) __gshared ubyte[4096 * 4] ptheap;
 
+bool kernel_map(Pagetable* pt) {
+    foreach (range; System.mem_ranges) {
+        for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
+            // TODO: free the memory allocated by mapping?
+            if (!pt.map(addr, addr, Pte.Pg.mega, Ap.krw, range.type, &System.allocator)) {
+                return false;
+            }
+            if (!pt.map(vm.pa2ka(addr), addr, Pte.Pg.mega, Ap.krw, range.type, &System.allocator)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 void kernel_setup(bool primary) {
     // Load normal into index 0 and device into index 1.
     SysReg.mair_el1 = (Mair.device_ngnrne << Mair.device_idx * 8) | (Mair.normal_cacheable << Mair.normal_idx * 8);

@@ -22,5 +22,5 @@ struct Regs {
     ulong x18;
     ulong fp;
     ulong lr;
-    ulong xzr;
+    ulong sp; // loaded from sp_el0
 }

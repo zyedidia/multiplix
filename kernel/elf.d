@@ -96,12 +96,12 @@ bool load(int W)(Proc* proc, immutable ubyte* elfdat, out uintptr entry) {
         auto pgs_ = kalloc_block(ph.memsz);
         assert(pgs_.has());
         ubyte[] code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
-        import io = ulib.io;
         memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
 
         // map newly allocated physical space to base va
         for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
-            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, &System.allocator)) {
+            import kernel.arch.aarch64.sysreg;
+            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, Mair.normal_cacheable, &System.allocator)) {
                 // TODO: free memory
                 return false;
             }

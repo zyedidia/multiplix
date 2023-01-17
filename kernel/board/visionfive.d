@@ -22,8 +22,9 @@ struct System {
         size_t sz;
     }
 
-    enum MemRange device = MemRange(0, sys.gb!(2));
-    enum MemRange mem = MemRange(sys.gb!(2), sys.gb!(2));
+    enum MemRange[] mem_ranges = [
+        MemRange(0, sys.gb!(4)),
+    ];
 
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(4));
     __gshared Buddy allocator;

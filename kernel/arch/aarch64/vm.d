@@ -41,6 +41,12 @@ struct Pte {
 
 enum Ap {
     krw = 0b00,
+    urw = 0b01,
+}
+
+enum Perm {
+    krwx = Ap.krw,
+    urwx = Ap.urw,
 }
 
 private uintptr vpn(uint level, uintptr va) {
@@ -82,11 +88,11 @@ struct Pagetable {
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
     bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm, ubyte mair, A* allocator) {
-        auto opte = walk(va, pgtyp, true, allocator);
-        if (!opte.has()) {
+        auto pte_ = walk(va, pgtyp, true, allocator);
+        if (!pte_.has()) {
             return false;
         }
-        auto pte = opte.get();
+        auto pte = pte_.get();
         pte.addr = pa >> 12;
         pte.ap = perm;
         pte.valid = 1;

@@ -1,5 +1,7 @@
 module kernel.arch.aarch64.trap;
 
+import core.sync;
+
 import kernel.arch.aarch64.sysreg;
 import kernel.arch.aarch64.regs;
 import kernel.arch.aarch64.timer;
@@ -44,8 +46,7 @@ extern (C) void kernel_interrupt(Regs* regs) {
 }
 
 struct Trapframe {
-    uintptr ktpidr;
-    uintptr ksp;
+    uintptr sp;
     uintptr epc;
     Regs regs;
     Proc* p;
@@ -61,28 +62,32 @@ extern (C) {
 
     void usertrap(Trapframe* tf) {
         io.writeln("usertrap");
-        usertrapret(tf.p, false);
+        while (1) {}
+        /* usertrapret(tf.p, false); */
     }
 }
 
 void usertrapret(Proc* p, bool swtch) {
     Trap.disable();
 
-    // change vbar
-    /* Csr.stvec = cast(uintptr) &uservec; */
+    // return to el0 aarch64 with no interrupts masked
+    SysReg.spsr_el1 = 0b0000_0_0_0000;
 
     // set up trapframe
-    p.trapframe.ktpidr = cpuinfo.tls;
-    p.trapframe.ksp = cpuinfo.stack;
+    p.trapframe.sp = cpuinfo.stack;
 
     // set elr to p.trapframe.epc
-    /* Csr.sepc = p.trapframe.epc; */
+    SysReg.elr_el1 = p.trapframe.epc;
 
     if (swtch) {
-        userswitch(p.trapframe, p.pt.satp(0));
-    } else {
-        userret(p.trapframe);
+        SysReg.ttbr0_el1 = cast(uintptr) p.pt;
+        vm_fence();
     }
+
+    import io = ulib.io;
+    io.writeln("going to userret");
+
+    userret(p.trapframe);
 
     while (1) {}
 }

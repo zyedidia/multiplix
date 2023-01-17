@@ -1,5 +1,7 @@
 module kernel.arch.riscv64.trap;
 
+import core.sync;
+
 import kernel.arch.riscv64.csr;
 import kernel.arch.riscv64.timer;
 import kernel.arch.riscv64.regs;
@@ -53,8 +55,6 @@ struct Trapframe {
 }
 
 extern (C) {
-    // userswitch in uservec.s
-    extern void userswitch(Trapframe* tf, uintptr satp);
     // userret in uservec.s
     extern void userret(Trapframe* tf);
     // uservec in uservec.s
@@ -93,10 +93,11 @@ void usertrapret(Proc* p, bool swtch) {
     Csr.sepc = p.trapframe.epc;
 
     if (swtch) {
-        userswitch(p.trapframe, p.pt.satp(0));
-    } else {
-        userret(p.trapframe);
+        Csr.satp = p.pt.satp(0);
+        vm_fence();
     }
+
+    userret(p.trapframe);
 
     while (1) {}
 }

@@ -46,13 +46,7 @@ uservec:
 
 	j usertrap
 
-# function: userswitch(Regs* regs, uintptr satp)
-.globl userswitch
-userswitch:
-	sfence.vma zero, zero
-	csrw satp, a1
-	sfence.vma zero, zero
-# function: userret(Regs* regs)
+# function: userret(Trapframe* tf)
 .globl userret
 userret:
 	ld ra, 32(a0)

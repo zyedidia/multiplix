@@ -8,25 +8,38 @@ import kernel.arch.riscv64.vm;
 import kernel.board;
 
 import sys = kernel.sys;
+import vm = kernel.vm;
 
 // Early pagetable (only maps gigapages since we don't have an allocator yet).
 __gshared Pagetable39 kpagetable;
+
+bool kernel_map(Pagetable39* pt) {
+    // Map kernel into the high part of the address space
+    foreach (range; System.mem_ranges) {
+        for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
+            pt.map_giga(vm.pa2ka(addr), addr, Perm.krwx);
+        }
+    }
+    return true;
+}
 
 // Sets up identity-mapped virtual memory and enables interrupts in SIE. After
 // running this function it is possible to jump to high kernel addresses.
 void kernel_setup(bool primary) {
     if (primary) {
         // Set up an identity-mapped pagetable.
-        auto map_region = (System.MemRange range, Pagetable39* pt) {
+        void map_region (System.MemRange range, Pagetable39* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
                 pt.map_giga(addr, addr, Perm.krwx);
-                pt.map_giga(sys.highmem_base + addr, addr, Perm.krwx);
+                pt.map_giga(vm.pa2ka(addr), addr, Perm.krwx);
             }
-        };
+        }
 
-        Pagetable39* pgtbl = cast(Pagetable39*) &kpagetable;
-        map_region(System.device, pgtbl);
-        map_region(System.mem, pgtbl);
+        Pagetable39* pgtbl = &kpagetable;
+
+        foreach (r; System.mem_ranges) {
+            map_region(r, pgtbl);
+        }
     }
 
 

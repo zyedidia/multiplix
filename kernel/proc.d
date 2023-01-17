@@ -51,9 +51,7 @@ struct Proc {
             return false;
         }
         // map kernel
-        for (uintptr pa = 0; pa < System.mem.start + System.mem.sz; pa += sys.gb!(1)) {
-            proc.pt.map_giga(vm.pa2ka(pa), pa, Perm.krwx);
-        }
+        assert(kernel_map(proc.pt));
         // allocate stack/trapframe
         auto stack_ = kalloc_block(sys.pagesize * 2);
         if (!stack_.get()) {
@@ -63,11 +61,12 @@ struct Proc {
         proc.stack = cast(ubyte[]) stack_.get()[0 .. sys.pagesize];
         proc.trapframe = cast(Trapframe*) stack_.get()[sys.pagesize .. sys.pagesize * 2];
         // map stack/trapframe
-        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) proc.stack.ptr), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
+        import kernel.arch.aarch64.sysreg;
+        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) proc.stack.ptr), Pte.Pg.normal, Perm.urwx, Mair.normal_cacheable, &System.allocator)) {
             // TODO: if failed, free memory
             return false;
         }
-        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx, &System.allocator)) {
+        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx, Mair.normal_cacheable, &System.allocator)) {
             // TODO: if failed, free memory
             return false;
         }

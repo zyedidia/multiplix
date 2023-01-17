@@ -2,7 +2,7 @@
 
 .globl _start
 _start:
-	// set stack = _kheap_start + coreid * 4096
+	// set stack = _kheap_start + (coreid + 1) * 4096
 	// coreid is in x0
 	ldr x1, =_kheap_start
 	add x2, x0, #1
@@ -74,16 +74,16 @@ cur_el_spx_serror:
 	b exception_entry
 .balign 0x80
 lower_el_aarch64_sync:
-	b exception_entry
+	b uservec
 .balign 0x80
 lower_el_aarch64_irq:
-	b interrupt_entry
+	b uservec
 .balign 0x80
 lower_el_aarch64_fiq:
-	b interrupt_entry
+	b uservec
 .balign 0x80
 lower_el_aarch64_serror:
-	b exception_entry
+	b uservec
 // aarch32 stuff, just infinite loop
 .balign 0x80
 	b .

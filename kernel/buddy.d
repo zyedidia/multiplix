@@ -124,6 +124,8 @@ public:
 
     // pointer allocation API
     void* alloc(size_t sz) {
+        import io = ulib.io;
+        io.writeln("allocating ", &this, " ", sz);
         if (sz == 0) {
             return null;
         }
