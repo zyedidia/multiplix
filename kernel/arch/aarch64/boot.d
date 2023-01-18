@@ -16,12 +16,10 @@ shared Pagetable tbl;
 align(4096) __gshared ubyte[4096 * 4] ptheap;
 
 bool kernel_map(Pagetable* pt) {
+    // TODO: don't actually have to do anything because ttbr1_el1 holds the kernel mapping
     foreach (range; System.mem_ranges) {
         for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
             // TODO: free the memory allocated by mapping?
-            if (!pt.map(addr, addr, Pte.Pg.mega, Ap.krw, range.type, &System.allocator)) {
-                return false;
-            }
             if (!pt.map(vm.pa2ka(addr), addr, Pte.Pg.mega, Ap.krw, range.type, &System.allocator)) {
                 return false;
             }

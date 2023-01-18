@@ -61,6 +61,7 @@ struct Pagetable {
     Opt!(Pte*) walk(A)(uintptr va, Pte.Pg endlevel, bool alloc, A* allocator) {
         Pagetable* pt = &this;
 
+        import io = ulib.io;
         for (int level = 2; level > endlevel; level--) {
             Pte* pte = &pt.ptes[vpn(level, va)];
             if (pte.valid && !pte.table) {
@@ -96,7 +97,12 @@ struct Pagetable {
         pte.addr = pa >> 12;
         pte.ap = perm;
         pte.valid = 1;
-        pte.table = 0;
+        if (pgtyp == Pte.Pg.normal) {
+            // last level PTEs need this bit enabled (confusing)
+            pte.table = 1;
+        } else {
+            pte.table = 0;
+        }
         pte.sh = 0b11;
         pte.af = 1;
         pte.index = mair;

@@ -20,6 +20,8 @@ auto hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
 __gshared Proc p;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
+    arch.Trap.setup();
+
     if (cpuinfo.primary) {
         System.allocator.__ctor(cast(uintptr) heap);
 

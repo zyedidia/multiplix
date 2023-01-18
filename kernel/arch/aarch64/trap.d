@@ -9,6 +9,8 @@ import kernel.arch.aarch64.timer;
 import kernel.proc;
 import kernel.cpu;
 
+import vm = kernel.vm;
+
 import io = ulib.io;
 import bits = ulib.bits;
 
@@ -80,12 +82,9 @@ void usertrapret(Proc* p, bool swtch) {
     SysReg.elr_el1 = p.trapframe.epc;
 
     if (swtch) {
-        SysReg.ttbr0_el1 = cast(uintptr) p.pt;
+        SysReg.ttbr0_el1 = vm.ka2pa(cast(uintptr) p.pt);
         vm_fence();
     }
-
-    import io = ulib.io;
-    io.writeln("going to userret");
 
     userret(p.trapframe);
 
