@@ -21,7 +21,7 @@ __gshared Proc p;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
-        System.allocator = System.Buddy(cast(uintptr) heap);
+        System.allocator.__ctor(cast(uintptr) heap);
 
         // boot up the other cores
         /* arch.Cpu.start_all_cores(); */
