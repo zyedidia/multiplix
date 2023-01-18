@@ -8,6 +8,7 @@ import ulib.memory;
 
 import kernel.vm;
 import kernel.alloc;
+import kernel.board;
 
 // AArch64 MMU configuration with 39-bit virtual addresses and a granule of 4KB.
 
@@ -88,7 +89,7 @@ struct Pagetable {
 
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
-    bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm, ubyte mair, A* allocator) {
+    bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm, A* allocator) {
         auto pte_ = walk(va, pgtyp, true, allocator);
         if (!pte_.has()) {
             return false;
@@ -105,11 +106,11 @@ struct Pagetable {
         }
         pte.sh = 0b11;
         pte.af = 1;
-        pte.index = mair;
+        pte.index = System.mem_type(pa);
         return true;
     }
 
-    void map_giga(uintptr va, uintptr pa, ubyte perm, ubyte mair) {
+    void map_giga(uintptr va, uintptr pa, ubyte perm) {
         auto idx = bits.get(va, 38, 30);
         ptes[idx].addr = pa >> 12;
         ptes[idx].valid = 1;
@@ -117,6 +118,6 @@ struct Pagetable {
         ptes[idx].ap = perm;
         ptes[idx].af = 1;
         ptes[idx].sh = 0b11;
-        ptes[idx].index = mair;
+        ptes[idx].index = System.mem_type(pa);
     }
 }

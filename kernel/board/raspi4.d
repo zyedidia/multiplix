@@ -32,6 +32,15 @@ struct System {
         MemRange(device_base, sys.mb!(28), MemType.device),
     ];
 
+    static MemType mem_type(uintptr pa) {
+        foreach (r; mem_ranges) {
+            if (pa >= r.start && pa < r.start + r.sz) {
+                return r.type;
+            }
+        }
+        return MemType.normal;
+    }
+
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(1));
     __gshared Buddy allocator;
 }

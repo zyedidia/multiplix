@@ -61,12 +61,11 @@ struct Proc {
         proc.stack = cast(ubyte[]) stack_.get()[0 .. sys.pagesize];
         proc.trapframe = cast(Trapframe*) stack_.get()[sys.pagesize .. sys.pagesize * 2];
         // map stack/trapframe
-        import kernel.arch.aarch64.sysreg;
-        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) proc.stack.ptr), Pte.Pg.normal, Perm.urwx, Mair.normal_idx, &System.allocator)) {
+        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) proc.stack.ptr), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
             // TODO: if failed, free memory
             return false;
         }
-        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx, Mair.normal_idx, &System.allocator)) {
+        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx, &System.allocator)) {
             // TODO: if failed, free memory
             return false;
         }
