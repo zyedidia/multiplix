@@ -38,7 +38,8 @@ struct Trap {
 }
 
 extern (C) void kernel_exception(Regs* regs) {
-    io.writeln("kernel exception");
+    const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
+    io.writeln("kernel exception: ", cast(void*) exc_class);
 }
 
 extern (C) void kernel_interrupt(Regs* regs) {
@@ -61,9 +62,18 @@ extern (C) {
     extern void uservec();
 
     noreturn usertrap(Trapframe* tf) {
-        io.writeln("usertrap");
-        while (1) {}
-        /* usertrapret(tf.p, false); */
+        const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
+        io.writeln("usertrap: ", cast(void*) exc_class);
+
+        switch (exc_class) {
+            case Exception.svc:
+                io.writeln("svc executed: x7: ", tf.regs.x7, " x0: ", tf.regs.x0);
+                break;
+            default:
+                break;
+        }
+
+        usertrapret(tf.p, false);
     }
 }
 

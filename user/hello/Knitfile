@@ -1,8 +1,25 @@
+function sel(cond, t, f)
+    if cond then return t else return f end
+end
+
+local build = include("../../build/build.knit")
+local conf = include("../../build/default.knit")
+
+local machine = build.machine(conf.board, false)
+if machine == nil then
+    return "could not find machine for board " .. conf.board
+end
+
+local darch = sel(machine.arch == "aarch64", "-DAARCH64", "-DRISCV64")
+
+local tools = build.tools(machine)
+local flags = build.flags(machine, conf.lto, conf.release, false)
+
 return b{
-    $ hello.elf: hello.c
-        riscv64-unknown-elf-gcc -march=rv64im -mabi=lp64 $input -Oz -o $output -T../../link/user.ld -ffreestanding -nostdlib
+    $ hello.elf: hello.c syscall.h[I]
+        $(tools.cc) $(flags.cc) $input -o $output -T../../link/user.ld -ffreestanding -nostdlib $darch
     $ hello.bin: hello.elf
-        riscv64-unknown-elf-objcopy $input -O binary $output
+        $(tools.objcopy) $input -O binary $output
     $ hello.list: hello.elf
-        riscv64-unknown-elf-objdump -D $input > $output
+        $(tools.objdump) -D $input > $output
 }
