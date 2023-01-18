@@ -63,7 +63,7 @@ extern (C) {
 
     noreturn usertrap(Trapframe* tf) {
         const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
-        io.writeln("usertrap: ", cast(void*) exc_class);
+        io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1);
 
         switch (exc_class) {
             case Exception.svc:

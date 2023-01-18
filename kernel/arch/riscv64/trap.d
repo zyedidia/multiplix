@@ -66,6 +66,7 @@ extern (C) {
         io.writeln("usertrap: scause: ", cast(void*) scause);
 
         if (scause == Cause.ecall_u) {
+            io.writeln("ecall_u: a7: ", tf.regs.a7, ", a0: ", tf.regs.a0);
             tf.epc = Csr.sepc + 4;
         } else if (scause == Cause.sti) {
             Timer.intr(Timer.interval);

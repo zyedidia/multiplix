@@ -95,11 +95,11 @@ bool load(int W)(Proc* proc, immutable ubyte* elfdat, out uintptr entry) {
         // allocate physical space for segment, and copy it in
         auto pgs_ = kalloc_block(ph.memsz);
         assert(pgs_.has());
-        ubyte[] code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
-        memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
+        proc.code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
+        memcpy(proc.code.ptr, elfdat + ph.offset, ph.filesz);
 
         // map newly allocated physical space to base va
-        for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
+        for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) proc.code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
             if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, &System.allocator)) {
                 // TODO: free memory
                 return false;

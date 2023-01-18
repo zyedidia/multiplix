@@ -57,6 +57,7 @@ struct Proc {
         if (!stack_.get()) {
             kfree(proc.pt);
             kfree(proc.code.ptr);
+            return false;
         }
         proc.stack = cast(ubyte[]) stack_.get()[0 .. sys.pagesize];
         proc.trapframe = cast(Trapframe*) stack_.get()[sys.pagesize .. sys.pagesize * 2];
@@ -78,7 +79,7 @@ struct Proc {
         proc.state = State.runnable;
         proc.pid = 42;
 
-        insn_fence();
+        sync_idmem(proc.code.ptr, proc.code.length);
 
         return true;
     }
