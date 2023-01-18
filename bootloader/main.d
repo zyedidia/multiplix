@@ -123,7 +123,7 @@ version (uart) {
 
 __gshared BootData bootdat;
 
-extern (C) void kmain(int coreid, ubyte* heap) {
+extern (C) noreturn kmain(int coreid, ubyte* heap) {
     arch.monitor_init();
 
     version (kenter) {
@@ -139,9 +139,8 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         // Secondary core can jump directly to the entry because the primary
         // core already copied the payload there.
         insn_fence();
-        auto fn = cast(void function(int)) bootdat.entry;
+        auto fn = cast(noreturn function(int)) bootdat.entry;
         fn(coreid);
-        return;
     }
 
     version (uart) {
@@ -157,6 +156,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         volatile_st(boot.entry + i, boot.data[i]);
     }
     sync_idmem(boot.entry, boot.data.length);
-    auto main = cast(void function(int)) boot.entry;
+    auto main = cast(noreturn function(int)) boot.entry;
     main(coreid);
 }

@@ -55,21 +55,19 @@ struct Trapframe {
 }
 
 extern (C) {
-    // userswitch in uservec.s
-    extern void userswitch(Trapframe* tf, uintptr satp);
     // userret in uservec.s
-    extern void userret(Trapframe* tf);
+    extern noreturn userret(Trapframe* tf);
     // uservec in uservec.s
     extern void uservec();
 
-    void usertrap(Trapframe* tf) {
+    noreturn usertrap(Trapframe* tf) {
         io.writeln("usertrap");
         while (1) {}
         /* usertrapret(tf.p, false); */
     }
 }
 
-void usertrapret(Proc* p, bool swtch) {
+noreturn usertrapret(Proc* p, bool swtch) {
     Trap.disable();
 
     // return to el0 aarch64 with no interrupts masked
@@ -87,6 +85,4 @@ void usertrapret(Proc* p, bool swtch) {
     }
 
     userret(p.trapframe);
-
-    while (1) {}
 }
