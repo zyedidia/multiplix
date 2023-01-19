@@ -6,6 +6,7 @@ import kernel.dev.reboot.unsupported;
 import kernel.dev.irq.sfclint;
 
 import kernel.vm;
+import kernel.buddy;
 
 import sys = kernel.sys;
 

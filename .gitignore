@@ -16,3 +16,4 @@ knit-*
 .kobj
 .bootobj
 *.img
+!/tools/vf2/jh7110-recovery.bin

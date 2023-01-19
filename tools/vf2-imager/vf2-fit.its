@@ -7,7 +7,7 @@
 	images {
 		firmware {
 			description = "u-boot";
-			data = /incbin/("bootloader.bin");
+			data = /incbin/("$firmware");
 			type = "firmware";
 			arch = "riscv";
 			os = "u-boot";
