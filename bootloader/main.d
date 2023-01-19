@@ -152,7 +152,9 @@ extern (C) noreturn kmain(int coreid, ubyte* heap) {
 
     primary = false;
 
-    for (uint i = 0; i < boot.data.length; i++) {
+    // write backwards in case the target region overlaps the payload region
+    assert(boot.entry >= boot.data.ptr);
+    for (long i = boot.data.length - 1; i >= 0; i--) {
         volatile_st(boot.entry + i, boot.data[i]);
     }
     sync_idmem(boot.entry, boot.data.length);

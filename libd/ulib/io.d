@@ -8,6 +8,8 @@ import sys = ulib.sys;
 
 struct File {
 public:
+    @disable this();
+
     void function(ubyte) putc = void;
 
     this(void function(ubyte) putc) {
@@ -32,7 +34,7 @@ private:
 
     void write_elem(string s) {
         foreach (c; s) {
-            putc(c);
+            write_elem(c);
         }
     }
 
