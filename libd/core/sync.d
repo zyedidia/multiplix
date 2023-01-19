@@ -111,7 +111,10 @@ alias vm_fence = () {
         }
     } else version (AArch64) {
         asm {
+            "dsb ish" ::: "memory";
             "tlbi vmalle1" ::: "memory";
+            "dsb ish" ::: "memory";
+            "isb" ::: "memory";
         }
     }
 };
