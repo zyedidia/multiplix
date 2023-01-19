@@ -3,6 +3,7 @@ module kernel.arch.riscv64.monitor.trap;
 import kernel.arch.riscv64.regs;
 import kernel.arch.riscv64.csr;
 import kernel.arch.riscv64.monitor.ext;
+import kernel.arch.riscv64.monitor.dbg;
 
 import sbi = kernel.arch.riscv64.sbi;
 
@@ -21,6 +22,9 @@ extern (C) void monitortrap(Regs* regs) {
         case Cause.mti:
             Csr.mie = bits.clear(Csr.mie, Mie.mtie);
             Csr.mip = Csr.mip | (1 << Mip.stip);
+            break;
+        case Cause.breakpoint:
+            ExtDebug.handle_breakpoint(mepc, regs);
             break;
         default:
             io.writeln("monitortrap: core: ", Csr.mhartid, ", cause: ", mcause, ", epc: ", cast(void*) mepc);

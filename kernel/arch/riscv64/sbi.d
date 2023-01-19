@@ -159,3 +159,27 @@ struct Hart {
         cast() ecall(ext, Fid.start_all_cores);
     }
 }
+
+struct Debug {
+    enum ext = 0x0A000000;
+
+    enum Fid {
+        step_start = 0,
+        step_start_at = 1,
+        step_stop = 2,
+    }
+
+    // start single stepping now
+    static void step_start() {
+        cast() ecall(ext, Fid.step_start);
+    }
+
+    // start single stepping at addr
+    static void step_start_at(uintptr addr) {
+        cast() ecall(ext, Fid.step_start_at, addr);
+    }
+
+    static void step_stop() {
+        cast() ecall(ext, Fid.step_stop);
+    }
+}

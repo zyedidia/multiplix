@@ -20,6 +20,10 @@ enum CsrNum {
     pmpcfg0 = 0x3A0,
     pmpaddr0 = 0x3B0,
 
+    tselect = 0x7a0,
+    tdata1 = 0x7a1,
+    tdata2 = 0x7a2,
+
     sstatus = 0x100,
     sedeleg = 0x102,
     sideleg = 0x103,
@@ -119,6 +123,10 @@ struct Csr {
     mixin(GenCsr!("mepc"));
     mixin(GenCsr!("mtval"));
     mixin(GenCsr!("mip"));
+
+    mixin(GenCsr!("tselect"));
+    mixin(GenCsr!("tdata1"));
+    mixin(GenCsr!("tdata2"));
 
     mixin(GenCsr!("pmpcfg0"));
     mixin(GenCsr!("pmpaddr0"));

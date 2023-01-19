@@ -16,7 +16,7 @@ void enter_smode() {
     // Disable paging.
     Csr.satp = 0;
     // Delegate certain interrupts and exceptions.
-    Csr.medeleg = 0x00f0b509;
+    Csr.medeleg = 0x00f0b501;
     Csr.mideleg = 0x00001666;
 
     // Configure the PMP to allow all accesses for S-mode.

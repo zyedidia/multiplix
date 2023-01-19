@@ -120,6 +120,9 @@ return b{
         dscanner --styleCheck $allsrc --config .dscanner.ini
     $ test:VB: $alltest
 
+    $ user/hello/hello.elf:B:
+        knit -C user/hello board=$(conf.board)
+
     testr,
     kernel,
     meta
