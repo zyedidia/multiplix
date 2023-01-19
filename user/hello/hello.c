@@ -2,9 +2,6 @@
 
 #include "syscall.h"
 
-#define SYS_GETPID 0
-#define SYS_PUTC 1
-
 int getpid() {
     return syscall_0(SYS_GETPID);
 }

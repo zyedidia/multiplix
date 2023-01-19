@@ -41,3 +41,6 @@ static inline uintptr_t syscall_2(int symno, uintptr_t arg0, uintptr_t arg1) {
     return a0;
 }
 #endif
+
+#define SYS_PUTC 0
+#define SYS_GETPID 1

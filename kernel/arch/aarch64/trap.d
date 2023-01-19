@@ -8,6 +8,7 @@ import kernel.arch.aarch64.timer;
 
 import kernel.proc;
 import kernel.cpu;
+import kernel.syscall;
 
 import vm = kernel.vm;
 
@@ -63,11 +64,12 @@ extern (C) {
 
     noreturn usertrap(Trapframe* tf) {
         const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
-        io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1);
+        /* io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1); */
 
         switch (exc_class) {
             case Exception.svc:
-                io.writeln("svc executed: x7: ", tf.regs.x7, " x0: ", tf.regs.x0);
+                Regs* r = &tf.regs;
+                r.x0 = syscall_handler(tf.p, r.x7, r.x0, r.x1, r.x2, r.x3, r.x4, r.x5, r.x6);
                 break;
             default:
                 break;

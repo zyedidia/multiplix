@@ -83,13 +83,4 @@ struct Proc {
 
         return true;
     }
-
-    int getpid() {
-        return pid;
-    }
-
-    void putc(char c) {
-        import io = ulib.io;
-        io.write(c);
-    }
 }

@@ -8,6 +8,7 @@ import kernel.arch.riscv64.regs;
 
 import kernel.proc;
 import kernel.cpu;
+import kernel.syscall;
 
 import sys = kernel.sys;
 
@@ -63,10 +64,11 @@ extern (C) {
     noreturn usertrap(Trapframe* tf) {
         uintptr scause = Csr.scause;
 
-        io.writeln("usertrap: scause: ", cast(void*) scause);
+        /* io.writeln("usertrap: scause: ", cast(void*) scause); */
 
         if (scause == Cause.ecall_u) {
-            io.writeln("ecall_u: a7: ", tf.regs.a7, ", a0: ", tf.regs.a0);
+            Regs* r = &tf.regs;
+            r.a0 = syscall_handler(tf.p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
             tf.epc = Csr.sepc + 4;
         } else if (scause == Cause.sti) {
             Timer.intr(Timer.interval);
