@@ -13,3 +13,4 @@ alias monitor_init = monitor.init;
 
 import fwi = kernel.arch.aarch64.fwi;
 alias Cpu = fwi.Cpu;
+alias Debug = fwi.Debug;

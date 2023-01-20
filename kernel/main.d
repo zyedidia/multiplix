@@ -40,14 +40,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     Timer.delay_ms(100);
 
-    version (RISCV64) {
-        import sbi = kernel.arch.riscv64.sbi;
-        sbi.Debug.step_start();
-
-        Timer.delay_nops(10);
-
-        sbi.Debug.step_stop();
-    }
+    arch.Debug.step_start();
+    Timer.delay_nops(10);
+    arch.Debug.step_stop();
 
     if (!Proc.make(&p, hello_elf)) {
         io.writeln("could not initialize process");

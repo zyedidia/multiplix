@@ -12,6 +12,7 @@ alias monitor_init = monitor.init;
 
 import sbi = kernel.arch.riscv64.sbi;
 alias Cpu = sbi.Hart;
+alias Debug = sbi.Debug;
 
 import vm = kernel.arch.riscv64.vm;
 alias Pagetable = vm.Pagetable39;

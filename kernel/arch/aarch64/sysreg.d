@@ -43,6 +43,7 @@ struct SysReg {
     mixin(GenSysReg!("vbar_el2"));
     mixin(GenSysReg!("esr_el2"));
     mixin(GenSysReg!("elr_el2"));
+    mixin(GenSysReg!("mdcr_el2"));
 
     mixin(GenSysReg!("sctlr_el1"));
     mixin(GenSysReg!("sp_el1"));
@@ -56,6 +57,7 @@ struct SysReg {
     mixin(GenSysReg!("spsr_el1"));
     mixin(GenSysReg!("esr_el1"));
     mixin(GenSysReg!("far_el1"));
+    mixin(GenSysReg!("mdscr_el1"));
 
     mixin(GenSysReg!("cntfrq_el0"));
     mixin(GenSysRegRdonly!("cntpct_el0"));
@@ -108,8 +110,16 @@ enum Scr {
     reserved = (3 << 4),
     rw_aarch64 = (1 << 10),
     ns = (1 << 0),
-    hce = (1 << 8),
-    smd = (1 << 7),
+    hce = (1 << 8), // hvc enable
+    smd = (1 << 7), // smc disable
+}
+
+enum Mdscr {
+    mde = (1 << 15), // monitor debug enable
+}
+
+enum Mdcr {
+    tde = (1 << 8), // trap debug exceptions
 }
 
 enum Exception {

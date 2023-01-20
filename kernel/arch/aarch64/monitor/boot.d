@@ -20,11 +20,15 @@ void enter_el2() {
 
 void enter_el1() {
     // Set spsr to return to EL1h.
-    SysReg.spsr_el2 = 0b1111_00_0101;
+    SysReg.spsr_el2 = 0b0111_00_0101;
     // Prepare EL1 with MMU and caches disabled.
     SysReg.sctlr_el1 = Sctlr.nommu;
     // Configure EL1 to run in aarch64 mode.
     SysReg.hcr_el2 = Hcr.rw_aarch64;
+    // Enable all debug exceptions in kernel mode.
+    SysReg.mdscr_el1 = SysReg.mdscr_el1 | Mdscr.mde;
+    // Route debug exceptions to EL2.
+    SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;
 
     _enter_el1();
 }
