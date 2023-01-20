@@ -1,0 +1,26 @@
+on: [push, pull_request]
+name: Test
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dlang-community/setup-dlang@v1
+      with:
+        compiler: ldc-latest
+    - uses: zyedidia/setup-knit@v1
+
+    # set up riscv64 gnu toolchain
+    - name: Install RISC-V toolchain
+      run: wget https://static.dev.sifive.com/dev-tools/freedom-tools/v2020.12/riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz -O riscv.tar.gz
+      run: mkdir riscv-toolchain && tar -xf riscv.tar.gz -C riscv-toolchain --strip-components=1
+      run: "$PWD/riscv-toolchain/bin" >> $GITHUB_PATH
+
+    # - name: Lint
+    #   run: knit lint
+
+    - name: Build
+      run: knit build board=virt_riscv64 lto=false
