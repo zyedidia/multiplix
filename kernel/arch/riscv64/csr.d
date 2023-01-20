@@ -1,47 +1,5 @@
 module kernel.arch.riscv64.csr;
 
-enum CsrNum {
-    mvendorid = 0xF11,
-    marchid = 0xF12,
-    mhartid = 0xF14,
-    mstatus = 0x300,
-    misa = 0x301,
-    medeleg = 0x302,
-    mideleg = 0x303,
-    mie = 0x304,
-    mtvec = 0x305,
-    mcounteren = 0x306,
-    mscratch = 0x340,
-    mepc = 0x341,
-    mcause = 0x342,
-    mtval = 0x343,
-    mip = 0x344,
-
-    pmpcfg0 = 0x3A0,
-    pmpaddr0 = 0x3B0,
-
-    tselect = 0x7a0,
-    tdata1 = 0x7a1,
-    tdata2 = 0x7a2,
-
-    sstatus = 0x100,
-    sedeleg = 0x102,
-    sideleg = 0x103,
-    sie = 0x104,
-    stvec = 0x105,
-    sscratch = 0x140,
-    sepc = 0x141,
-    scause = 0x142,
-    stval = 0x143,
-    sip = 0x144,
-    satp = 0x180,
-
-    cycle = 0xc00,
-    time = 0xc01,
-    cycleh = 0xc80,
-    timeh = 0xc81,
-}
-
 enum Priv {
     u = 0b00,
     s = 0b01,
@@ -97,14 +55,19 @@ enum Cause {
 }
 
 // dfmt off
-template GenCsr(string name) {
-    const char[] GenCsr = `@property static uintptr ` ~ name ~ `() {
-        return rdcsr!(CsrNum.` ~ name ~ `)();
+const char[] GenCsr(string name) =
+`@property static uintptr ` ~ name ~ `() {
+    uintptr r;
+    asm {
+        "csrr %0, ` ~ name ~ `" : "=r"(r);
     }
-    @property static void ` ~ name ~ `(uintptr v) {
-        wrcsr!(CsrNum.` ~ name ~ `)(v);
-    }`;
+    return r;
 }
+@property static void ` ~ name ~ `(uintptr v) {
+    asm {
+        "csrw ` ~ name ~ `, %0" :: "r"(v);
+    }
+}`;
 // dfmt on
 
 struct Csr {
@@ -142,24 +105,3 @@ struct Csr {
     mixin(GenCsr!("time"));
     mixin(GenCsr!("cycle"));
 }
-
-void wrcsr(CsrNum reg)(uintptr val) {
-    asm {
-        "csrw %0, %1" :  : "i"(reg), "r"(val);
-    }
-}
-
-void wrcsr(CsrNum reg, int val)() if (val < 32) {
-    asm {
-        "csrwi %0, %1" :  : "i"(reg), "I"(val);
-    }
-}
-
-uintptr rdcsr(CsrNum reg)() {
-    uintptr r;
-    asm {
-        "csrr %0, %1" : "=r"(r) : "i"(reg);
-    }
-    return r;
-}
-

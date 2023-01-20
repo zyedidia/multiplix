@@ -1,38 +1,33 @@
 module kernel.arch.aarch64.sysreg;
 
 // dfmt off
-template GenSysReg(string name) {
-    const char[] GenSysReg = `@property static uintptr ` ~ name ~ `() {
-        uintptr val;
-        asm {
-            "mrs %0, ` ~ name ~ `" : "=r"(val);
-        }
-        return val;
+const char[] GenSysReg(string name) =
+//
+`@property static uintptr ` ~ name ~ `() {
+    uintptr val;
+    asm {
+        "mrs %0, ` ~ name ~ `" : "=r"(val);
     }
-    @property static void ` ~ name ~ `(uintptr v) {
-        asm {
-            "msr ` ~ name ~ `, %0" : : "r"(v);
-        }
-    }`;
+    return val;
 }
+@property static void ` ~ name ~ `(uintptr v) {
+    asm {
+        "msr ` ~ name ~ `, %0" : : "r"(v);
+    }
+}`;
+const char[] GenSysRegRdonly(string name) =
+`@property static uintptr ` ~ name ~ `() {
+    uintptr val;
+    asm {
+        "mrs %0, ` ~ name ~ `" : "=r"(val);
+    }
+    return val;
+}`;
 // dfmt on
 
 struct SysReg {
-    @property static uintptr currentel() {
-        uintptr val;
-        asm {
-            "mrs %0, currentel" : "=r"(val);
-        }
-        return val;
-    }
-    @property static uintptr mpidr_el1() {
-        uintptr val;
-        asm {
-            "mrs %0, mpidr_el1" : "=r"(val);
-        }
-        return val;
-    }
-    /* mixin(GenSysReg!("currentel")); */
+    mixin(GenSysRegRdonly!("currentel"));
+    mixin(GenSysRegRdonly!("mpidr_el1"));
 
     mixin(GenSysReg!("elr_el3"));
     mixin(GenSysReg!("spsr_el3"));
@@ -63,7 +58,7 @@ struct SysReg {
     mixin(GenSysReg!("far_el1"));
 
     mixin(GenSysReg!("cntfrq_el0"));
-    mixin(GenSysReg!("cntpct_el0"));
+    mixin(GenSysRegRdonly!("cntpct_el0"));
     mixin(GenSysReg!("cntp_ctl_el0"));
     mixin(GenSysReg!("cntp_tval_el0"));
 
