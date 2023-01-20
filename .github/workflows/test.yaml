@@ -16,6 +16,12 @@ jobs:
     - name: Install plboot
       run: cd tools/plboot && go install
 
+    - name: Install D-scanner
+      run: |
+        wget -q https://www.scs.stanford.edu/~zyedidia/dscanner.tar.gz
+        mkdir dscanner && tar -xf dscanner.tar.gz -C dscanner
+        echo "$PWD/dscanner" >> $GITHUB_PATH
+
     # set up riscv64 gnu toolchain
     - name: Install RISC-V toolchain
       run: |
@@ -23,8 +29,8 @@ jobs:
         mkdir riscv-toolchain && tar -xf riscv.tar.gz -C riscv-toolchain --strip-components=1
         echo "$PWD/riscv-toolchain/bin" >> $GITHUB_PATH
 
-    # - name: Lint
-    #   run: knit lint
+    - name: Lint
+      run: knit lint
 
     - name: Build
       run: knit kernel.boot.bin board=virt_riscv64 lto=false
