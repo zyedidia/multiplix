@@ -22,6 +22,13 @@ void check(bool b) {
     }
 }
 
+extern (C) void brk() {
+    pragma(LDC_never_inline);
+    asm {
+        "nop";
+    }
+}
+
 version (LDC) {
     extern (C) void _d_array_slice_copy(void* dst, size_t dstlen, void* src,
             size_t srclen, size_t elemsz) {

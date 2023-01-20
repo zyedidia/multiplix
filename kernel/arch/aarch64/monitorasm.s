@@ -2,7 +2,7 @@
 
 .globl _start
 _start:
-	bl _set_sp_el3
+	bl _reset_sp
 	mrs x0, mpidr_el1
 	and x0, x0, #0xff
 	cbz x0, _primary_boot
@@ -16,7 +16,7 @@ _primary_boot:
 _hlt:
 	b _hlt
 
-_set_sp_el3:
+_reset_sp:
 	// set stack = _kheap_start + (coreid + 1) * 4096
 	mrs x0, mpidr_el1
 	and x0, x0, #0xff
@@ -32,18 +32,32 @@ _set_sp_el3:
 wakeup:
 	.int 0
 
+.section ".text.enter_el2"
+.globl _enter_el2
+_enter_el2:
+	mov x0, sp
+	msr sp_el2, x0
+	mov x3, lr // x3 is not modified by _reset_sp
+	bl _reset_sp // reset currentel stack pointer
+	mov lr, x3
+	ldr x0, =entry_el2
+	msr elr_el3, x0
+	eret
+entry_el2:
+	ret
+
 .section ".text.enter_el1"
 .globl _enter_el1
 _enter_el1:
 	mov x0, sp
 	msr sp_el1, x0
-	mov x3, lr // x3 is not modified by _set_sp_el3
-	bl _set_sp_el3 // reset el3 stack pointer
+	mov x3, lr // x3 is not modified by _reset_sp
+	bl _reset_sp // reset currentel stack pointer
 	mov lr, x3
-	ldr x0, =entry
-	msr elr_el3, x0
+	ldr x0, =entry_el1
+	msr elr_el2, x0
 	eret
-entry:
+entry_el1:
 	ret
 
 .macro PROLOGUE

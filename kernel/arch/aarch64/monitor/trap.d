@@ -12,10 +12,10 @@ import bits = ulib.bits;
 extern (C) extern __gshared uint wakeup;
 
 extern (C) void monitor_exception(Regs* regs) {
-    const auto exc_class = bits.get(SysReg.esr_el3, 31, 26);
+    const auto exc_class = bits.get(SysReg.esr_el2, 31, 26);
 
     switch (exc_class) {
-        case Exception.smc:
+        case Exception.hvc:
             volatile_st(&wakeup, 1);
             device_fence();
             asm { "sev"; }
@@ -26,5 +26,5 @@ extern (C) void monitor_exception(Regs* regs) {
 }
 
 extern (C) void monitor_interrupt(Regs* regs) {
-    io.writeln("monitor interrupt, elr_el3: ", cast(void*) SysReg.elr_el3);
+    io.writeln("monitor interrupt, elr_el2: ", cast(void*) SysReg.elr_el2);
 }

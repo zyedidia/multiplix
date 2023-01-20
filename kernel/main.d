@@ -26,7 +26,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         System.allocator.__ctor(cast(uintptr) heap);
 
         // boot up the other cores
-        /* arch.Cpu.start_all_cores(); */
+        arch.Cpu.start_all_cores();
     }
 
     lock.lock();
@@ -35,8 +35,10 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     if (!cpuinfo.primary) {
         // spin secondary cores
-        while (1) {}
+        return;
     }
+
+    Timer.delay_ms(100);
 
     version (RISCV64) {
         import sbi = kernel.arch.riscv64.sbi;

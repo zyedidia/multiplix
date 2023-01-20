@@ -41,9 +41,13 @@ struct SysReg {
     mixin(GenSysReg!("esr_el3"));
     mixin(GenSysReg!("tpidr_el3"));
 
+    mixin(GenSysReg!("sctlr_el2"));
     mixin(GenSysReg!("spsr_el2"));
     mixin(GenSysReg!("hcr_el2"));
     mixin(GenSysReg!("tpidr_el2"));
+    mixin(GenSysReg!("vbar_el2"));
+    mixin(GenSysReg!("esr_el2"));
+    mixin(GenSysReg!("elr_el2"));
 
     mixin(GenSysReg!("sctlr_el1"));
     mixin(GenSysReg!("sp_el1"));
@@ -109,9 +113,12 @@ enum Scr {
     reserved = (3 << 4),
     rw_aarch64 = (1 << 10),
     ns = (1 << 0),
+    hce = (1 << 8),
+    smd = (1 << 7),
 }
 
 enum Exception {
     smc = 0b010111,
     svc = 0b010101,
+    hvc = 0b010110,
 }
