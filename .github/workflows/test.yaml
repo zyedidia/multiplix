@@ -16,7 +16,7 @@ jobs:
     # set up riscv64 gnu toolchain
     - name: Install RISC-V toolchain
       run: |
-        wget https://static.dev.sifive.com/dev-tools/freedom-tools/v2020.12/riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz -O riscv.tar.gz
+        wget -q https://static.dev.sifive.com/dev-tools/freedom-tools/v2020.12/riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz -O riscv.tar.gz
         mkdir riscv-toolchain && tar -xf riscv.tar.gz -C riscv-toolchain --strip-components=1
         echo "$PWD/riscv-toolchain/bin" >> $GITHUB_PATH
 
@@ -24,4 +24,4 @@ jobs:
     #   run: knit lint
 
     - name: Build
-      run: knit build board=virt_riscv64 lto=false
+      run: knit kernel.boot.bin board=virt_riscv64 lto=false
