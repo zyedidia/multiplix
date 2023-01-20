@@ -13,6 +13,9 @@ jobs:
         compiler: ldc-latest
     - uses: zyedidia/setup-knit@v1
 
+    - name: Install plboot
+      run: cd tools/plboot && go install
+
     # set up riscv64 gnu toolchain
     - name: Install RISC-V toolchain
       run: |
