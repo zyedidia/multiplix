@@ -17,7 +17,7 @@ jobs:
     - name: Install RISC-V toolchain
       run: wget https://static.dev.sifive.com/dev-tools/freedom-tools/v2020.12/riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz -O riscv.tar.gz
       run: mkdir riscv-toolchain && tar -xf riscv.tar.gz -C riscv-toolchain --strip-components=1
-      run: "$PWD/riscv-toolchain/bin" >> $GITHUB_PATH
+      run: echo "$PWD/riscv-toolchain/bin" >> $GITHUB_PATH
 
     # - name: Lint
     #   run: knit lint
