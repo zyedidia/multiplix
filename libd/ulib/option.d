@@ -34,7 +34,8 @@ struct Opt(T) if (!isPointer!T) {
     }
 
     static Opt!T none() {
-        Opt!T empty;
+        Opt!T empty = void;
+        empty.exists = false;
         return empty;
     }
 
