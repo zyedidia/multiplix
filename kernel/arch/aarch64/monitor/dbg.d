@@ -40,7 +40,6 @@ struct ExtDebug {
     }
 
     static void place_breakpoint(uintptr addr) {
-        io.writeln("place breakpoint at: ", cast(void*) addr);
         SysReg.dbgbvr0_el1 = addr;
         SysReg.dbgbcr0_el1 = bits.write(0, 23, 20, Dbgbcr.unlinked_insn) | Dbgbcr.aarch64 | Dbgbcr.el1_el0 | Dbgbcr.e;
     }
@@ -51,12 +50,10 @@ struct ExtDebug {
     }
 
     static void clear_breakpoints() {
-        io.writeln("clear breakpoints");
         SysReg.dbgbcr0_el1 = 0;
     }
 
     static void clear_ss() {
-        io.writeln("clear software step");
         SysReg.spsr_el2 = bits.clear(SysReg.spsr_el2, Spsr.ss);
         SysReg.mdscr_el1 = bits.clear(SysReg.mdscr_el1, Mdscr.ss);
     }
