@@ -61,15 +61,15 @@ struct Pte39 {
         return cast(uintptr) val;
     }
 
-    @property uintptr pa() {
+    uintptr pa() {
         return (u(ppn0) << 12) | (u(ppn1) << 21) | (u(ppn2) << 30);
     }
 
-    @property void pa(uintptr pa) {
+    void pa(uintptr pa) {
         data = bits.write(data, 53, 10, bits.get(pa, 55, 12));
     }
 
-    @property void perm(uint perm) {
+    void perm(uint perm) {
         data = bits.write(data, 7, 0, perm);
     }
 

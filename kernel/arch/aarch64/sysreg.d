@@ -3,7 +3,7 @@ module kernel.arch.aarch64.sysreg;
 // dfmt off
 const char[] GenSysReg(string name) = GenSysRegRdOnly!(name) ~ GenSysRegWrOnly!(name);
 const char[] GenSysRegRdOnly(string name) =
-`@property static uintptr ` ~ name ~ `() {
+`static uintptr ` ~ name ~ `() {
     uintptr val;
     asm {
         "mrs %0, ` ~ name ~ `" : "=r"(val);
@@ -11,7 +11,7 @@ const char[] GenSysRegRdOnly(string name) =
     return val;
 }`;
 const char[] GenSysRegWrOnly(string name) =
-`@property static void ` ~ name ~ `(uintptr v) {
+`static void ` ~ name ~ `(uintptr v) {
     asm {
         "msr ` ~ name ~ `, %0" : : "r"(v);
     }

@@ -10,59 +10,59 @@ import bits = ulib.bits;
 struct Dw8250(uintptr base) {
     // Read registers
     // Receive buffer register
-    @property static uint rbr() {
+    static uint rbr() {
         enum off = base + 0x0;
         return volatile_ld(cast(uint*) off);
     }
     // Divisor latch low
-    @property static uint dll() {
+    static uint dll() {
         enum off = base + 0x0;
         return volatile_ld(cast(uint*) off);
     }
     // Divisor latch high
-    @property static uint dlh() {
+    static uint dlh() {
         enum off = base + 0x4;
         return volatile_ld(cast(uint*) off);
     }
     // Line control register
-    @property static uint lcr() {
+    static uint lcr() {
         enum off = base + 0xc;
         return volatile_ld(cast(uint*) off);
     }
     // Line status register
-    @property static uint lsr() {
+    static uint lsr() {
         enum off = base + 0x14;
         return volatile_ld(cast(uint*) off);
     }
     // UART status register
-    @property static uint usr() {
+    static uint usr() {
         enum off = base + 0x14;
         return volatile_ld(cast(uint*) off);
     }
 
     // Write registers
     // Transmit holding register
-    @property static void thr(uint b) {
+    static void thr(uint b) {
         enum off = base + 0x0;
         volatile_st(cast(uint*) off, b);
     }
     // Divisor latch low
-    @property static void dll(uint b) {
+    static void dll(uint b) {
         enum off = base + 0x0;
         volatile_st(cast(uint*) off, b);
     }
     // Divisor latch high
-    @property static void dlh(uint b) {
+    static void dlh(uint b) {
         enum off = base + 0x4;
         volatile_st(cast(uint*) off, b);
     }
     // Line control register
-    @property static void lcr(uint b) {
+    static void lcr(uint b) {
         enum off = base + 0xc;
         volatile_st(cast(uint*) off, b);
     }
     // Fifo control register
-    @property static void fcr(uint b) {
+    static void fcr(uint b) {
         enum off = base + 0x8;
         volatile_st(cast(uint*) off, b);
     }

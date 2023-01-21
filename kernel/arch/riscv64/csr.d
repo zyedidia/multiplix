@@ -2,14 +2,14 @@ module kernel.arch.riscv64.csr;
 
 // dfmt off
 const char[] GenCsr(string name) =
-`@property static uintptr ` ~ name ~ `() {
+`static uintptr ` ~ name ~ `() {
     uintptr r;
     asm {
         "csrr %0, ` ~ name ~ `" : "=r"(r);
     }
     return r;
 }
-@property static void ` ~ name ~ `(uintptr v) {
+static void ` ~ name ~ `(uintptr v) {
     asm {
         "csrw ` ~ name ~ `, %0" :: "r"(v);
     }
