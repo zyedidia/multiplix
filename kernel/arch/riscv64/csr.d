@@ -1,5 +1,57 @@
 module kernel.arch.riscv64.csr;
 
+// dfmt off
+const char[] GenCsr(string name) =
+`@property static uintptr ` ~ name ~ `() {
+    uintptr r;
+    asm {
+        "csrr %0, ` ~ name ~ `" : "=r"(r);
+    }
+    return r;
+}
+@property static void ` ~ name ~ `(uintptr v) {
+    asm {
+        "csrw ` ~ name ~ `, %0" :: "r"(v);
+    }
+}`;
+// dfmt on
+
+struct Csr {
+    mixin(GenCsr!("mstatus"));
+    mixin(GenCsr!("mvendorid"));
+    mixin(GenCsr!("marchid"));
+    mixin(GenCsr!("mhartid"));
+    mixin(GenCsr!("mtvec"));
+    mixin(GenCsr!("mcounteren"));
+    mixin(GenCsr!("misa"));
+    mixin(GenCsr!("medeleg"));
+    mixin(GenCsr!("mideleg"));
+    mixin(GenCsr!("mie"));
+    mixin(GenCsr!("mcause"));
+    mixin(GenCsr!("mscratch"));
+    mixin(GenCsr!("mepc"));
+    mixin(GenCsr!("mtval"));
+    mixin(GenCsr!("mip"));
+
+    mixin(GenCsr!("tselect"));
+    mixin(GenCsr!("tdata1"));
+    mixin(GenCsr!("tdata2"));
+
+    mixin(GenCsr!("pmpcfg0"));
+    mixin(GenCsr!("pmpaddr0"));
+
+    mixin(GenCsr!("stvec"));
+    mixin(GenCsr!("satp"));
+    mixin(GenCsr!("sie"));
+    mixin(GenCsr!("sepc"));
+    mixin(GenCsr!("sscratch"));
+    mixin(GenCsr!("sstatus"));
+    mixin(GenCsr!("scause"));
+
+    mixin(GenCsr!("time"));
+    mixin(GenCsr!("cycle"));
+}
+
 enum Priv {
     u = 0b00,
     s = 0b01,
@@ -52,56 +104,4 @@ enum Cause {
     ecall_u = 8,
     ecall_s = 9,
     ecall_m = 11,
-}
-
-// dfmt off
-const char[] GenCsr(string name) =
-`@property static uintptr ` ~ name ~ `() {
-    uintptr r;
-    asm {
-        "csrr %0, ` ~ name ~ `" : "=r"(r);
-    }
-    return r;
-}
-@property static void ` ~ name ~ `(uintptr v) {
-    asm {
-        "csrw ` ~ name ~ `, %0" :: "r"(v);
-    }
-}`;
-// dfmt on
-
-struct Csr {
-    mixin(GenCsr!("mstatus"));
-    mixin(GenCsr!("mvendorid"));
-    mixin(GenCsr!("marchid"));
-    mixin(GenCsr!("mhartid"));
-    mixin(GenCsr!("mtvec"));
-    mixin(GenCsr!("mcounteren"));
-    mixin(GenCsr!("misa"));
-    mixin(GenCsr!("medeleg"));
-    mixin(GenCsr!("mideleg"));
-    mixin(GenCsr!("mie"));
-    mixin(GenCsr!("mcause"));
-    mixin(GenCsr!("mscratch"));
-    mixin(GenCsr!("mepc"));
-    mixin(GenCsr!("mtval"));
-    mixin(GenCsr!("mip"));
-
-    mixin(GenCsr!("tselect"));
-    mixin(GenCsr!("tdata1"));
-    mixin(GenCsr!("tdata2"));
-
-    mixin(GenCsr!("pmpcfg0"));
-    mixin(GenCsr!("pmpaddr0"));
-
-    mixin(GenCsr!("stvec"));
-    mixin(GenCsr!("satp"));
-    mixin(GenCsr!("sie"));
-    mixin(GenCsr!("sepc"));
-    mixin(GenCsr!("sscratch"));
-    mixin(GenCsr!("sstatus"));
-    mixin(GenCsr!("scause"));
-
-    mixin(GenCsr!("time"));
-    mixin(GenCsr!("cycle"));
 }

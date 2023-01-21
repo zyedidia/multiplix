@@ -25,9 +25,10 @@ enum SynchronizationScope {
 enum AtomicRmwSizeLimit = size_t.sizeof;
 
 pragma(inline, true)
-alias clean_dcache = (ubyte* start, size_t size) {
+alias clean_dcache() = (ubyte* start, size_t size) {
     version (RISCV64) {
-        assert(0, "TODO: clean_dcache");
+        // haven't had any need to flush the dcache on riscv
+        static assert(0, "TODO: clean_dcache not implemented for RISC-V");
     } else version (AArch64) {
         for (size_t i = 0; i < size; i++) {
             asm {
@@ -38,9 +39,10 @@ alias clean_dcache = (ubyte* start, size_t size) {
 };
 
 pragma(inline, true)
-alias clean_icache = (ubyte* start, size_t size) {
+alias clean_icache() = (ubyte* start, size_t size) {
     version (RISCV64) {
-        assert(0, "TODO: clean_icache");
+        // haven't had any need to flush the icache on riscv
+        static assert(0, "TODO: clean_icache not implemented for RISC-V");
     } else version (AArch64) {
         for (size_t i = 0; i < size; i++) {
             asm {
