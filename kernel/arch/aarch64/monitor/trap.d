@@ -6,6 +6,7 @@ import core.sync;
 import kernel.arch.aarch64.regs;
 import kernel.arch.aarch64.sysreg;
 import kernel.arch.aarch64.monitor.ext;
+import kernel.arch.aarch64.monitor.dbg;
 
 import kernel.cpu;
 
@@ -18,6 +19,12 @@ extern (C) void monitor_exception(Regs* regs) {
     switch (exc_class) {
         case Exception.hvc:
             fwi_handler(regs);
+            break;
+        case Exception.brkpt:
+            ExtDebug.handle_breakpoint(SysReg.elr_el2, regs);
+            break;
+        case Exception.ss:
+            ExtDebug.handle_ss(SysReg.elr_el2, regs);
             break;
         default:
             io.writeln("monitor_exception: core: ", cpuinfo.coreid, ", cause: ", exc_class, " elr: ", cast(void*) SysReg.elr_el2);

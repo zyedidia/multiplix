@@ -58,6 +58,10 @@ struct SysReg {
     mixin(GenSysReg!("esr_el1"));
     mixin(GenSysReg!("far_el1"));
     mixin(GenSysReg!("mdscr_el1"));
+    mixin(GenSysReg!("oslar_el1"));
+
+    mixin(GenSysReg!("dbgbcr0_el1"));
+    mixin(GenSysReg!("dbgbvr0_el1"));
 
     mixin(GenSysReg!("cntfrq_el0"));
     mixin(GenSysRegRdonly!("cntpct_el0"));
@@ -65,6 +69,16 @@ struct SysReg {
     mixin(GenSysReg!("cntp_tval_el0"));
 
     mixin(GenSysReg!("daif"));
+
+    // a clunkier but more flexible interface for debug registers
+    /* struct dbgbcr_el1(uint n) { */
+    /*     static void wr(uintptr v) { */
+    /*         import ulib.meta; */
+    /*         mixin(`asm { */
+    /*             "msr dbgbcr` ~ itoa!uint(n) ~ `_el1, %0" :: "r"(v); */
+    /*         }`); */
+    /*     } */
+    /* } */
 
     // CPUECTLR
     mixin(GenSysReg!("S3_1_C15_C2_1"));
@@ -103,27 +117,48 @@ struct Tcr {
 }
 
 enum Hcr {
-    rw_aarch64 = (1 << 31),
+    rw_aarch64 = 1 << 31,
 }
 
 enum Scr {
-    reserved = (3 << 4),
-    rw_aarch64 = (1 << 10),
-    ns = (1 << 0),
-    hce = (1 << 8), // hvc enable
-    smd = (1 << 7), // smc disable
+    reserved = 3 << 4,
+    rw_aarch64 = 1 << 10,
+    ns = 1 << 0,
+    hce = 1 << 8, // hvc enable
+    smd = 1 << 7, // smc disable
 }
 
 enum Mdscr {
-    mde = (1 << 15), // monitor debug enable
+    mde = 1 << 15, // monitor debug enable
+    ss = 0, // software step
 }
 
 enum Mdcr {
-    tde = (1 << 8), // trap debug exceptions
+    tde = 1 << 8, // trap debug exceptions
+}
+
+enum Dbgbcr {
+    e = 1,
+    aarch64 = 0b1111 << 5,
+    el1 = 0b01 << 1,
+    el1_el0 = 0b11 << 1,
+
+    unlinked_insn = 0b0000,
+    unlinked_mismatch_insn = 0b0100,
+}
+
+enum Dbgscr {
+    mdbgen = 1 << 15,
+}
+
+enum Spsr {
+    ss = 21,
 }
 
 enum Exception {
     smc = 0b010111,
     svc = 0b010101,
     hvc = 0b010110,
+    brkpt = 0b110000,
+    ss = 0b110010,
 }
