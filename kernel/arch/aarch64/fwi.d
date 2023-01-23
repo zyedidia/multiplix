@@ -7,28 +7,28 @@ import ldc.llvmasm;
 private uint hvc(uint ext, uint fid, uintptr a0, uintptr a1, uintptr a2) {
     return __asm!(uint) (
         "hvc 0",
-        "={x0},{x7},{x6},{x0},{x1},{x2},~{memory}",
+        "={x0},{x7},{x6},{x0},{x1},{x2},~{memory},~{x1}",
         ext, fid, a0, a1, a2
     );
 }
 private uint hvc(uint ext, uint fid, uintptr a0, uintptr a1) {
     return __asm!(uint) (
         "hvc 0",
-        "={x0},{x7},{x6},{x0},{x1},~{memory}",
+        "={x0},{x7},{x6},{x0},{x1},~{memory},~{x1}",
         ext, fid, a0, a1
     );
 }
 private uint hvc(uint ext, uint fid, uintptr a0) {
     return __asm!(uint) (
         "hvc 0",
-        "={x0},{x7},{x6},{x0},~{memory}",
+        "={x0},{x7},{x6},{x0},~{memory},~{x1}",
         ext, fid, a0
     );
 }
 private uint hvc(uint ext, uint fid) {
     return __asm!(uint) (
         "hvc 0",
-        "={x0},{x7},{x6},~{memory}",
+        "={x0},{x7},{x6},~{memory},~{x1}",
         ext, fid
     );
 }
@@ -40,10 +40,15 @@ struct Cpu {
 
     enum Fid {
         start_all_cores = 0,
+        enable_vm = 128,
     }
 
     static void start_all_cores() {
         cast() hvc(ext, Fid.start_all_cores);
+    }
+
+    static void enable_vm(uintptr ttbr) {
+        cast() hvc(ext, Fid.enable_vm, ttbr);
     }
 }
 

@@ -5,6 +5,8 @@ import core.sync;
 import kernel.arch.aarch64.sysreg;
 import kernel.arch.aarch64.vm;
 
+import fwi = kernel.arch.aarch64.fwi;
+
 import kernel.board;
 import kernel.alloc;
 

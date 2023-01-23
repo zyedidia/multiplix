@@ -29,6 +29,8 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         arch.Cpu.start_all_cores();
     }
 
+    arch.setup();
+
     lock.lock();
     io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
     lock.unlock();

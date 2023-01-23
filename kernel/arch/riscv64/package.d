@@ -18,3 +18,6 @@ import vm = kernel.arch.riscv64.vm;
 alias Pagetable = vm.Pagetable39;
 alias Pte = vm.Pte39;
 alias Perm = vm.Perm;
+
+// arch-specific setup after booting
+void setup() {}

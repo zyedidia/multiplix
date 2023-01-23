@@ -14,3 +14,10 @@ alias monitor_init = monitor.init;
 import fwi = kernel.arch.aarch64.fwi;
 alias Cpu = fwi.Cpu;
 alias Debug = fwi.Debug;
+
+// arch-specific setup after booting
+void setup() {
+    // enable vm and caches in EL2
+    import kernel.arch.aarch64.sysreg;
+    fwi.Cpu.enable_vm(SysReg.ttbr0_el1);
+}
