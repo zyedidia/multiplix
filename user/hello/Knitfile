@@ -16,8 +16,8 @@ local tools = build.tools(machine)
 local flags = build.flags(machine, conf.lto, conf.release, false)
 
 return b{
-    $ hello.elf: hello.c syscall.h[I]
-        $(tools.cc) $(flags.cc) $input -o $output -T../../link/user.ld -ffreestanding -nostdlib $darch
+    $ hello.elf: hello.c ../include/syscall.h[I]
+        $(tools.cc) $(flags.cc) $input -o $output -I../include -T../../link/user.ld -ffreestanding -nostdlib $darch
     $ hello.bin: hello.elf
         $(tools.objcopy) $input -O binary $output
     $ hello.list: hello.elf
