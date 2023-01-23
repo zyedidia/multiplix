@@ -23,6 +23,9 @@ uservec_exception:
 	str x1, [x0, #16]
 	mrs x1, elr_el1
 	str x1, [x0, #8]
+	// load the stack
+	ldr x1, [x0, #0]
+	mov sp, x1
 
 	b user_exception
 

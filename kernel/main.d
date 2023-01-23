@@ -10,6 +10,7 @@ import kernel.cpu;
 import kernel.alloc;
 import kernel.spinlock;
 import kernel.proc;
+import kernel.schedule;
 
 import arch = kernel.arch;
 import sys = kernel.sys;
@@ -17,8 +18,6 @@ import sys = kernel.sys;
 shared Spinlock lock;
 
 auto hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
-
-__gshared ProcTable!(10) ptable;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     arch.Trap.setup();
@@ -46,13 +45,17 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.Debug.step_stop();
 
     if (!ptable.start(hello_elf)) {
-        io.writeln("could not initialize process");
+        io.writeln("could not initialize process 0");
+        return;
+    }
+    if (!ptable.start(hello_elf)) {
+        io.writeln("could not initialize process 1");
         return;
     }
 
     irq();
 
-    arch.usertrapret(ptable.schedule(), true);
+    schedule();
 }
 
 void irq() {

@@ -27,6 +27,6 @@ int main() {
         print("process: ");
         putc('0' + pid);
         putc('\n');
-        nops(10000000);
+        nops(10000000 / 2);
     }
 }
