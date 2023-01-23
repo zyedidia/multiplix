@@ -57,11 +57,11 @@ struct Trapframe {
 
 extern (C) {
     // userret in uservec.s
-    extern noreturn userret(Trapframe* tf);
+    extern void userret(Trapframe* tf);
     // uservec in uservec.s
     extern void uservec();
 
-    noreturn usertrap(Trapframe* tf) {
+    void usertrap(Trapframe* tf) {
         uintptr scause = Csr.scause;
 
         /* io.writeln("usertrap: scause: ", cast(void*) scause); */
@@ -71,6 +71,7 @@ extern (C) {
             r.a0 = syscall_handler(tf.p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
             tf.epc = Csr.sepc + 4;
         } else if (scause == Cause.sti) {
+            io.writeln("user timer interrupt");
             Timer.intr(Timer.interval);
         } else {
             assert(0, "unhandled user trap");
@@ -80,7 +81,7 @@ extern (C) {
     }
 }
 
-noreturn usertrapret(Proc* p, bool swtch) {
+void usertrapret(Proc* p, bool swtch) {
     Trap.disable();
 
     Csr.stvec = cast(uintptr) &uservec;

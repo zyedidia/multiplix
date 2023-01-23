@@ -5,11 +5,13 @@ import core.sync;
 import kernel.arch;
 import kernel.alloc;
 import kernel.board;
+import kernel.spinlock;
 
 import sys = kernel.sys;
 import vm = kernel.vm;
 import elf = kernel.elf;
 
+import ulib.option;
 import ulib.memory;
 
 struct Proc {
@@ -17,11 +19,12 @@ struct Proc {
     enum trapframeva = stackva - sys.pagesize;
 
     enum State {
+        free = 0,
         runnable,
         running,
     }
 
-    int pid;
+    uint pid;
 
     Trapframe* trapframe;
 
@@ -77,10 +80,66 @@ struct Proc {
         proc.trapframe.p = proc;
 
         proc.state = State.runnable;
-        proc.pid = 42;
 
         sync_idmem(proc.code.ptr, proc.code.length);
 
         return true;
+    }
+}
+
+struct ProcTable(uint size) {
+    Proc[size] procs;
+    Sched[size] sched;
+
+    shared Spinlock lock;
+
+    struct Sched {
+        ulong priority;
+    }
+
+    private Opt!(Proc*) next() {
+        for (uint i = 0; i < size; i++) {
+            if (procs[i].state == Proc.State.free) {
+                procs[i].pid = i;
+                return Opt!(Proc*)(&procs[i]);
+            }
+        }
+        return Opt!(Proc*).none;
+    }
+
+    bool start(immutable ubyte[] binary) {
+        lock.lock();
+        scope(exit) lock.unlock();
+
+        auto p_ = next();
+        if (!p_.has()) {
+            return false;
+        }
+        return Proc.make(p_.get(), binary);
+    }
+
+    void free(uint pid) {
+        lock.lock();
+        scope(exit) lock.unlock();
+
+        procs[pid].state = Proc.State.free;
+    }
+
+    Proc* schedule() {
+        uint imin = 0;
+        {
+            lock.lock();
+            scope(exit) lock.unlock();
+
+            ulong min = ulong.max;
+            for (uint i = 0; i < size; i++) {
+                if (sched[i].priority <= min && procs[i].state == Proc.State.runnable) {
+                    imin = i;
+                }
+            }
+            sched[imin].priority++;
+        }
+
+        return &procs[imin];
     }
 }

@@ -59,11 +59,18 @@ struct Trapframe {
 
 extern (C) {
     // userret in uservec.s
-    extern noreturn userret(Trapframe* tf);
+    extern void userret(Trapframe* tf);
     // uservec in uservec.s
     extern void uservec();
 
-    noreturn usertrap(Trapframe* tf) {
+    void user_interrupt(Trapframe* tf) {
+        import kernel.cpu;
+        io.writeln("core: ", cpuinfo.coreid, ", user interrupt");
+        Timer.intr();
+        usertrapret(tf.p, false);
+    }
+
+    void user_exception(Trapframe* tf) {
         const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
         /* io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1); */
         /* io.writeln("far_el1: ", cast(void*) SysReg.far_el1); */
@@ -81,7 +88,7 @@ extern (C) {
     }
 }
 
-noreturn usertrapret(Proc* p, bool swtch) {
+void usertrapret(Proc* p, bool swtch) {
     Trap.disable();
 
     // return to el0 aarch64 with no interrupts masked

@@ -74,16 +74,16 @@ cur_el_spx_serror:
 	b exception_entry
 .balign 0x80
 lower_el_aarch64_sync:
-	b uservec
+	b uservec_exception
 .balign 0x80
 lower_el_aarch64_irq:
-	b uservec
+	b uservec_interrupt
 .balign 0x80
 lower_el_aarch64_fiq:
-	b uservec
+	b uservec_interrupt
 .balign 0x80
 lower_el_aarch64_serror:
-	b uservec
+	b uservec_exception
 // aarch32 stuff, just infinite loop
 .balign 0x80
 	b .

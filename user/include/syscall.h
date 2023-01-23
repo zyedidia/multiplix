@@ -44,3 +44,20 @@ static inline uintptr_t syscall_2(int symno, uintptr_t arg0, uintptr_t arg1) {
 
 #define SYS_PUTC 0
 #define SYS_GETPID 1
+#define SYS_DELAY 2
+
+static inline int getpid() {
+    return syscall_0(SYS_GETPID);
+}
+
+static inline void putc(char c) {
+    syscall_1(SYS_PUTC, c);
+}
+
+static inline void delay_us(unsigned long us) {
+    syscall_1(SYS_DELAY, us);
+}
+
+static inline void delay_ms(unsigned long ms) {
+    delay_us(ms * 1000);
+}

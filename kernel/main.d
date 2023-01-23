@@ -17,7 +17,8 @@ import sys = kernel.sys;
 shared Spinlock lock;
 
 auto hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
-__gshared Proc p;
+
+__gshared ProcTable!(10) ptable;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     arch.Trap.setup();
@@ -40,18 +41,18 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         return;
     }
 
-    Timer.delay_ms(100);
-
     arch.Debug.step_start();
     Timer.delay_nops(10);
     arch.Debug.step_stop();
 
-    if (!Proc.make(&p, hello_elf)) {
+    if (!ptable.start(hello_elf)) {
         io.writeln("could not initialize process");
         return;
     }
 
-    arch.usertrapret(&p, true);
+    irq();
+
+    arch.usertrapret(ptable.schedule(), true);
 }
 
 void irq() {
@@ -61,7 +62,6 @@ void irq() {
         CoreTimer.enable_irq();
     }
 
-    arch.Trap.setup();
     arch.Trap.enable();
     arch.Timer.intr();
 }
