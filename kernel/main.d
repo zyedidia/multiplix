@@ -43,7 +43,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     Timer.delay_ms(100);
 
     arch.Debug.step_start();
-    Timer.delay_nops(10);
+    Timer.delay_nops(1000000);
     arch.Debug.step_stop();
 
     if (!Proc.make(&p, hello_elf)) {

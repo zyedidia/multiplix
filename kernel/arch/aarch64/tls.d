@@ -9,7 +9,7 @@ enum tcb_size = 16;
 
 void set_tls_base(uintptr base) {
     version (monitor) {
-        SysReg.tpidr_el3 = cast(uintptr) base;
+        SysReg.tpidr_el2 = cast(uintptr) base;
     } else {
         SysReg.tpidr_el1 = cast(uintptr) base;
     }

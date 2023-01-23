@@ -9,7 +9,7 @@ function build.prefix(arch)
 end
 
 function build.machine(board, monitor)
-    local tpidr = sel(monitor, "tpidr-el3", "tpidr-el1")
+    local tpidr = sel(monitor, "tpidr-el2", "tpidr-el1")
     local machines = {
         raspi3 = {
             board = "raspi3",

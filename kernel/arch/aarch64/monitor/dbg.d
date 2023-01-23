@@ -11,9 +11,11 @@ struct ExtDebug {
     static bool handler(uint fid, Regs* regs, uint* out_val) {
         switch (fid) {
             case fwi.Debug.Fid.step_start:
+                SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss);
                 place_breakpoint(SysReg.elr_el2);
                 break;
             case fwi.Debug.Fid.step_start_at:
+                SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss);
                 place_breakpoint(regs.x0);
                 break;
             case fwi.Debug.Fid.step_stop:
@@ -26,16 +28,12 @@ struct ExtDebug {
         return true;
     }
 
-    import io = ulib.io;
-
     static void handle_breakpoint(uintptr epc, Regs* regs) {
-        io.writeln("handle breakpoint: ", cast(void*) epc);
         clear_breakpoints();
         single_step();
     }
 
     static void handle_ss(uintptr epc, Regs* regs) {
-        io.writeln("handle ss: ", cast(void*) epc);
         single_step();
     }
 
@@ -46,7 +44,6 @@ struct ExtDebug {
 
     static void single_step() {
         SysReg.spsr_el2 = bits.set(SysReg.spsr_el2, Spsr.ss);
-        SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss);
     }
 
     static void clear_breakpoints() {
