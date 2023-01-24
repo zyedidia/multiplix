@@ -51,18 +51,19 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     Timer.delay_ms(100);
 
-    auto vamap_ = ptable.procs[0].pt.lookup(0x1000);
-    assert(vamap_.has());
-    auto vamap = vamap_.get();
-    io.writeln(cast(void*) vamap.va, " ", cast(void*) vamap.pa, " ", vamap.user);
+    io.writeln(ptable.procs[0].pt.range().empty());
+
+    foreach (vamap; ptable.procs[0].pt.range()) {
+        io.writeln(cast(void*) vamap.va, " ", cast(void*) vamap.pa, " ", vamap.user, " ", vamap.size);
+    }
 
     /* arch.Debug.step_start(); */
     /* Timer.delay_nops(10); */
     /* arch.Debug.step_stop(); */
 
-    enable_irq();
-
-    schedule();
+    /* enable_irq(); */
+    /*  */
+    /* schedule(); */
 }
 
 void enable_irq() {

@@ -93,6 +93,7 @@ struct VaMapping {
     uintptr va;
     uintptr pa;
     bool user;
+    size_t size;
 }
 
 struct Pagetable39 {
@@ -100,21 +101,24 @@ struct Pagetable39 {
 
     // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
-    Opt!(Pte39*) walk(A, bool alloc)(uintptr va, Pte39.Pg endlevel, A* allocator) {
+    Opt!(Pte39*) walk(A, bool alloc)(uintptr va, ref Pte39.Pg endlevel, A* allocator) {
         Pagetable39* pt = &this;
 
         for (int level = 2; level > endlevel; level--) {
             Pte39* pte = &pt.ptes[vpn(level, va)];
             if (pte.leaf()) {
+                endlevel = cast(Pte39.Pg) level;
                 return Opt!(Pte39*)(pte);
             } else if (pte.valid) {
                 pt = cast(Pagetable39*) pa2ka(pte.pa);
             } else {
                 static if (!alloc) {
+                    endlevel = cast(Pte39.Pg) level;
                     return Opt!(Pte39*).none;
                 } else {
                     auto pg = kalloc_block(allocator, Pagetable39.sizeof);
                     if (!pg.has()) {
+                        endlevel = cast(Pte39.Pg) level;
                         return Opt!(Pte39*).none;
                     }
                     pt = cast(Pagetable39*) pg.get();
@@ -127,7 +131,7 @@ struct Pagetable39 {
         return Opt!(Pte39*)(&pt.ptes[vpn(endlevel, va)]);
     }
 
-    Opt!(Pte39*) walk(uintptr va, Pte39.Pg endlevel) {
+    Opt!(Pte39*) walk(uintptr va, ref Pte39.Pg endlevel) {
         return walk!(void, false)(va, endlevel, null);
     }
 
@@ -164,12 +168,76 @@ struct Pagetable39 {
         return bits.write(val, 63, 60, VmMode.sv39);
     }
 
+    static size_t level2size(Pte39.Pg type) {
+        size_t size = void;
+        final switch (type) {
+            case Pte39.Pg.normal: return 4096;
+            case Pte39.Pg.mega: return sys.mb!(1);
+            case Pte39.Pg.giga: return sys.gb!(1);
+        }
+    }
+
     Opt!(VaMapping) lookup(uintptr va) {
-        auto pte_ = walk(va, Pte39.Pg.normal);
+        Pte39.Pg pgtype;
+        auto pte_ = walk(va, pgtype);
         if (!pte_.has()) {
             return Opt!(VaMapping).none;
         }
         auto pte = pte_.get();
-        return Opt!(VaMapping)(VaMapping(va, pte.pa(), pte.user()));
+        size_t size = level2size(pgtype);
+        return Opt!(VaMapping)(VaMapping(va, pte.pa(), pte.user(), size));
+    }
+
+    alias Range = LevelRange!2;
+
+    Range range() return {
+        return Range(&this, 0);
+    }
+
+    struct LevelRange(uint level) {
+        enum lastlevel = level == 0;
+
+        Pagetable39* pt;
+        uint idx;
+        static if (!lastlevel) {
+            LevelRange!(level - 1) next;
+        }
+
+        bool empty() {
+            return !get_mapping().has();
+        }
+
+        VaMapping front() {
+            return get_mapping().get();
+        }
+
+        Opt!(VaMapping) get_mapping() {
+            if (idx >= pt.ptes.length) {
+                return Opt!(VaMapping).none;
+            }
+            Pte39* pte = &pt.ptes[idx];
+            if (pte.leaf() && pte.valid()) {
+                return Opt!(VaMapping)(VaMapping(bits.sext!(long, ulong)(idx * level2size(cast(Pte39.Pg) level), 39), pte.pa(), pte.user(), level2size(cast(Pte39.Pg) level)));
+            }
+            static if (!lastlevel) {
+                if (pte.valid()) {
+                    next = LevelRange!(level - 1)(cast(Pagetable39*) pa2ka(pt.ptes[idx].pa()));
+                    auto nf = next.get_mapping();
+                    if (!nf.has()) {
+                        return nf;
+                    }
+                    nf.get().va += idx * level2size(cast(Pte39.Pg) level);
+                    return nf;
+                }
+            }
+            do {
+                idx++;
+            } while (!empty() && !pt.ptes[idx].valid());
+            return get_mapping();
+        }
+
+        void popFront() {
+            idx++;
+        }
     }
 }
