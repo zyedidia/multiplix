@@ -15,8 +15,8 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
         case Syscall.n_getpid:
             ret = Syscall.getpid(p);
             break;
-        case Syscall.n_delay_us:
-            Syscall.delay_us(args[0]);
+        case Syscall.n_exit:
+            Syscall.exit(p);
             break;
         default:
             io.writeln("invalid syscall: ", sysno);
@@ -37,8 +37,11 @@ struct Syscall {
         return p.pid;
     }
 
-    enum n_delay_us = 2;
-    static void delay_us(ulong us) {
-        Timer.delay_us(us);
+    enum n_exit = 2;
+    static void exit(Proc* p) {
+        p.lock();
+        p.state = Proc.State.free;
+        io.writeln("process ", p.pid, " exited");
+        p.unlock();
     }
 }

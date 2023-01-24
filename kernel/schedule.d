@@ -87,6 +87,14 @@ noreturn schedule() {
     if (curproc == p) {
         arch.usertrapret(p, false);
     } else {
+        curproc.lock();
+        curproc.state = Proc.State.runnable;
+        curproc.unlock();
+
+        p.lock();
+        p.state = Proc.State.running;
+        p.unlock();
+
         curproc = p;
         arch.usertrapret(p, true);
     }

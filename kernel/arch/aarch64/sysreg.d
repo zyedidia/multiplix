@@ -121,7 +121,7 @@ enum Scr {
 
 enum Mdscr {
     mde = 1 << 15, // monitor debug enable
-    ss = 0, // software step
+    ss_bit = 0, // software step
 }
 
 enum Mdcr {
@@ -143,7 +143,7 @@ enum Dbgscr {
 }
 
 enum Spsr {
-    ss = 21,
+    ss_bit = 21,
 
     d = 1 << 9,
     a = 1 << 8,

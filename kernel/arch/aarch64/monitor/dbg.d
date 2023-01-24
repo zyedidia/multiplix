@@ -11,11 +11,11 @@ struct ExtDebug {
     static bool handler(uint fid, Regs* regs, uint* out_val) {
         switch (fid) {
             case fwi.Debug.Fid.step_start:
-                SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss);
+                SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
                 place_breakpoint(SysReg.elr_el2);
                 break;
             case fwi.Debug.Fid.step_start_at:
-                SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss);
+                SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
                 place_breakpoint(regs.x0);
                 break;
             case fwi.Debug.Fid.step_stop:
@@ -43,7 +43,7 @@ struct ExtDebug {
     }
 
     static void single_step() {
-        SysReg.spsr_el2 = bits.set(SysReg.spsr_el2, Spsr.ss);
+        SysReg.spsr_el2 = bits.set(SysReg.spsr_el2, Spsr.ss_bit);
     }
 
     static void clear_breakpoints() {
@@ -51,7 +51,7 @@ struct ExtDebug {
     }
 
     static void clear_ss() {
-        SysReg.spsr_el2 = bits.clear(SysReg.spsr_el2, Spsr.ss);
-        SysReg.mdscr_el1 = bits.clear(SysReg.mdscr_el1, Mdscr.ss);
+        SysReg.spsr_el2 = bits.clear(SysReg.spsr_el2, Spsr.ss_bit);
+        SysReg.mdscr_el1 = bits.clear(SysReg.mdscr_el1, Mdscr.ss_bit);
     }
 }
