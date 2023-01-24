@@ -11,9 +11,9 @@ import sys = kernel.sys;
 import vm = kernel.vm;
 
 // Early pagetable (only maps gigapages since we don't have an allocator yet).
-__gshared Pagetable39 kpagetable;
+__gshared Pagetable kpagetable;
 
-bool kernel_map(Pagetable39* pt) {
+bool kernel_map(Pagetable* pt) {
     // Map kernel into the high part of the address space
     foreach (range; System.mem_ranges) {
         for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
@@ -28,14 +28,14 @@ bool kernel_map(Pagetable39* pt) {
 void kernel_setup(bool primary) {
     if (primary) {
         // Set up an identity-mapped pagetable.
-        void map_region (System.MemRange range, Pagetable39* pt) {
+        void map_region (System.MemRange range, Pagetable* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
                 pt.map_giga(addr, addr, Perm.krwx);
                 pt.map_giga(vm.pa2ka(addr), addr, Perm.krwx);
             }
         }
 
-        Pagetable39* pgtbl = &kpagetable;
+        Pagetable* pgtbl = &kpagetable;
 
         foreach (r; System.mem_ranges) {
             map_region(r, pgtbl);

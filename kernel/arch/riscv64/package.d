@@ -15,8 +15,8 @@ alias Cpu = sbi.Hart;
 alias Debug = sbi.Debug;
 
 import vm = kernel.arch.riscv64.vm;
-alias Pagetable = vm.Pagetable39;
-alias Pte = vm.Pte39;
+alias Pagetable = vm.Pagetable;
+alias Pte = vm.Pte;
 alias Perm = vm.Perm;
 
 // arch-specific setup after booting
