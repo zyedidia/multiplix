@@ -89,12 +89,18 @@ private uintptr vpn(uint level, uintptr va) {
     return (va >> 12+9*level) & bits.mask!uintptr(9);
 }
 
+struct VaMapping {
+    uintptr va;
+    uintptr pa;
+    bool user;
+}
+
 struct Pagetable39 {
     align(4096) Pte39[512] ptes;
 
     // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
-    Opt!(Pte39*) walk(A)(uintptr va, Pte39.Pg endlevel, bool alloc, A* allocator) {
+    Opt!(Pte39*) walk(A, bool alloc)(uintptr va, Pte39.Pg endlevel, A* allocator) {
         Pagetable39* pt = &this;
 
         for (int level = 2; level > endlevel; level--) {
@@ -104,26 +110,31 @@ struct Pagetable39 {
             } else if (pte.valid) {
                 pt = cast(Pagetable39*) pa2ka(pte.pa);
             } else {
-                if (!alloc) {
+                static if (!alloc) {
                     return Opt!(Pte39*).none;
+                } else {
+                    auto pg = kalloc_block(allocator, Pagetable39.sizeof);
+                    if (!pg.has()) {
+                        return Opt!(Pte39*).none;
+                    }
+                    pt = cast(Pagetable39*) pg.get();
+                    memset(pt, 0, Pagetable39.sizeof);
+                    pte.pa = ka2pa(cast(uintptr) pt);
+                    pte.valid = 1;
                 }
-                auto pg = kalloc_block(allocator, Pagetable39.sizeof);
-                if (!pg.has()) {
-                    return Opt!(Pte39*).none;
-                }
-                pt = cast(Pagetable39*) pg.get();
-                memset(pt, 0, Pagetable39.sizeof);
-                pte.pa = ka2pa(cast(uintptr) pt);
-                pte.valid = 1;
             }
         }
         return Opt!(Pte39*)(&pt.ptes[vpn(endlevel, va)]);
     }
 
+    Opt!(Pte39*) walk(uintptr va, Pte39.Pg endlevel) {
+        return walk!(void, false)(va, endlevel, null);
+    }
+
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
     bool map(A)(uintptr va, uintptr pa, Pte39.Pg pgtyp, uint perm, A* allocator) {
-        auto opte = walk(va, pgtyp, true, allocator);
+        auto opte = walk!(A, true)(va, pgtyp, allocator);
         if (!opte.has()) {
             return false;
         }
@@ -151,5 +162,14 @@ struct Pagetable39 {
     uintptr satp(uint asid) {
         uintptr val = bits.write(pn(), 59, 44, asid);
         return bits.write(val, 63, 60, VmMode.sv39);
+    }
+
+    Opt!(VaMapping) lookup(uintptr va) {
+        auto pte_ = walk(va, Pte39.Pg.normal);
+        if (!pte_.has()) {
+            return Opt!(VaMapping).none;
+        }
+        auto pte = pte_.get();
+        return Opt!(VaMapping)(VaMapping(va, pte.pa(), pte.user()));
     }
 }

@@ -49,6 +49,13 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         return;
     }
 
+    Timer.delay_ms(100);
+
+    auto vamap_ = ptable.procs[0].pt.lookup(0x1000);
+    assert(vamap_.has());
+    auto vamap = vamap_.get();
+    io.writeln(cast(void*) vamap.va, " ", cast(void*) vamap.pa, " ", vamap.user);
+
     /* arch.Debug.step_start(); */
     /* Timer.delay_nops(10); */
     /* arch.Debug.step_stop(); */

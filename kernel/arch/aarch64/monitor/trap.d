@@ -28,7 +28,7 @@ extern (C) void monitor_exception(Regs* regs) {
             break;
         default:
             io.writeln("monitor_exception: core: ", cpuinfo.coreid, ", cause: ", exc_class, " elr: ", cast(void*) SysReg.elr_el2);
-            assert(0, "monitor_exception: unknown exception class");
+            assert(0, "monitor_exception: unhandled exception class");
     }
 }
 

@@ -54,15 +54,20 @@ private uintptr vpn(uint level, uintptr va) {
     return (va >> 12+9*level) & bits.mask!uintptr(9);
 }
 
+struct VaMapping {
+    uintptr va;
+    uintptr pa;
+    bool user;
+}
+
 struct Pagetable {
     align(4096) Pte[512] ptes;
 
     // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
-    Opt!(Pte*) walk(A)(uintptr va, Pte.Pg endlevel, bool alloc, A* allocator) {
+    Opt!(Pte*) walk(A, bool alloc)(uintptr va, Pte.Pg endlevel, A* allocator) {
         Pagetable* pt = &this;
 
-        import io = ulib.io;
         for (int level = 2; level > endlevel; level--) {
             Pte* pte = &pt.ptes[vpn(level, va)];
             if (pte.valid && !pte.table) {
@@ -70,27 +75,32 @@ struct Pagetable {
             } else if (pte.valid) {
                 pt = cast(Pagetable*) pa2kpa(pte.addr << 12);
             } else {
-                if (!alloc) {
+                static if (!alloc) {
                     return Opt!(Pte*).none;
+                } else {
+                    auto pg = kalloc_block(allocator, Pagetable.sizeof);
+                    if (!pg.has()) {
+                        return Opt!(Pte*).none;
+                    }
+                    pt = cast(Pagetable*) pg.get();
+                    memset(pt, 0, Pagetable.sizeof);
+                    pte.addr = kpa2pa(cast(uintptr) pt) >> 12;
+                    pte.valid = 1;
+                    pte.table = 1;
                 }
-                auto pg = kalloc_block(allocator, Pagetable.sizeof);
-                if (!pg.has()) {
-                    return Opt!(Pte*).none;
-                }
-                pt = cast(Pagetable*) pg.get();
-                memset(pt, 0, Pagetable.sizeof);
-                pte.addr = kpa2pa(cast(uintptr) pt) >> 12;
-                pte.valid = 1;
-                pte.table = 1;
             }
         }
         return Opt!(Pte*)(&pt.ptes[vpn(endlevel, va)]);
     }
 
+    Opt!(Pte*) walk(uintptr va, Pte.Pg endlevel) {
+        return walk!(void, false)(va, endlevel, null);
+    }
+
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
     bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm, A* allocator) {
-        auto pte_ = walk(va, pgtyp, true, allocator);
+        auto pte_ = walk!(A, true)(va, pgtyp, allocator);
         if (!pte_.has()) {
             return false;
         }
@@ -119,5 +129,14 @@ struct Pagetable {
         ptes[idx].af = 1;
         ptes[idx].sh = 0b11;
         ptes[idx].index = System.mem_type(pa);
+    }
+
+    Opt!(VaMapping) lookup(uintptr va) {
+        auto pte_ = walk(va, Pte.Pg.normal);
+        if (!pte_.has()) {
+            return Opt!(VaMapping).none;
+        }
+        auto pte = pte_.get();
+        return Opt!(VaMapping)(VaMapping(va, pte.addr << 12, pte.ap == Ap.urw));
     }
 }

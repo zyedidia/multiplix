@@ -10,7 +10,7 @@ import ulib.option;
 import io = ulib.io;
 
 __gshared ProcTable!(10) ptable;
-Proc* curproc;
+Opt!(Proc*) curproc;
 
 struct ProcTable(uint size) {
     Proc[size] procs;
@@ -84,18 +84,20 @@ noreturn schedule() {
     }
     auto p = p_.get();
 
-    if (curproc == p) {
+    if (curproc.has() && curproc.get() == p) {
         arch.usertrapret(p, false);
     } else {
-        curproc.lock();
-        curproc.state = Proc.State.runnable;
-        curproc.unlock();
+        if (curproc.has()) {
+            curproc.get().lock();
+            curproc.get().state = Proc.State.runnable;
+            curproc.get().unlock();
+        }
 
         p.lock();
         p.state = Proc.State.running;
         p.unlock();
 
-        curproc = p;
+        curproc = Opt!(Proc*)(p);
         arch.usertrapret(p, true);
     }
 }

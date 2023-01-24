@@ -28,6 +28,6 @@ extern (C) void monitortrap(Regs* regs) {
             break;
         default:
             io.writeln("monitortrap: core: ", Csr.mhartid, ", cause: ", mcause, ", epc: ", cast(void*) mepc);
-            assert(0, "monitortrap: unknown cause");
+            assert(0, "monitortrap: unhandled cause");
     }
 }
