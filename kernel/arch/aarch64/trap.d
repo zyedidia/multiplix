@@ -93,7 +93,7 @@ noreturn usertrapret(Proc* p, bool swtch) {
     Trap.disable();
 
     // return to el0 aarch64 with no interrupts masked
-    SysReg.spsr_el1 = 0b0000_0_0_0000;
+    SysReg.spsr_el1 = Spsr.el0;
 
     // set up trapframe
     p.trapframe.sp = cpuinfo.stack;

@@ -80,14 +80,11 @@ struct SysReg {
 
 enum Sctlr {
     reserved = (3 << 28) | (3 << 22) | (1 << 20) | (1 << 11),
-    ee_little_endian = (0 << 25),
-    eoe_little_endian = (0 << 24),
-    icache_disabled = (0 << 12),
-    dcache_disabled = (0 << 2),
-    mmu_disabled = (0 << 0),
-    mmu_enabled = (1 << 0),
+    icache = (1 << 12),
+    dcache = (1 << 2),
+    mmu = (1 << 0),
 
-    nommu = reserved | ee_little_endian | icache_disabled | dcache_disabled | mmu_disabled,
+    nommu = reserved,
 }
 
 enum Mair {
@@ -147,6 +144,15 @@ enum Dbgscr {
 
 enum Spsr {
     ss = 21,
+
+    d = 1 << 9,
+    a = 1 << 8,
+    i = 1 << 7,
+    f = 1 << 6,
+
+    el2h = 0b1001,
+    el1h = 0b0101,
+    el0 = 0b0000,
 }
 
 enum Exception {

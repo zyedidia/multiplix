@@ -50,7 +50,7 @@ void kernel_setup(bool primary) {
         "isb";
     }
 
-    SysReg.sctlr_el1 = SysReg.sctlr_el1 | 1 | (1 << 2) | (1 << 12); // enable mmu and caches
+    SysReg.sctlr_el1 = SysReg.sctlr_el1 | Sctlr.mmu | Sctlr.icache | Sctlr.dcache; // enable mmu and caches
 
     asm {
         "dsb sy";

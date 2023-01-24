@@ -32,7 +32,7 @@ struct ExtCpu {
                 SysReg.tcr_el2 = Tcr.t0sz!(25) | Tcr.t1sz!(25) | Tcr.tg0_4kb | Tcr.tg1_4kb | Tcr.ips_36 | Tcr.irgn | Tcr.orgn | Tcr.sh;
                 SysReg.ttbr0_el2 = regs.x0;
                 fence();
-                SysReg.sctlr_el2 = SysReg.sctlr_el2 | 1 | (1 << 2) | (1 << 12);
+                SysReg.sctlr_el2 = SysReg.sctlr_el2 | Sctlr.mmu | Sctlr.icache | Sctlr.dcache; // enable mmu and caches
                 fence();
                 break;
             default:
