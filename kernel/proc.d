@@ -24,14 +24,24 @@ struct Proc {
         running,
     }
 
-    uint pid;
-
     Trapframe* trapframe;
 
+    // protects the following fields (not trapframe)
+    private shared Spinlock _lock;
+
+    uint pid;
     Pagetable* pt;
     State state;
     ubyte[] code;
     ubyte[] stack;
+
+    void lock() {
+        this._lock.lock();
+    }
+
+    void unlock() {
+        this._lock.unlock();
+    }
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // TODO: use arena allocation to ease memory cleanup

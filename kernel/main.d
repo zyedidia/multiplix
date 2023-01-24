@@ -25,6 +25,15 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         System.allocator.__ctor(cast(uintptr) heap);
 
+        if (!ptable.start(hello_elf)) {
+            io.writeln("could not initialize process 0");
+            return;
+        }
+        if (!ptable.start(hello_elf)) {
+            io.writeln("could not initialize process 1");
+            return;
+        }
+
         // boot up the other cores
         arch.Cpu.start_all_cores();
     }
@@ -40,25 +49,16 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         return;
     }
 
-    arch.Debug.step_start();
-    Timer.delay_nops(10);
-    arch.Debug.step_stop();
+    /* arch.Debug.step_start(); */
+    /* Timer.delay_nops(10); */
+    /* arch.Debug.step_stop(); */
 
-    if (!ptable.start(hello_elf)) {
-        io.writeln("could not initialize process 0");
-        return;
-    }
-    if (!ptable.start(hello_elf)) {
-        io.writeln("could not initialize process 1");
-        return;
-    }
-
-    irq();
+    enable_irq();
 
     schedule();
 }
 
-void irq() {
+void enable_irq() {
     version (raspi3) {
         CoreTimer.enable_irq();
     } else version (raspi4) {

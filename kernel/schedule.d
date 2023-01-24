@@ -16,7 +16,8 @@ struct ProcTable(uint size) {
     Proc[size] procs;
     Sched[size] sched;
 
-    shared Spinlock lock;
+    // protects sched
+    shared Spinlock sched_lock;
 
     struct Sched {
         ulong priority;
@@ -24,6 +25,8 @@ struct ProcTable(uint size) {
 
     private Opt!(Proc*) next() {
         for (uint i = 0; i < size; i++) {
+            procs[i].lock();
+            scope(exit) procs[i].unlock();
             if (procs[i].state == Proc.State.free) {
                 procs[i].pid = i;
                 return Opt!(Proc*)(&procs[i]);
@@ -33,45 +36,54 @@ struct ProcTable(uint size) {
     }
 
     bool start(immutable ubyte[] binary) {
-        lock.lock();
-        scope(exit) lock.unlock();
-
         auto p_ = next();
         if (!p_.has()) {
             return false;
         }
+        auto p = p_.get();
+        p.lock();
+        scope(exit) p.unlock();
         return Proc.make(p_.get(), binary);
     }
 
     void free(uint pid) {
-        lock.lock();
-        scope(exit) lock.unlock();
+        procs[pid].lock();
+        scope(exit) procs[pid].unlock();
 
         procs[pid].state = Proc.State.free;
     }
 
-    Proc* schedule() {
-        uint imin = 0;
-        {
-            lock.lock();
-            scope(exit) lock.unlock();
+    Opt!(Proc*) schedule() {
+        sched_lock.lock();
+        scope(exit) sched_lock.unlock();
 
-            ulong min = ulong.max;
-            for (uint i = 0; i < size; i++) {
-                if (sched[i].priority <= min && procs[i].state == Proc.State.runnable) {
-                    imin = i;
-                    min = sched[i].priority;
-                }
+        ulong min = ulong.max;
+        Opt!uint imin = Opt!uint(0);
+        for (uint i = 0; i < size; i++) {
+            procs[i].lock();
+            scope(exit) procs[i].unlock();
+            if (sched[i].priority <= min && procs[i].state == Proc.State.runnable) {
+                imin = Opt!uint(i);
+                min = sched[i].priority;
             }
-            sched[imin].priority++;
         }
 
-        return &procs[imin];
+        if (!imin.has()) {
+            return Opt!(Proc*).none;
+        }
+
+        sched[imin.get()].priority++;
+        return Opt!(Proc*)(&procs[imin.get()]);
     }
 }
 
 noreturn schedule() {
-    auto p = ptable.schedule();
+    Opt!(Proc*) p_;
+    while (!p_.has()) {
+        p_ = ptable.schedule();
+    }
+    auto p = p_.get();
+
     if (curproc == p) {
         arch.usertrapret(p, false);
     } else {
