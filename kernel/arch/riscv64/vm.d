@@ -170,7 +170,6 @@ struct Pagetable {
     }
 
     static size_t level2size(Pte.Pg type) {
-        size_t size = void;
         final switch (type) {
             case Pte.Pg.normal: return 4096;
             case Pte.Pg.mega: return sys.mb!(2);
