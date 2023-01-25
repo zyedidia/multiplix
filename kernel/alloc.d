@@ -155,7 +155,7 @@ Opt!(T[]) kalloc_array(A, T, Args...)(A* allocator, size_t nelem, Args args) {
     for (int i = 0; i < arr.length; i++) {
         emplace_init(&arr[i], args);
     }
-    return arr;
+    return Opt!(T[])(arr);
 }
 
 void kfree(A, T)(A* allocator, T* ptr) {
@@ -173,7 +173,7 @@ Opt!(T*) kalloc(T, Args...)(Args args) {
 }
 
 Opt!(T[]) kalloc_array(T, Args...)(size_t nelem, Args args) {
-    return kalloc_array(typeof(System.allocator), T, Args)(&System.allocator, nelem, args);
+    return kalloc_array!(typeof(System.allocator), T, Args)(&System.allocator, nelem, args);
 }
 
 void kfree(T)(T* ptr) {
