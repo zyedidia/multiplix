@@ -11,6 +11,7 @@ import kernel.alloc;
 import kernel.spinlock;
 import kernel.proc;
 import kernel.schedule;
+import kernel.vm;
 
 import arch = kernel.arch;
 import sys = kernel.sys;
