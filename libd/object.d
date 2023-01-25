@@ -43,3 +43,8 @@ version (LDC) {
         return to;
     }
 }
+
+// for printing pointers as hex values
+struct Hex {
+    uintptr p;
+}

@@ -53,7 +53,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     Timer.delay_ms(100);
 
     foreach (vamap; ptable.procs[0].pt.range()) {
-        io.writeln(cast(void*) vamap.va, " ", cast(void*) vamap.pa, " ", vamap.user, " ", vamap.size);
+        io.writeln(Hex(vamap.va), " ", Hex(vamap.pa), " ", vamap.user, " ", vamap.size);
     }
 
     /* arch.Debug.step_start(); */

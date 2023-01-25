@@ -28,9 +28,8 @@ private:
         write_elem(cast(uintptr) val, 16);
     }
 
-    void write_elem(uintptr val) {
-        write_elem("0x");
-        write_elem(val, 16);
+    void write_elem(Hex val) {
+        write_elem(cast(void*) val.p);
     }
 
     void write_elem(char ch) {
