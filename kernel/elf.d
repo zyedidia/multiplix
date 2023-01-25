@@ -97,6 +97,7 @@ bool load(int W)(Proc* proc, immutable ubyte* elfdat, out uintptr entry) {
         assert(pgs_.has());
         proc.code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
         memcpy(proc.code.ptr, elfdat + ph.offset, ph.filesz);
+        memset(proc.code.ptr + ph.filesz, 0, ph.memsz - ph.filesz);
 
         // map newly allocated physical space to base va
         for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) proc.code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {

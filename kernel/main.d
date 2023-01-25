@@ -52,7 +52,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     Timer.delay_ms(100);
 
-    io.writeln(ptable.procs[0].pt.lookup(0x7fff0000).has());
     foreach (vamap; ptable.procs[0].pt.range()) {
         io.writeln(cast(void*) vamap.va, " ", cast(void*) vamap.pa, " ", vamap.user, " ", vamap.size);
     }

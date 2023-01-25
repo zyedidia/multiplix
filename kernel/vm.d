@@ -63,6 +63,7 @@ struct VaMapping {
     }
 }
 
+// Look up a virtual address in a pagetable and return the VaMapping.
 Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
     Pte.Pg pgtype;
     auto pte_ = pt.walk(va, pgtype);
@@ -74,6 +75,7 @@ Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
     return Opt!(VaMapping)(VaMapping(va, size, pte));
 }
 
+// Pagetable range (iterator) API.
 alias Range = LevelRange!(Pte.Pg.max);
 
 Range range(Pagetable* pt) {
@@ -89,6 +91,7 @@ struct LevelRange(Pte.Pg level) {
         LevelRange!(Pte.down(level)) next;
     }
 
+    // reached the last pte
     bool ended() {
         return idx >= pt.ptes.length;
     }
