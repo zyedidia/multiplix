@@ -44,23 +44,25 @@ struct Proc {
     }
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
-        // TODO: use arena allocation to ease memory cleanup
+        // Checkpoint so we can free all memory if there is a failure.
+        System.allocator.checkpoint();
         // allocate pagetable
         auto pt_ = kalloc!(Pagetable)();
         if (!pt_.has()) {
+            System.allocator.free_checkpoint();
             return false;
         }
         proc.pt = pt_.get();
         // allocate physical space for binary, and copy it in
         auto pgs_ = kalloc_block(binary.length);
         if (!pgs_.get()) {
-            kfree(proc.pt);
+            System.allocator.free_checkpoint();
             return false;
         }
         uintptr entryva;
         const bool ok = elf.load!64(proc, binary.ptr, entryva);
         if (!ok) {
-            // TODO: free memory
+            System.allocator.free_checkpoint();
             return false;
         }
         // map kernel
@@ -68,21 +70,22 @@ struct Proc {
         // allocate stack/trapframe
         auto stack_ = kalloc_block(sys.pagesize * 2);
         if (!stack_.get()) {
-            kfree(proc.pt);
-            kfree(proc.code.ptr);
+            System.allocator.free_checkpoint();
             return false;
         }
         proc.stack = cast(ubyte[]) stack_.get()[0 .. sys.pagesize];
         proc.trapframe = cast(Trapframe*) stack_.get()[sys.pagesize .. sys.pagesize * 2];
         // map stack/trapframe
         if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) proc.stack.ptr), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
-            // TODO: if failed, free memory
+            System.allocator.free_checkpoint();
             return false;
         }
         if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx, &System.allocator)) {
-            // TODO: if failed, free memory
+            System.allocator.free_checkpoint();
             return false;
         }
+        System.allocator.done_checkpoint();
+
         // initialize registers (stack, pc)
         memset(&proc.trapframe.regs, 0, Regs.sizeof);
         proc.trapframe.regs.sp = stackva + sys.pagesize;

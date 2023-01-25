@@ -7,6 +7,7 @@ import kernel.dev.irq.sfclint;
 
 import kernel.buddy;
 import kernel.vm;
+import kernel.alloc;
 
 import sys = kernel.sys;
 
@@ -28,6 +29,10 @@ struct System {
 
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(4));
     __gshared Buddy allocator;
+
+
+    alias CpAlloc = CheckpointAllocator!(Buddy);
+    static CpAlloc allocator = CpAlloc(&buddy);
 }
 
 alias Uart = Dw8250!(pa2kpa(0x12440000));

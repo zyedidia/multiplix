@@ -24,7 +24,7 @@ struct Vector(T) {
 
     bool grow() {
         // double in size by default
-        return grow(cap == 0 ? 1 : cap * 2);
+        return grow(cap == 0 ? 4096 : cap * 2);
     }
 
     bool grow(size_t newlen) {

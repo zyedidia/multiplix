@@ -24,7 +24,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.Trap.setup();
 
     if (cpuinfo.primary) {
-        System.allocator.__ctor(cast(uintptr) heap);
+        System.allocator.construct(cast(uintptr) heap);
 
         if (!ptable.start(hello_elf)) {
             io.writeln("could not initialize process 0");

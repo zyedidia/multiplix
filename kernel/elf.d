@@ -102,7 +102,7 @@ bool load(int W)(Proc* proc, immutable ubyte* elfdat, out uintptr entry) {
         // map newly allocated physical space to base va
         for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) proc.code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
             if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, &System.allocator)) {
-                // TODO: free memory
+                // memory will be freed by caller via checkpoint free (in proc creation)
                 return false;
             }
         }

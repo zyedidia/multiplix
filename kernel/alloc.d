@@ -2,6 +2,7 @@ module kernel.alloc;
 
 import ulib.alloc;
 import ulib.option;
+import ulib.vector;
 
 import kernel.board;
 
@@ -134,6 +135,52 @@ private:
     uintptr end;
 }
 
+struct CheckpointAllocator(A) {
+    A* internal;
+
+    this(A* a) {
+        internal = a;
+    }
+
+    void construct(Args...)(Args args) {
+        internal.__ctor(args);
+    }
+
+    Vector!(void*) allocs;
+    bool active;
+
+    void* alloc(size_t sz) {
+        void* p = internal.alloc(sz);
+        if (p && active) {
+            if (!allocs.append(p)) {
+                internal.free(p);
+                return null;
+            }
+        }
+        return p;
+    }
+
+    void free(void* p) {
+        internal.free(p);
+    }
+
+    void checkpoint() {
+        active = true;
+    }
+
+    void free_checkpoint() {
+        foreach (p; allocs) {
+            internal.free(p);
+        }
+        allocs.clear();
+        active = false;
+    }
+
+    void done_checkpoint() {
+        allocs.clear();
+    }
+}
+
 // Allocation API.
 
 Opt!(void*) kalloc_block(A)(A* allocator, size_t sz) {
@@ -185,10 +232,10 @@ void kfree(T)(T* ptr) {
 
 extern (C) {
     void* ulib_malloc(size_t sz) {
-        return System.allocator.alloc(sz);
+        return System.allocator.internal.alloc(sz);
     }
 
     void ulib_free(void* p) {
-        System.allocator.free(p);
+        System.allocator.internal.free(p);
     }
 }
