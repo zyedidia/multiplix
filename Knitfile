@@ -107,19 +107,28 @@ end
 return b{
     $ all:V: kernel.boot.bin
 
+    $ comp:V: kernel.boot.bin $(knit.prefix("lint-", allsrc))
+
     $ bootloader.elf:B:
         knit -f build/bootloader.knit kboot=1 kenter=1 bootloader.elf board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
 
     $ format:VB:
         dfmt -i --brace_style=otbs $allsrc
+
     $ clean:VB:
         knit -f build/bootloader.knit :all -t clean
         knit :all -t clean
         rm -rf *.list *.bin *.bin.out
+
     $ prog:VB: kernel.elf
         plboot prog $input
+
     $ lint:VBQ:
         dscanner --styleCheck $allsrc --config .dscanner.ini -I. -Ikernel --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
+
+    $ lint-%:VBQ: %
+        dscanner --styleCheck $input --config .dscanner.ini -I. -Ikernel --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
+
     $ test:VB: $alltest
 
     $ .kobj/kernel/main.o: user/hello/hello.elf
