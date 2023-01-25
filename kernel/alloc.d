@@ -182,3 +182,13 @@ void kfree(T)(T* ptr) {
     }
     kfree!(typeof(System.allocator), T)(&System.allocator, ptr);
 }
+
+extern (C) {
+    void* ulib_malloc(size_t sz) {
+        return System.allocator.alloc(sz);
+    }
+
+    void ulib_free(void* p) {
+        System.allocator.free(p);
+    }
+}
