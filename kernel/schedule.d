@@ -23,6 +23,16 @@ struct ProcTable(uint size) {
         ulong priority;
     }
 
+    size_t length() {
+        size_t len = 0;
+        foreach (p; procs) {
+            p.lock();
+            len += p.state != Proc.State.free;
+            p.unlock();
+        }
+        return len;
+    }
+
     private Opt!(Proc*) next() {
         for (uint i = 0; i < size; i++) {
             procs[i].lock();
@@ -87,6 +97,7 @@ noreturn schedule() {
     if (curproc.has() && curproc.get() == p) {
         arch.usertrapret(p, false);
     } else {
+        ptable.sched_lock.lock();
         if (curproc.has()) {
             curproc.get().lock();
             curproc.get().state = Proc.State.runnable;
@@ -98,6 +109,7 @@ noreturn schedule() {
         p.unlock();
 
         curproc = Opt!(Proc*)(p);
+        ptable.sched_lock.unlock();
         arch.usertrapret(p, true);
     }
 }

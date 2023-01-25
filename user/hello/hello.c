@@ -23,7 +23,7 @@ void nops(unsigned long n) {
 
 int main() {
     int pid = getpid();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 30; i++) {
         print("process: ");
         putc('0' + pid);
         putc('\n');

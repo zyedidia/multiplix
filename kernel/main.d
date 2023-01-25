@@ -60,9 +60,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     /* Timer.delay_nops(10); */
     /* arch.Debug.step_stop(); */
 
-    /* enable_irq(); */
-    /*  */
-    /* schedule(); */
+    enable_irq();
+
+    schedule();
 }
 
 void enable_irq() {

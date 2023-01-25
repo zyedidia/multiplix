@@ -2,8 +2,11 @@ module kernel.syscall;
 
 import kernel.proc;
 import kernel.timer;
+import kernel.schedule;
 
 import io = ulib.io;
+
+import ulib.option;
 
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     brk();
@@ -42,6 +45,15 @@ struct Syscall {
         p.lock();
         p.state = Proc.State.free;
         io.writeln("process ", p.pid, " exited");
+        ptable.sched_lock.lock();
+        curproc = Opt!(Proc*).none;
+        ptable.sched_lock.unlock();
         p.unlock();
+
+        if (ptable.length == 0) {
+            // TODO: we are shutting down the machine automatically when the last process exits
+            import kernel.board;
+            Reboot.shutdown();
+        }
     }
 }
