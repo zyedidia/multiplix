@@ -4,52 +4,45 @@ import ulib.trait;
 
 alias Optp(T) = Opt(T*);
 
-struct Opt(T) if (isPointer!T) {
+struct Opt(T) {
     this(T s) {
         value = s;
+        static if (!isPointer!T) {
+            exists = true;
+        }
     }
 
     static Opt!T none() {
-        return Opt!T(null);
+        static if (isPointer!T) {
+            return Opt!T(null);
+        } else {
+            Opt!T empty = void;
+            empty.exists = false;
+            return empty;
+        }
     }
 
     bool has() {
-        return value != null;
+        static if (isPointer!T) {
+            return value != null;
+        } else {
+            return exists;
+        }
     }
 
     T get() {
-        assert(value != null, "option is none");
+        static if (isPointer!T) {
+            assert(value != null, "option is none");
+        } else {
+            assert(exists, "option is none");
+        }
         return value;
     }
 
 private:
-    T value;
-
-}
-
-struct Opt(T) if (!isPointer!T) {
-    this(T s) {
-        value = s;
-        exists = true;
+    static if (!isPointer!T) {
+        bool exists = false;
     }
-
-    static Opt!T none() {
-        Opt!T empty = void;
-        empty.exists = false;
-        return empty;
-    }
-
-    bool has() {
-        return exists;
-    }
-
-    T get() {
-        assert(exists, "option is none");
-        return value;
-    }
-
-private:
-    bool exists = false;
     T value;
 }
 
