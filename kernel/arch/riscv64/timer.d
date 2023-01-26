@@ -32,6 +32,10 @@ struct Timer {
         delay_time(t * (System.mtime_freq / 1_000_000));
     }
 
+    static ulong cycles() {
+        return Csr.cycle;
+    }
+
     enum interval = 100000;
 
     static ulong freq() {

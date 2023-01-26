@@ -42,6 +42,7 @@ extern (C) void kernel_exception(Regs* regs) {
     const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
     io.writeln("elr: ", cast(void*) SysReg.elr_el1);
     io.writeln("kernel exception: ", cast(void*) exc_class);
+    assert(0, "unhandled kernel exception");
 }
 
 extern (C) void kernel_interrupt(Regs* regs) {

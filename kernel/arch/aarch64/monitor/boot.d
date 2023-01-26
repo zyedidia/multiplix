@@ -14,6 +14,9 @@ void enter_el2() {
     SysReg.scr_el3 = Scr.reserved | Scr.rw_aarch64 | Scr.ns | Scr.hce | Scr.smd;
     // Configure EL2 with MMU and caches disabled.
     SysReg.sctlr_el2 = Sctlr.nommu;
+    // Enable SIMD/FP.
+    SysReg.cptr_el3 = bits.clear(SysReg.cptr_el3, 10);
+    SysReg.cptr_el2 = bits.clear(SysReg.cptr_el2, 10);
 
     _enter_el2();
 }
@@ -31,6 +34,8 @@ void enter_el1() {
     SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;
     // Clear the OS lock.
     SysReg.oslar_el1 = 0;
+    // Enable SIMD/FP in kernel.
+    SysReg.cpacr_el1 = bits.write(SysReg.cpacr_el1, 21, 20, 0b01);
 
     _enter_el1();
 }

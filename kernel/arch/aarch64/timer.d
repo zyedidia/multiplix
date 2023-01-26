@@ -18,6 +18,10 @@ struct Timer {
         return SysReg.cntfrq_el0;
     }
 
+    static ulong cycles() {
+        return SysReg.pmccntr_el0;
+    }
+
     enum interval = 100000;
     static void intr() {
         intr(interval);
