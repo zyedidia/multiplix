@@ -56,19 +56,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         io.writeln(Hex(vamap.va), " ", Hex(vamap.pa), " ", vamap.user, " ", vamap.size);
     }
 
-    io.writeln(Timer.time_fn(1000, () {
-        arch.Debug.step_start();
-        Timer.delay_nops(100);
-        arch.Debug.step_stop();
-    }));
-    io.writeln(Timer.time_fn(1000, () {
-        Timer.delay_nops(100);
-    }));
+    enable_irq();
 
-
-    /* enable_irq(); */
-    /*  */
-    /* schedule(); */
+    schedule();
 }
 
 void enable_irq() {

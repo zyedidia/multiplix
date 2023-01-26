@@ -9,7 +9,6 @@ import io = ulib.io;
 import ulib.option;
 
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
-    brk();
     uintptr ret = 0;
     switch (sysno) {
         case Syscall.n_putc:
