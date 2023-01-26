@@ -33,7 +33,7 @@ struct ProcTable(uint size) {
         return len;
     }
 
-    private Opt!(Proc*) next() {
+    Opt!(Proc*) next() {
         for (uint i = 0; i < size; i++) {
             procs[i].lock();
             scope(exit) procs[i].unlock();
@@ -53,7 +53,7 @@ struct ProcTable(uint size) {
         auto p = p_.get();
         p.lock();
         scope(exit) p.unlock();
-        return Proc.make(p_.get(), binary);
+        return Proc.make(p, binary);
     }
 
     void free(uint pid) {
@@ -64,6 +64,7 @@ struct ProcTable(uint size) {
     }
 
     Opt!(Proc*) schedule() {
+        // TODO: fix this scheduler it is awful
         sched_lock.lock();
         scope(exit) sched_lock.unlock();
 

@@ -32,8 +32,6 @@ struct Proc {
     uint pid;
     Pagetable* pt;
     State state;
-    ubyte[] code;
-    ubyte[] stack;
 
     void lock() {
         this._lock.lock();
@@ -60,7 +58,7 @@ struct Proc {
             return false;
         }
         uintptr entryva;
-        const bool ok = elf.load!64(proc, binary.ptr, entryva);
+        const bool ok = elf.load!64(proc.pt, binary.ptr, entryva);
         if (!ok) {
             System.allocator.free_checkpoint();
             return false;
@@ -73,10 +71,9 @@ struct Proc {
             System.allocator.free_checkpoint();
             return false;
         }
-        proc.stack = cast(ubyte[]) stack_.get()[0 .. sys.pagesize];
         proc.trapframe = cast(Trapframe*) stack_.get()[sys.pagesize .. sys.pagesize * 2];
         // map stack/trapframe
-        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) proc.stack.ptr), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
+        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack_.get()), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
             System.allocator.free_checkpoint();
             return false;
         }
@@ -93,8 +90,6 @@ struct Proc {
         proc.trapframe.p = proc;
 
         proc.state = State.runnable;
-
-        sync_idmem(proc.code.ptr, proc.code.length);
 
         return true;
     }

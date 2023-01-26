@@ -1,7 +1,8 @@
 module kernel.elf;
 
+import core.sync;
+
 import kernel.alloc;
-import kernel.proc;
 import kernel.board;
 import kernel.arch;
 
@@ -76,7 +77,7 @@ int getwidth(ubyte* elfdat) {
     assert(0);
 }
 
-bool load(int W)(Proc* proc, immutable ubyte* elfdat, out uintptr entry) {
+bool load(int W)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
     assert(elf.magic == magic);
@@ -95,17 +96,19 @@ bool load(int W)(Proc* proc, immutable ubyte* elfdat, out uintptr entry) {
         // allocate physical space for segment, and copy it in
         auto pgs_ = kalloc_block(ph.memsz);
         assert(pgs_.has());
-        proc.code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
-        memcpy(proc.code.ptr, elfdat + ph.offset, ph.filesz);
-        memset(proc.code.ptr + ph.filesz, 0, ph.memsz - ph.filesz);
+        auto code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
+        memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
+        memset(code.ptr + ph.filesz, 0, ph.memsz - ph.filesz);
 
         // map newly allocated physical space to base va
-        for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) proc.code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
-            if (!proc.pt.map(va, pa, Pte.Pg.normal, Perm.urwx, &System.allocator)) {
+        for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
+            if (!pt.map(va, pa, Pte.Pg.normal, Perm.urwx, &System.allocator)) {
                 // memory will be freed by caller via checkpoint free (in proc creation)
                 return false;
             }
         }
+
+        sync_idmem(code.ptr, code.length);
     }
 
     entry = elf.entry;

@@ -3,6 +3,7 @@ module kernel.syscall;
 import kernel.proc;
 import kernel.timer;
 import kernel.schedule;
+import kernel.vm;
 
 import io = ulib.io;
 
@@ -19,6 +20,9 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
             break;
         case Syscall.n_exit:
             Syscall.exit(p);
+            break;
+        case Syscall.n_fork:
+            Syscall.fork(p);
             break;
         default:
             io.writeln("invalid syscall: ", sysno);
@@ -54,5 +58,29 @@ struct Syscall {
             import kernel.board;
             Reboot.shutdown();
         }
+    }
+
+    enum n_fork = 3;
+    static int fork(Proc* p) {
+        auto child_ = ptable.next();
+        if (!child_.has()) {
+            return -1;
+        }
+        auto child = child_.get();
+        child.lock();
+        scope(exit) child.unlock();
+
+        // kalloc a pagetable
+
+        // kalloc+map trapframe
+
+        foreach (map; p.pt.range()) {
+            // pa = kalloc(map.size)
+            // map(child.pt, map.va, pa)
+        }
+
+        child.state = Proc.State.runnable;
+
+        return child.pid;
     }
 }
