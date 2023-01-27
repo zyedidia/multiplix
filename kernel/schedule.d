@@ -84,6 +84,8 @@ struct ProcTable(uint size) {
             return Opt!(Proc*).none;
         }
 
+        io.writeln("scheduling process ", imin.get());
+
         sched[imin.get()].priority++;
         return Opt!(Proc*)(&procs[imin.get()]);
     }

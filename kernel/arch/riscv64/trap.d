@@ -67,9 +67,9 @@ extern (C) {
         /* io.writeln("usertrap: scause: ", cast(void*) scause); */
 
         if (scause == Cause.ecall_u) {
+            tf.epc = Csr.sepc + 4;
             Regs* r = &tf.regs;
             r.a0 = syscall_handler(tf.p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
-            tf.epc = Csr.sepc + 4;
         } else if (scause == Cause.sti) {
             io.writeln("user timer interrupt");
             Timer.intr(Timer.interval);

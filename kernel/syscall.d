@@ -101,6 +101,8 @@ struct Syscall {
             return false;
         }
 
+        assert(kernel_map(child.pt));
+
         foreach (vmmap; p.pt.range()) {
             if (!vmmap.user) {
                 continue;
@@ -121,7 +123,12 @@ struct Syscall {
         child.state = Proc.State.runnable;
 
         memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);
-        child.trapframe.regs.x0 = 0;
+        version (RISCV64) {
+            child.trapframe.regs.a0 = 0;
+        } else version (Aarch64) {
+            child.trapframe.regs.x0 = 0;
+        }
+
         child.trapframe.epc = p.trapframe.epc;
         child.trapframe.p = child;
 
