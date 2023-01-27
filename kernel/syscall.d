@@ -22,7 +22,7 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
             Syscall.exit(p);
             break;
         case Syscall.n_fork:
-            Syscall.fork(p);
+            ret = Syscall.fork(p);
             break;
         default:
             io.writeln("invalid syscall: ", sysno);
