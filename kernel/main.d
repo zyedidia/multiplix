@@ -20,7 +20,6 @@ shared Spinlock lock;
 
 auto hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
 
-extern (C) void nops();
 extern (C) void simd_store();
 extern (C) void stack_store();
 
