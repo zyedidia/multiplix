@@ -121,6 +121,13 @@ alias vm_fence = () {
     }
 };
 
+pragma(inline, true)
+alias compiler_fence = () {
+    asm {
+        "" ::: "memory";
+    }
+};
+
 /// Used to introduce happens-before edges between operations.
 pragma(LDC_fence)
     void memory_fence(AtomicOrdering ordering = DefaultOrdering,

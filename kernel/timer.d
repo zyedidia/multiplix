@@ -18,13 +18,12 @@ struct Timer {
         delay_us(t * 1000);
     }
 
-    static ulong time_fn(ulong iters, void function() fn) {
-        ulong total = 0;
-        for (ulong i = 0; i < iters; i++) {
-            auto start = arch.Timer.cycles();
+    static ulong time_fn(ulong iters)(void function() fn) {
+        auto start = arch.Timer.cycles();
+        static foreach (j; 0 .. iters) {
             fn();
-            total += arch.Timer.cycles() - start;
         }
-        return total;
+        auto end = arch.Timer.cycles();
+        return end - start;
     }
 }

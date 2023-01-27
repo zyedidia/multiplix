@@ -28,7 +28,7 @@ struct System {
     ];
 
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(4));
-    __gshared Buddy allocator;
+    __gshared Buddy buddy;
 
 
     alias CpAlloc = CheckpointAllocator!(Buddy);

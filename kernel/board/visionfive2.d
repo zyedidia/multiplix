@@ -1,4 +1,4 @@
-module kernel.board.visionfive;
+module kernel.board.visionfive2;
 
 import kernel.dev.uart.dw8250;
 import kernel.dev.gpio.starfive;
@@ -28,7 +28,7 @@ struct System {
     ];
 
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(3));
-    __gshared Buddy allocator;
+    __gshared Buddy buddy;
 
     alias CpAlloc = CheckpointAllocator!(Buddy);
     static CpAlloc allocator = CpAlloc(&buddy);
