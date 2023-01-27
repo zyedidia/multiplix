@@ -87,7 +87,7 @@ local kernel = r{
         $(tools.qemu) $(flags.qemu) -no-reboot -kernel $input
     $ qemu-gdb:VB: kernel.boot.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -s -S -kernel $input &
-        $(tools.gdb) -ex "file $input" -ex "target remote localhost:1234"
+        $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
 }
 
 local allsrc = knit.rglob(".", "*.d")

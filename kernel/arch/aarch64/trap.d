@@ -66,7 +66,7 @@ extern (C) {
 
     noreturn user_interrupt(Trapframe* tf) {
         import kernel.cpu;
-        /* io.writeln("core: ", cpuinfo.coreid, ", user interrupt"); */
+        io.writeln("core: ", cpuinfo.coreid, ", user interrupt");
         Timer.intr();
         import kernel.schedule;
         schedule();
@@ -83,6 +83,9 @@ extern (C) {
                 r.x0 = syscall_handler(tf.p, r.x7, r.x0, r.x1, r.x2, r.x3, r.x4, r.x5, r.x6);
                 break;
             default:
+                io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1);
+                import core.exception;
+                panic("unhandled exception");
                 break;
         }
 

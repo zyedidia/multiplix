@@ -22,9 +22,10 @@ void nops(unsigned long n) {
 }
 
 int main() {
+    fork();
+    fork();
     int pid = getpid();
-    for (int i = 0; i < 30; i++) {
-        print("process: ");
+    for (int i = 0; i < 10; i++) {
         putc('0' + pid);
         putc('\n');
         nops(10000000 / 2);

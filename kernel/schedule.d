@@ -34,6 +34,7 @@ struct ProcTable(uint size) {
     }
 
     Opt!(Proc*) next() {
+        // TODO: concurrency bug here
         for (uint i = 0; i < size; i++) {
             procs[i].lock();
             scope(exit) procs[i].unlock();
@@ -69,11 +70,11 @@ struct ProcTable(uint size) {
         scope(exit) sched_lock.unlock();
 
         ulong min = ulong.max;
-        Opt!uint imin = Opt!uint(0);
+        Opt!uint imin = Opt!uint.none;
         for (uint i = 0; i < size; i++) {
             procs[i].lock();
             scope(exit) procs[i].unlock();
-            if (sched[i].priority <= min && procs[i].state == Proc.State.runnable) {
+            if (sched[i].priority <= min && procs[i].state == Proc.State.runnable || procs[i].state == Proc.State.running) {
                 imin = Opt!uint(i);
                 min = sched[i].priority;
             }

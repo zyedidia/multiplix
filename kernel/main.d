@@ -30,10 +30,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
             io.writeln("could not initialize process 0");
             return;
         }
-        if (!ptable.start(hello_elf)) {
-            io.writeln("could not initialize process 1");
-            return;
-        }
 
         // boot up the other cores
         arch.Cpu.start_all_cores();

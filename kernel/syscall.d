@@ -4,9 +4,16 @@ import kernel.proc;
 import kernel.timer;
 import kernel.schedule;
 import kernel.vm;
+import kernel.board;
+import kernel.alloc;
+import kernel.arch;
+
+import sys = kernel.sys;
+import vm = kernel.vm;
 
 import io = ulib.io;
 
+import ulib.memory;
 import ulib.option;
 
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
@@ -44,8 +51,9 @@ struct Syscall {
     }
 
     enum n_exit = 2;
-    static void exit(Proc* p) {
+    static noreturn exit(Proc* p) {
         p.lock();
+        // TODO: free the process
         p.state = Proc.State.free;
         io.writeln("process ", p.pid, " exited");
         ptable.sched_lock.lock();
@@ -58,6 +66,8 @@ struct Syscall {
             import kernel.board;
             Reboot.shutdown();
         }
+
+        schedule();
     }
 
     enum n_fork = 3;
@@ -70,16 +80,50 @@ struct Syscall {
         child.lock();
         scope(exit) child.unlock();
 
+        System.allocator.checkpoint();
         // kalloc a pagetable
+        auto pt_ = kalloc!(Pagetable)();
+        if (!pt_.has()) {
+            System.allocator.free_checkpoint();
+            return -1;
+        }
+        child.pt = pt_.get();
 
         // kalloc+map trapframe
-
-        foreach (map; p.pt.range()) {
-            // pa = kalloc(map.size)
-            // map(child.pt, map.va, pa)
+        auto trapframe_ = kalloc_block(sys.pagesize);
+        if (!trapframe_.has()) {
+            System.allocator.free_checkpoint();
+            return -1;
+        }
+        child.trapframe = cast(Trapframe*) trapframe_.get();
+        if (!child.pt.map(Proc.trapframeva, vm.ka2pa(cast(uintptr) child.trapframe), Pte.Pg.normal, Perm.krwx, &System.allocator)) {
+            System.allocator.free_checkpoint();
+            return false;
         }
 
+        foreach (vmmap; p.pt.range()) {
+            if (!vmmap.user) {
+                continue;
+            }
+            auto block_ = kalloc_block(vmmap.size);
+            if (!block_.has()) {
+                System.allocator.free_checkpoint();
+                return -1;
+            }
+            memcpy(block_.get(), cast(void*) vmmap.ka(), vmmap.size);
+            if (!child.pt.map(vmmap.va, vm.ka2pa(cast(uintptr) block_.get()), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
+                System.allocator.free_checkpoint();
+                return -1;
+            }
+        }
+        System.allocator.done_checkpoint();
+
         child.state = Proc.State.runnable;
+
+        memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);
+        child.trapframe.regs.x0 = 0;
+        child.trapframe.epc = p.trapframe.epc;
+        child.trapframe.p = child;
 
         return child.pid;
     }

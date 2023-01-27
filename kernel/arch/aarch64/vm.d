@@ -177,16 +177,6 @@ struct Pagetable {
         ptes[idx].index = System.mem_type(pa);
     }
 
-    Opt!(VaMapping) lookup(uintptr va) {
-        Pte.Pg pgtype;
-        auto pte_ = walk(va, pgtype);
-        if (!pte_.has() || pte_.get().leaf(pgtype)) {
-            return Opt!(VaMapping).none;
-        }
-        auto pte = pte_.get();
-        return Opt!(VaMapping)(VaMapping(va, pte.pa, pte.ap == Ap.urw));
-    }
-
     static size_t level2size(Pte.Pg type) {
         final switch (type) {
             case Pte.Pg.normal: return 4096;
