@@ -47,6 +47,7 @@ struct Csr {
     mixin(GenCsr!("sscratch"));
     mixin(GenCsr!("sstatus"));
     mixin(GenCsr!("scause"));
+    mixin(GenCsr!("scounteren"));
 
     mixin(GenCsr!("time"));
     mixin(GenCsr!("cycle"));

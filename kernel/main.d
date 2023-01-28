@@ -49,7 +49,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     Timer.delay_ms(100);
 
     for (int i = 0; i < 10; i++) {
-        /* arch.Debug.step_start(); */
+        arch.Debug.step_start();
         auto time = Timer.time_fn!(10)(() {
             static foreach (i; 1 .. 1000) {
                 asm {
@@ -57,7 +57,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
                 }
             }
         });
-        /* arch.Debug.step_stop(); */
+        arch.Debug.step_stop();
         io.writeln(time);
     }
 
@@ -79,12 +79,13 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         }
         SysReg.pmuserenr_el0 = 1;
     } else version (RISCV64) {
-        /* import kernel.arch.riscv64.csr; */
+        import kernel.arch.riscv64.csr;
         /* foreach (i; 0 .. 20) { */
         /*     __asm("ecall", "{a0},~{a1}", Csr.cycle); */
         /* } */
+        Csr.scounteren = 0b111;
     }
-    /* schedule(); */
+    schedule();
 }
 
 void enable_irq() {

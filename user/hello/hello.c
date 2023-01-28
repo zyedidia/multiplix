@@ -22,12 +22,13 @@ void nops(unsigned long n) {
 }
 
 int main() {
-    unsigned long count;
+    uintptr_t count;
     for (int i = 0; i < 10; i++) {
         /* asm volatile ("mrs %0, pmccntr_el0" : "=r"(count) : : "x0"); */
         /* syscall_0(count); */
-        asm volatile ("csrr %0, cycle" : "=r"(count));
-        syscall_0(count);
+        asm volatile (
+                "rdcycle a7\necall" ::: "a7");
+        /* syscall_0(count); */
     }
     exit();
 }
