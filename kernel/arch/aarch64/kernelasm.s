@@ -62,6 +62,7 @@ cur_el_sp0_serror:
 	b .
 .balign 0x80
 cur_el_spx_sync:
+	// mrs x1, pmccntr_el0
 	b exception_entry
 .balign 0x80
 cur_el_spx_irq:
@@ -74,6 +75,7 @@ cur_el_spx_serror:
 	b exception_entry
 .balign 0x80
 lower_el_aarch64_sync:
+	// mrs x0, pmccntr_el0
 	b uservec_exception
 .balign 0x80
 lower_el_aarch64_irq:

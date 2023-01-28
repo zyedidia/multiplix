@@ -13,18 +13,18 @@ import kernel.cpu;
 import io = ulib.io;
 import bits = ulib.bits;
 
-extern (C) void monitor_exception(Regs* regs) {
+extern (C) void monitor_exception(uint extid, uint fid, uintptr arg0) {
     const auto exc_class = bits.get(SysReg.esr_el2, 31, 26);
 
     switch (exc_class) {
         case Exception.hvc:
-            fwi_handler(regs);
+            fwi_handler(extid, fid, arg0);
             break;
         case Exception.brkpt:
-            ExtDebug.handle_breakpoint(SysReg.elr_el2, regs);
+            ExtDebug.handle_breakpoint(SysReg.elr_el2);
             break;
         case Exception.ss:
-            ExtDebug.handle_ss(SysReg.elr_el2, regs);
+            ExtDebug.handle_ss(SysReg.elr_el2);
             break;
         default:
             io.writeln("monitor_exception: core: ", cpuinfo.coreid, ", cause: ", exc_class, " elr: ", cast(void*) SysReg.elr_el2);

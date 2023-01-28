@@ -68,6 +68,7 @@ struct SysReg {
     mixin(GenSysReg!("pmccfiltr_el0"));
     mixin(GenSysReg!("pmcntenset_el0"));
     mixin(GenSysReg!("pmcr_el0"));
+    mixin(GenSysReg!("pmuserenr_el0"));
 
     mixin(GenSysReg!("daif"));
 

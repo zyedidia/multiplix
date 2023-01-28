@@ -48,13 +48,43 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     Timer.delay_ms(100);
 
-    foreach (vamap; ptable.procs[0].pt.range()) {
-        io.writeln(Hex(vamap.va), " ", Hex(vamap.pa), " ", vamap.user, " ", vamap.size);
+    for (int i = 0; i < 10; i++) {
+        /* arch.Debug.step_start(); */
+        auto time = Timer.time_fn!(10)(() {
+            static foreach (i; 1 .. 1000) {
+                asm {
+                    "nop";
+                }
+            }
+        });
+        /* arch.Debug.step_stop(); */
+        io.writeln(time);
     }
 
-    enable_irq();
+    for (int i = 0; i < 10; i++) {
+        io.writeln(Timer.time_fn!(10)(() {
+            static foreach (i; 1 .. 1000) {
+                asm {
+                    "nop";
+                }
+            }
+        }));
+    }
 
-    schedule();
+    import ldc.llvmasm;
+    version (AArch64) {
+        import kernel.arch.aarch64.sysreg;
+        foreach (i; 0 .. 20) {
+            __asm("svc 0", "{x0},~{x1}", SysReg.pmccntr_el0);
+        }
+        SysReg.pmuserenr_el0 = 1;
+    } else version (RISCV64) {
+        /* import kernel.arch.riscv64.csr; */
+        /* foreach (i; 0 .. 20) { */
+        /*     __asm("ecall", "{a0},~{a1}", Csr.cycle); */
+        /* } */
+    }
+    /* schedule(); */
 }
 
 void enable_irq() {

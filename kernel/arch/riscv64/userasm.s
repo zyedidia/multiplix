@@ -1,6 +1,7 @@
 .align 4
 .globl uservec
 uservec:
+	rdcycle a0
 	csrw sscratch, a0
 	li a0, 0x7ffef000
 

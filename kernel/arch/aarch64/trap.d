@@ -39,10 +39,11 @@ struct Trap {
 }
 
 extern (C) void kernel_exception(Regs* regs) {
+    io.writeln("pmccntr_el0: ", regs.x1 - regs.x0);
     const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
     io.writeln("elr: ", cast(void*) SysReg.elr_el1);
     io.writeln("kernel exception: ", cast(void*) exc_class);
-    assert(0, "unhandled kernel exception");
+    /* assert(0, "unhandled kernel exception"); */
 }
 
 extern (C) void kernel_interrupt(Regs* regs) {
@@ -73,6 +74,7 @@ extern (C) {
     }
 
     noreturn user_exception(Trapframe* tf) {
+        io.writeln("pmccntr_el0: ", tf.regs.x0 - tf.regs.x7);
         const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
         /* io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1); */
         /* io.writeln("far_el1: ", cast(void*) SysReg.far_el1); */

@@ -22,13 +22,12 @@ void nops(unsigned long n) {
 }
 
 int main() {
-    fork();
-    fork();
-    int pid = getpid();
+    unsigned long count;
     for (int i = 0; i < 10; i++) {
-        putc('0' + pid);
-        putc('\n');
-        nops(10000000 / 2);
+        /* asm volatile ("mrs %0, pmccntr_el0" : "=r"(count) : : "x0"); */
+        /* syscall_0(count); */
+        asm volatile ("csrr %0, cycle" : "=r"(count));
+        syscall_0(count);
     }
     exit();
 }

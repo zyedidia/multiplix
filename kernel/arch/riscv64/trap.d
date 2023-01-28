@@ -64,6 +64,8 @@ extern (C) {
     noreturn usertrap(Trapframe* tf) {
         uintptr scause = Csr.scause;
 
+        io.writeln("ecall cycles: ", tf.regs.a0 - tf.regs.a7);
+
         /* io.writeln("usertrap: scause: ", cast(void*) scause); */
 
         if (scause == Cause.ecall_u) {

@@ -7,22 +7,19 @@ import kernel.arch.aarch64.monitor.dbg;
 
 import fwi = kernel.arch.aarch64.fwi;
 
-alias Handler = bool function(uint, Regs*, uint*);
+alias Handler = bool function(uint, uintptr, uint*);
 
-void fwi_handler(Regs* regs) {
-    uint extid = cast(uint) regs.x7;
-    uint fid = cast(uint) regs.x6;
-
+void fwi_handler(uint extid, uint fid, uintptr arg0) {
     Handler handler = ext_handler(extid);
     if (!handler) {
-        regs.x0 = 1;
+        /* regs.x0 = 1; */
         return;
     }
 
     uint val = void;
-    bool ok = handler(fid, regs, &val);
-    regs.x0 = ok ? 0 : 1;
-    regs.x1 = val;
+    handler(fid, arg0, &val);
+    /* regs.x0 = ok ? 0 : 1; */
+    /* regs.x1 = val; */
 }
 
 Handler ext_handler(uint extid) {

@@ -8,7 +8,7 @@ import fwi = kernel.arch.aarch64.fwi;
 import bits = ulib.bits;
 
 struct ExtDebug {
-    static bool handler(uint fid, Regs* regs, uint* out_val) {
+    static bool handler(uint fid, uintptr arg0, uint* out_val) {
         switch (fid) {
             case fwi.Debug.Fid.step_start:
                 SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
@@ -16,7 +16,7 @@ struct ExtDebug {
                 break;
             case fwi.Debug.Fid.step_start_at:
                 SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
-                place_breakpoint(regs.x0);
+                place_breakpoint(arg0);
                 break;
             case fwi.Debug.Fid.step_stop:
                 clear_breakpoints();
@@ -28,12 +28,12 @@ struct ExtDebug {
         return true;
     }
 
-    static void handle_breakpoint(uintptr epc, Regs* regs) {
+    static void handle_breakpoint(uintptr epc) {
         clear_breakpoints();
         single_step();
     }
 
-    static void handle_ss(uintptr epc, Regs* regs) {
+    static void handle_ss(uintptr epc) {
         single_step();
     }
 

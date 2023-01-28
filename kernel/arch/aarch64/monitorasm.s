@@ -73,6 +73,9 @@ stp x14, x15, [sp, #112]
 stp x16, x17, [sp, #128]
 stp x18, x29, [sp, #144]
 stp x30, xzr, [sp, #160]
+mov x2, x0
+mov x0, x7
+mov x1, x6
 .endm
 
 .macro EPILOGUE
@@ -88,6 +91,58 @@ ldp x16, x17, [sp, #128]
 ldp x18, x29, [sp, #144]
 ldp x30, xzr, [sp, #160]
 add sp, sp, #192
+eret
+.endm
+
+.macro PROLOGUE_SIMD
+mov v0.d[0], x0
+mov v1.d[0], x1
+mov v2.d[0], x2
+mov v3.d[0], x3
+mov v4.d[0], x4
+mov v5.d[0], x5
+mov v6.d[0], x6
+mov v7.d[0], x7
+mov v8.d[0], x8
+mov v9.d[0], x9
+mov v10.d[0], x10
+mov v11.d[0], x11
+mov v12.d[0], x12
+mov v13.d[0], x13
+mov v14.d[0], x14
+mov v15.d[0], x15
+mov v16.d[0], x16
+mov v17.d[0], x17
+mov v18.d[0], x18
+mov v19.d[0], x29
+mov v20.d[0], x30
+mov x2, x0
+mov x0, x7
+mov x1, x6
+.endm
+
+.macro EPILOGUE_SIMD
+mov x0, v0.d[0]
+mov x1, v1.d[0]
+mov x2, v2.d[0]
+mov x3, v3.d[0]
+mov x4, v4.d[0]
+mov x5, v5.d[0]
+mov x6, v6.d[0]
+mov x7, v7.d[0]
+mov x8, v8.d[0]
+mov x9, v9.d[0]
+mov x10, v10.d[0]
+mov x11, v11.d[0]
+mov x12, v12.d[0]
+mov x13, v13.d[0]
+mov x14, v14.d[0]
+mov x15, v15.d[0]
+mov x16, v16.d[0]
+mov x17, v17.d[0]
+mov x18, v18.d[0]
+mov x29, v19.d[0]
+mov x30, v20.d[0]
 eret
 .endm
 
@@ -141,13 +196,11 @@ lower_el_aarch64_serror:
 	b .
 
 exception_entry:
-	PROLOGUE
-	mov x0, sp
+	PROLOGUE_SIMD
 	bl monitor_exception
-	EPILOGUE
+	EPILOGUE_SIMD
 
 interrupt_entry:
-	PROLOGUE
-	mov x0, sp
+	PROLOGUE_SIMD
 	bl monitor_interrupt
-	EPILOGUE
+	EPILOGUE_SIMD

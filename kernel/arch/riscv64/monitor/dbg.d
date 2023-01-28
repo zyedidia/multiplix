@@ -28,8 +28,8 @@ struct ExtDebug {
     }
 
     static void handle_breakpoint(uintptr epc, Regs* regs) {
-        import io = ulib.io;
-        io.writeln("reached breakpoint: ", cast(void*) epc);
+        /* import io = ulib.io; */
+        /* io.writeln("reached breakpoint: ", cast(void*) epc); */
         place_mismatch_breakpoint(epc);
     }
 
