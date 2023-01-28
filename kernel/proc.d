@@ -77,9 +77,6 @@ struct Proc {
             return false;
         }
         proc.trapframe = cast(Trapframe*) trapframe_.get();
-        import io = ulib.io;
-        io.writeln("trapframe: ", cast(void*) proc.trapframe);
-        io.writeln("proc: ", cast(void*) proc);
         // map stack/trapframe
         if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack_.get()), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
             System.allocator.free_checkpoint();
