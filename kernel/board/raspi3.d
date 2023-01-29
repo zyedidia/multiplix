@@ -4,7 +4,7 @@ import kernel.dev.uart.bcmmini;
 import kernel.dev.gpio.bcm;
 import kernel.dev.reboot.bcmreboot;
 import kernel.dev.timer.bcmcore;
-import kernel.dev.bcmmailbox;
+import kernel.dev.mailbox.bcmmailbox;
 
 import kernel.vm;
 import kernel.buddy;
