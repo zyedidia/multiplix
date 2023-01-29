@@ -4,6 +4,7 @@ import kernel.dev.uart.bcmmini;
 import kernel.dev.gpio.bcm;
 import kernel.dev.reboot.bcmreboot;
 import kernel.dev.timer.bcmcore;
+import kernel.dev.bcmmailbox;
 
 import kernel.vm;
 import kernel.buddy;
@@ -53,3 +54,4 @@ alias Uart = BcmMiniUart!(pa2kpa(System.device_base + 0x215000));
 alias Gpio = BcmGpio!(pa2kpa(System.device_base + 0x200000));
 alias Reboot = BcmReboot!(pa2kpa(System.device_base + 0x10001c), pa2kpa(System.device_base + 0x100024));
 alias CoreTimer = BcmCoreTimer!(pa2kpa(0xff80_0000));
+alias Mailbox = BcmMailbox!(pa2kpa(System.device_base + 0xb880));
