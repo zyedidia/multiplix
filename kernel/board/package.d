@@ -13,3 +13,11 @@ version (raspi3) {
 } else {
     static assert(0, "no supported board selected");
 }
+
+version (raspi3) {
+    enum raspi = true;
+} else version (raspi4) {
+    enum raspi = true;
+} else {
+    enum raspi = false;
+}
