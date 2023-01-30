@@ -3,7 +3,8 @@ module kernel.dev.emmc.bcmemmc.defs;
 import bits = ulib.bits;
 
 struct EmmcCommand {
-    uint data = 0xffff_ffff;
+    enum invalid = 0xffff_ffff;
+    uint data = invalid;
 
     // dfmt off
     mixin(bits.field!(data,
@@ -28,23 +29,18 @@ struct EmmcCommand {
         this.data = data;
     }
 
-    this(ubyte resp_a, ubyte block_count, ubyte auto_command, ubyte direction,
-         ubyte multiblock, ushort resp_b, ubyte response_type, ubyte res0, ubyte crc_enable,
-         ubyte idx_enable, ubyte is_data, ubyte type, ubyte index, ubyte res1) {
-        this.resp_a = resp_a;
+    this(ubyte block_count, ubyte auto_command, ubyte direction,
+         ubyte multiblock, ubyte response_type, ubyte crc_enable,
+         ubyte is_data, ubyte index) {
+        this.data = 0; // zero out unused fields
         this.block_count = block_count;
         this.auto_command = auto_command;
         this.direction = direction;
         this.multiblock = multiblock;
-        this.resp_b = resp_b;
         this.response_type = response_type;
-        this.res0 = res0;
         this.crc_enable = crc_enable;
-        this.idx_enable = idx_enable;
         this.is_data = is_data;
-        this.type = type;
         this.index = index;
-        this.res1 = res1;
     }
 }
 

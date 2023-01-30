@@ -5,6 +5,7 @@ import kernel.dev.gpio.bcm;
 import kernel.dev.reboot.bcmreboot;
 import kernel.dev.timer.bcmcore;
 import kernel.dev.mailbox.bcmmailbox;
+import kernel.dev.emmc.bcmemmc;
 
 import kernel.vm;
 import kernel.buddy;
@@ -55,3 +56,4 @@ alias Gpio = BcmGpio!(pa2kpa(System.device_base + 0x200000));
 alias Reboot = BcmReboot!(pa2kpa(System.device_base + 0x10001c), pa2kpa(System.device_base + 0x100024));
 alias CoreTimer = BcmCoreTimer!(pa2kpa(0xff80_0000));
 alias Mailbox = BcmMailbox!(pa2kpa(System.device_base + 0xb880));
+alias Emmc = BcmEmmc!(pa2kpa(System.device_base + 0x00340000));

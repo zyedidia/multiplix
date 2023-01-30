@@ -52,10 +52,10 @@ struct VaMapping {
         this.va = va;
         this.pa = pte.pa();
         this.size = size;
-        this.read = pte.read();
-        this.write = pte.write();
-        this.exec = pte.exec();
-        this.user = pte.user();
+        this.read = pte.read() != 0;
+        this.write = pte.write() != 0;
+        this.exec = pte.exec() != 0;
+        this.user = pte.user() != 0;
     }
 
     uintptr ka() {

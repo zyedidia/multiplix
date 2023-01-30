@@ -75,6 +75,10 @@ version (LDC) {
     size_t msb(ulong x) {
         return cast(size_t)(x ? x.sizeof * 8 - llvm_ctlz!ulong(x, true) : 0);
     }
+
+    T bswap(T)(T val) {
+        return llvm_bswap!T(val);
+    }
 }
 
 template field(alias data, args...) {

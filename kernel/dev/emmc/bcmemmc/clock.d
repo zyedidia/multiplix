@@ -3,9 +3,6 @@ module kernel.dev.emmc.bcmemmc.clock;
 import kernel.dev.emmc.bcmemmc.ctrl;
 import kernel.dev.emmc.bcmemmc.defs;
 
-import kernel.board;
-import kernel.timer;
-
 import io = ulib.io;
 
 uint get_clock_divider(uint base_clock, uint target_rate) {
@@ -57,56 +54,3 @@ uint get_clock_divider(uint base_clock, uint target_rate) {
 
     return ret;
 }
-
-bool switch_clock_rate(Emmc)(uint base_clock, uint target_rate) {
-    uint divider = get_clock_divider(base_clock, target_rate);
-
-    while ((Emmc.status & (Status.cmd_inhibit | Status.dat_inhibit))) {
-        Timer.delay_ms(1);
-    }
-
-    uint c1 = Emmc.control[1] & ~Ctrl1.clk_enable;
-
-    Emmc.control[1] = c1;
-
-    Timer.delay_ms(3);
-
-    Emmc.control[1] = (c1 | divider) & ~0xFFE0;
-
-    Timer.delay_ms(3);
-
-    Emmc.control[1] = c1 | Ctrl1.clk_enable;
-
-    Timer.delay_ms(3);
-
-    return true;
-}
-
-bool emmc_setup_clock(Emmc)() {
-    Emmc.control2 = 0;
-
-    uint rate = Mailbox.get_clock_rate(Mailbox.ClockType.emmc);
-
-    uint n = Emmc.control[1];
-    n |= Ctrl1.clk_int_en;
-    n |= get_clock_divider(rate, Sd.clock_id);
-    n &= ~(0xf << 16);
-    n |= (11 << 16);
-
-    Emmc.control[1] = n;
-
-    if (!wait_reg_mask(&Emmc.control[1], Ctrl1.clk_stable, true, 2000)) {
-        io.writeln("EMMC_ERR: SD CLOCK NOT STABLE\n");
-        return false;
-    }
-
-    Timer.delay_ms(30);
-
-    //enabling the clock
-    Emmc.control[1] |= 4;
-
-    Timer.delay_ms(30);
-
-    return true;
-}
-
