@@ -46,14 +46,14 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         return;
     }
 
+    Timer.delay_ms(100);
+
     static if (raspi) {
         // raise clock speed to max
         uint max_clock = Mailbox.get_max_clock_rate(Mailbox.ClockType.arm);
         Mailbox.set_clock_rate(Mailbox.ClockType.arm, max_clock, false);
         io.writeln("arm clock: ", Mailbox.get_clock_rate(Mailbox.ClockType.arm), " Hz");
     }
-
-    Timer.delay_ms(100);
 
     foreach (vamap; ptable.procs[0].pt.range()) {
         io.writeln(Hex(vamap.va), " ", Hex(vamap.pa), " ", vamap.user, " ", vamap.size);

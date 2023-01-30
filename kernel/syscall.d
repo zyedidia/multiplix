@@ -1,5 +1,7 @@
 module kernel.syscall;
 
+import core.sync;
+
 import kernel.proc;
 import kernel.timer;
 import kernel.schedule;
@@ -117,6 +119,8 @@ struct Syscall {
                 System.allocator.free_checkpoint();
                 return -1;
             }
+            // TODO: only sync ID cache for executable pages
+            sync_idmem(cast(ubyte*) block_.get(), vmmap.size);
         }
         System.allocator.done_checkpoint();
 
