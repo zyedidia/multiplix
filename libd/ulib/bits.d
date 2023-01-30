@@ -121,7 +121,7 @@ template bitmask(long size) {
 
 template targetType(long size) {
     static if (size == 1)
-        enum targetType = "bool";
+        enum targetType = "ubyte";
     else static if (size <= 8)
         enum targetType = "ubyte";
     else static if (size <= 16)
