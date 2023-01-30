@@ -1,4 +1,4 @@
-module kernel.dev.emmc.bcmemmc.defs;
+module kernel.dev.emmc.bcm.defs;
 
 import bits = ulib.bits;
 

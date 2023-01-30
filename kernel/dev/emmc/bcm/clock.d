@@ -1,7 +1,7 @@
-module kernel.dev.emmc.bcmemmc.clock;
+module kernel.dev.emmc.bcm.clock;
 
-import kernel.dev.emmc.bcmemmc.ctrl;
-import kernel.dev.emmc.bcmemmc.defs;
+import kernel.dev.emmc.bcm.ctrl;
+import kernel.dev.emmc.bcm.defs;
 
 import io = ulib.io;
 

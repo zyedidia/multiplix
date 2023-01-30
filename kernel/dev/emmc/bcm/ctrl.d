@@ -1,9 +1,9 @@
-module kernel.dev.emmc.bcmemmc.ctrl;
+module kernel.dev.emmc.bcm.ctrl;
 
 import core.volatile;
 
-import kernel.dev.emmc.bcmemmc.defs;
-import kernel.dev.emmc.bcmemmc.clock;
+import kernel.dev.emmc.bcm.defs;
+import kernel.dev.emmc.bcm.clock;
 
 import kernel.board;
 import kernel.timer;

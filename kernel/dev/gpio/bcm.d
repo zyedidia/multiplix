@@ -27,8 +27,6 @@ struct BcmGpio(uintptr base) {
     enum lev = cast(uint*)(base + 0x34);
 
     static void set_func(uint pin, FuncType fn) {
-        if (pin >= 32)
-            return;
         uint off = (pin % 10) * 3;
         uint idx = pin / 10;
 
@@ -47,21 +45,14 @@ struct BcmGpio(uintptr base) {
     }
 
     static void set_on(uint pin) {
-        if (pin >= 32)
-            return;
         volatile_st(set, 1 << pin);
     }
 
     static void set_off(uint pin) {
-        if (pin >= 32)
-            return;
         volatile_st(clr, 1 << pin);
     }
 
     static bool read(uint pin) {
-        if (pin >= 32)
-            return false;
         return (volatile_ld(lev) >> pin) & 1;
     }
-
 }
