@@ -46,6 +46,8 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         return;
     }
 
+    Timer.delay_ms(100);
+
     static if (raspi) {
         // raise clock speed to max
         uint max_clock = Mailbox.get_max_clock_rate(Mailbox.ClockType.arm);
@@ -55,13 +57,34 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     Timer.delay_ms(100);
 
-    foreach (vamap; ptable.procs[0].pt.range()) {
-        io.writeln(Hex(vamap.va), " ", Hex(vamap.pa), " ", vamap.user, " ", vamap.size);
+    arch.Trap.enable();
+    CoreTimer.enable_pmu_irq();
+
+    import kernel.arch.aarch64.sysreg;
+    SysReg.pmintenset_el1 = 1;
+
+    // interrupt in 100 instructions
+    SysReg.pmevtyper0_el0 = 0x8;
+    SysReg.pmevcntr0_el0 = uint.max - 99;
+    SysReg.pmcntenset_el0 = SysReg.pmcntenset_el0 | (1);
+    auto start = SysReg.pmevcntr0_el0;
+    static foreach (i; 0 .. 200) {
+        asm {
+            "nop";
+        }
     }
+    auto end = SysReg.pmevcntr0_el0;
+    io.writeln("instructions: ", end - start);
 
-    enable_irq();
+    Reboot.shutdown();
 
-    schedule();
+    /* foreach (vamap; ptable.procs[0].pt.range()) { */
+    /*     io.writeln(Hex(vamap.va), " ", Hex(vamap.pa), " ", vamap.user, " ", vamap.size); */
+    /* } */
+    /*  */
+    /* enable_irq(); */
+    /*  */
+    /* schedule(); */
 }
 
 void enable_irq() {

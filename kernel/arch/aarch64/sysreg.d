@@ -60,6 +60,8 @@ struct SysReg {
     mixin(GenSysReg!("dbgbcr0_el1"));
     mixin(GenSysReg!("dbgbvr0_el1"));
 
+    mixin(GenSysReg!("pmintenset_el1"));
+
     mixin(GenSysReg!("cntfrq_el0"));
     mixin(GenSysRegRdOnly!("cntpct_el0"));
     mixin(GenSysReg!("cntp_ctl_el0"));
@@ -68,6 +70,8 @@ struct SysReg {
     mixin(GenSysReg!("pmccfiltr_el0"));
     mixin(GenSysReg!("pmcntenset_el0"));
     mixin(GenSysReg!("pmcr_el0"));
+    mixin(GenSysReg!("pmevcntr0_el0"));
+    mixin(GenSysReg!("pmevtyper0_el0"));
 
     mixin(GenSysReg!("daif"));
 

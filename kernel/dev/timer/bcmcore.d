@@ -12,6 +12,12 @@ struct BcmCoreTimer(uintptr base) {
         device_fence();
     }
 
+    static void enable_pmu_irq() {
+        device_fence();
+        volatile_st(cast(uint*) (base + 0x10), 1);
+        device_fence();
+    }
+
     static ulong time() {
         device_fence();
         uint ls32 = volatile_ld(cast(uint*) (base + 0x1C));

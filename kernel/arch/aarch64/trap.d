@@ -47,7 +47,7 @@ extern (C) void kernel_exception(Regs* regs) {
 
 extern (C) void kernel_interrupt(Regs* regs) {
     import kernel.cpu;
-    io.writeln("core: ", cpuinfo.coreid, ", kernel interrupt");
+    io.writeln("core: ", cpuinfo.coreid, ", kernel interrupt", " elr: ", cast(void*) SysReg.elr_el1);
     Timer.intr();
 }
 
