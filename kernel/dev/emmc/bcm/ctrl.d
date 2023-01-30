@@ -43,7 +43,7 @@ immutable EmmcCommand[] commands = [
 
 struct BcmEmmc(uintptr base) {
     enum EmmcRegs* regs = cast(EmmcRegs*) base;
-    static __gshared EmmcDevice device;
+    __gshared EmmcDevice device;
 
     private static uint sd_error_mask(SdError err) {
         return 1 << (16 + cast(uint) err);
