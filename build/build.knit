@@ -118,7 +118,7 @@ function build.flags(machine, lto, release, monitor)
     }
 
     return {
-        dc := -betterC $flto -gc -Oz -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt $version -J. -fvisibility=hidden
+        dc := -betterC $flto -g -Oz -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt $version -J. -fvisibility=hidden
         cc := -Os $(flags.gnu)
         as := -Os $(flags.gnu) -xassembler-with-cpp
         ld := $ltoflags --gc-sections

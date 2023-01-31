@@ -82,7 +82,4 @@ extern (C) {
     void ulib_tx(ubyte c) {
         Uart.tx(c);
     }
-
-    void ulib_exit() {
-    }
 }

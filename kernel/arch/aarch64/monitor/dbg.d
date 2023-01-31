@@ -1,4 +1,4 @@
-module kernel.arch.aarch64.dbg;
+module kernel.arch.aarch64.monitor.dbg;
 
 import kernel.arch.aarch64.regs;
 import kernel.arch.aarch64.sysreg;
