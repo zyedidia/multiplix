@@ -48,3 +48,5 @@ version (LDC) {
 struct Hex {
     uintptr p;
 }
+
+public import core.exception : panic;
