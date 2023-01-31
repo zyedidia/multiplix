@@ -16,6 +16,7 @@ import io = ulib.io;
 struct RunQ {
     uint runpid = -1;
     Vector!(Proc) runnable;
+    Vector!(Proc) blocked;
 
     size_t length() {
         return runnable.length;
@@ -38,11 +39,40 @@ struct RunQ {
         return Proc.make(p_.get(), binary);
     }
 
-    void exit(size_t idx) {
-        runnable[idx] = runnable[runnable.length - 1];
-        runnable[idx].slot = idx;
-        runnable[idx].update_trapframe();
+    void unblock(size_t slot) {
+        auto p = remove_blocked(slot);
+        runnable.append(p);
+        runnable[runnable.length - 1].slot = runnable.length - 1;
+        runnable[runnable.length - 1].update_trapframe();
+    }
+
+    void block(size_t slot) {
+        auto p = remove_runnable(slot);
+        blocked.append(p);
+        blocked[blocked.length - 1].slot = blocked.length - 1;
+        blocked[blocked.length - 1].update_trapframe();
+    }
+
+    void exit(size_t slot) {
+        remove_runnable(slot);
+    }
+
+    private Proc remove_blocked(size_t slot) {
+        auto p = blocked[slot];
+        blocked[slot] = blocked[blocked.length - 1];
+        blocked[slot].slot = slot;
+        blocked[slot].update_trapframe();
+        blocked.length--;
+        return p;
+    }
+
+    private Proc remove_runnable(size_t slot) {
+        auto p = runnable[slot];
+        runnable[slot] = runnable[runnable.length - 1];
+        runnable[slot].slot = slot;
+        runnable[slot].update_trapframe();
         runnable.length--;
+        return p;
     }
 
     // Returns the next process to run, or none if there are no runnable processes.
