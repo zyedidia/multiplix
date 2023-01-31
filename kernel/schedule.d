@@ -2,48 +2,32 @@ module kernel.schedule;
 
 import kernel.proc;
 import kernel.spinlock;
+import kernel.board;
+import kernel.cpu;
 
 import arch = kernel.arch;
 
 import ulib.option;
+import ulib.vector;
+import rand = ulib.rand;
 
 import io = ulib.io;
 
-__gshared ProcTable!(10) ptable;
-Opt!(Proc*) curproc;
-
-struct ProcTable(uint size) {
-    Proc[size] procs;
-    Sched[size] sched;
-
-    // protects sched
-    shared Spinlock sched_lock;
-
-    struct Sched {
-        ulong priority;
-    }
+struct RunQ {
+    uint runpid = -1;
+    Vector!(Proc) runnable;
 
     size_t length() {
-        size_t len = 0;
-        foreach (p; procs) {
-            p.lock();
-            len += p.state != Proc.State.free;
-            p.unlock();
-        }
-        return len;
+        return runnable.length;
     }
 
     Opt!(Proc*) next() {
-        // TODO: concurrency bug here
-        for (uint i = 0; i < size; i++) {
-            procs[i].lock();
-            scope(exit) procs[i].unlock();
-            if (procs[i].state == Proc.State.free) {
-                procs[i].pid = i;
-                return Opt!(Proc*)(&procs[i]);
-            }
+        if (!runnable.append(Proc())) {
+            return Opt!(Proc*).none;
         }
-        return Opt!(Proc*).none;
+        Proc* p = &runnable[runnable.length - 1];
+        p.slot = runnable.length - 1;
+        return Opt!(Proc*)(&runnable[runnable.length - 1]);
     }
 
     bool start(immutable ubyte[] binary) {
@@ -51,69 +35,49 @@ struct ProcTable(uint size) {
         if (!p_.has()) {
             return false;
         }
-        auto p = p_.get();
-        p.lock();
-        scope(exit) p.unlock();
-        return Proc.make(p, binary);
+        return Proc.make(p_.get(), binary);
     }
 
-    void free(uint pid) {
-        procs[pid].lock();
-        scope(exit) procs[pid].unlock();
-
-        procs[pid].state = Proc.State.free;
+    void exit(size_t idx) {
+        runnable[idx] = runnable[runnable.length - 1];
+        runnable[idx].slot = idx;
+        runnable[idx].update_trapframe();
+        runnable.length--;
     }
 
+    // Returns the next process to run, or none if there are no runnable processes.
     Opt!(Proc*) schedule() {
-        // TODO: fix this scheduler it is awful
-        sched_lock.lock();
-        scope(exit) sched_lock.unlock();
-
-        ulong min = ulong.max;
-        Opt!uint imin = Opt!uint.none;
-        for (uint i = 0; i < size; i++) {
-            procs[i].lock();
-            scope(exit) procs[i].unlock();
-            if (sched[i].priority <= min && (procs[i].state == Proc.State.runnable || procs[i].state == Proc.State.running)) {
-                imin = Opt!uint(i);
-                min = sched[i].priority;
-            }
-        }
-
-        if (!imin.has()) {
+        if (runnable.length <= 0) {
             return Opt!(Proc*).none;
         }
-
-        io.writeln("scheduling process ", imin.get());
-
-        sched[imin.get()].priority++;
-        return Opt!(Proc*)(&procs[imin.get()]);
+        uint choice = rand.gen_uint() % runnable.length;
+        return Opt!(Proc*)(&runnable[choice]);
     }
 }
 
-noreturn schedule() {
-    Opt!(Proc*) p_;
-    while (!p_.has()) {
-        p_ = ptable.schedule();
+struct GlobalRunQ {
+    shared RunQ[System.ncores] queues;
+
+    RunQ* queue() shared return {
+        return cast(RunQ*) &queues[cpuinfo.coreid];
     }
-    auto p = p_.get();
 
-    if (curproc.has() && curproc.get() == p) {
-        arch.usertrapret(p, false);
+    alias queue this;
+}
+
+shared GlobalRunQ runq;
+
+noreturn schedule() {
+    Opt!(Proc*) p;
+    while (!p.has()) {
+        p = runq.schedule();
+    }
+
+    if (runq.runpid != -1 && runq.runpid == p.get().pid) {
+        // continue running the same process
+        arch.usertrapret(p.get(), false);
     } else {
-        ptable.sched_lock.lock();
-        if (curproc.has()) {
-            curproc.get().lock();
-            curproc.get().state = Proc.State.runnable;
-            curproc.get().unlock();
-        }
-
-        p.lock();
-        p.state = Proc.State.running;
-        p.unlock();
-
-        curproc = Opt!(Proc*)(p);
-        ptable.sched_lock.unlock();
-        arch.usertrapret(p, true);
+        runq.runpid = p.get().pid;
+        arch.usertrapret(p.get(), true);
     }
 }

@@ -54,33 +54,22 @@ struct Syscall {
 
     enum n_exit = 2;
     static noreturn exit(Proc* p) {
-        p.lock();
         // TODO: free the process
-        p.state = Proc.State.free;
-        io.writeln("process ", p.pid, " exited");
-        ptable.sched_lock.lock();
-        curproc = Opt!(Proc*).none;
-        ptable.sched_lock.unlock();
-        p.unlock();
+        io.writeln("process ", p.pid, " exited ", p.slot);
 
-        if (ptable.length == 0) {
-            // TODO: we are shutting down the machine automatically when the last process exits
-            import kernel.board;
-            Reboot.shutdown();
-        }
+        // remove p from runnable
+        runq.exit(p.slot);
 
         schedule();
     }
 
     enum n_fork = 3;
     static int fork(Proc* p) {
-        auto child_ = ptable.next();
+        auto child_ = runq.queue().next();
         if (!child_.has()) {
             return -1;
         }
         auto child = child_.get();
-        child.lock();
-        scope(exit) child.unlock();
 
         System.allocator.checkpoint();
         // kalloc a pagetable
@@ -100,7 +89,7 @@ struct Syscall {
         child.trapframe = cast(Trapframe*) trapframe_.get();
         if (!child.pt.map(Proc.trapframeva, vm.ka2pa(cast(uintptr) child.trapframe), Pte.Pg.normal, Perm.krwx, &System.allocator)) {
             System.allocator.free_checkpoint();
-            return false;
+            return -1;
         }
 
         assert(kernel_map(child.pt));
@@ -124,8 +113,6 @@ struct Syscall {
         }
         System.allocator.done_checkpoint();
 
-        child.state = Proc.State.runnable;
-
         memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);
         version (RISCV64) {
             child.trapframe.regs.a0 = 0;
@@ -134,7 +121,9 @@ struct Syscall {
         }
 
         child.trapframe.epc = p.trapframe.epc;
-        child.trapframe.p = child;
+        child.update_trapframe();
+
+        child.pid = atomic_rmw_add(&nextpid, 1);
 
         return child.pid;
     }

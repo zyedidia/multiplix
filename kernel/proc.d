@@ -14,32 +14,17 @@ import elf = kernel.elf;
 import ulib.option;
 import ulib.memory;
 
+shared uint nextpid = 0;
+
 struct Proc {
     enum stackva = 0x7fff0000;
     enum trapframeva = stackva - sys.pagesize;
 
-    enum State {
-        free = 0,
-        runnable,
-        running,
-    }
-
     Trapframe* trapframe;
 
-    // protects the following fields (not trapframe)
-    private shared Spinlock _lock;
-
-    uint pid;
+    uint pid = -1;
+    size_t slot;
     Pagetable* pt;
-    State state;
-
-    void lock() {
-        this._lock.lock();
-    }
-
-    void unlock() {
-        this._lock.unlock();
-    }
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // Checkpoint so we can free all memory if there is a failure.
@@ -92,10 +77,14 @@ struct Proc {
         memset(&proc.trapframe.regs, 0, Regs.sizeof);
         proc.trapframe.regs.sp = stackva + sys.pagesize;
         proc.trapframe.epc = entryva;
-        proc.trapframe.p = proc;
+        proc.update_trapframe();
 
-        proc.state = State.runnable;
+        proc.pid = atomic_rmw_add(&nextpid, 1);
 
         return true;
+    }
+
+    void update_trapframe() {
+        this.trapframe.p = &this;
     }
 }

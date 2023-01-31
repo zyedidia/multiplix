@@ -26,7 +26,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         System.allocator.construct(cast(uintptr) heap);
 
-        if (!ptable.start(hello_elf)) {
+        if (!runq.start(hello_elf)) {
             io.writeln("could not initialize process 0");
             return;
         }
@@ -55,21 +55,17 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         io.writeln("arm clock: ", Mailbox.get_clock_rate(Mailbox.ClockType.arm), " Hz");
     }
 
-    static if (is(typeof(Emmc.setup))) {
-        assert(Emmc.setup());
-        ubyte[512] sector;
-        for (int i = 0; i < 10; i++) {
-            auto start = arch.Timer.cycles();
-            Emmc.read(sector.ptr, sector.length);
-            auto end = arch.Timer.cycles();
-            io.writeln(end - start);
-        }
-        io.writeln(cast(void*) sector[510], cast(void*) sector[511]);
-    }
-
-    foreach (vamap; ptable.procs[0].pt.range()) {
-        io.writeln(Hex(vamap.va), " ", Hex(vamap.pa), " ", vamap.user, " ", vamap.size);
-    }
+    /* static if (is(typeof(Emmc.setup))) { */
+    /*     assert(Emmc.setup()); */
+    /*     ubyte[512] sector; */
+    /*     for (int i = 0; i < 10; i++) { */
+    /*         auto start = arch.Timer.cycles(); */
+    /*         Emmc.read(sector.ptr, sector.length); */
+    /*         auto end = arch.Timer.cycles(); */
+    /*         io.writeln(end - start); */
+    /*     } */
+    /*     io.writeln(cast(void*) sector[510], cast(void*) sector[511]); */
+    /* } */
 
     enable_irq();
 

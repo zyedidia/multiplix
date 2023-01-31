@@ -7,7 +7,7 @@ struct Vector(T) {
     T[] data;
     size_t length;
 
-    T opIndex(size_t i) {
+    ref T opIndex(size_t i) {
         assert(i < length, "vector index out of bounds");
         return data[i];
     }
