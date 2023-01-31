@@ -3,11 +3,11 @@ module kernel.dev.reboot.unsupported;
 import core.exception;
 
 struct Unsupported {
-    static void shutdown() {
+    static noreturn shutdown() {
         panic("reboot not supported");
     }
 
-    static void reboot() {
+    static noreturn reboot() {
         shutdown();
     }
 }

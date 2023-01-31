@@ -5,11 +5,11 @@ import core.sync;
 import kernel.board;
 
 struct BcmReboot(uintptr pm_rstc, uintptr pm_wdog) {
-    static void shutdown() {
+    static noreturn shutdown() {
         reboot();
     }
 
-    static void reboot() {
+    static noreturn reboot() {
         Uart.tx_flush();
         device_fence();
 
