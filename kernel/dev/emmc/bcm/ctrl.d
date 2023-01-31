@@ -68,7 +68,7 @@ struct BcmEmmc(uintptr base) {
         uint* data = cast(uint*) device.buffer;
 
         for (int block = 0; block < device.transfer_blocks; block++) {
-            wait_reg_mask(&regs.int_flags, wrIrpt | 0x8000, true, 2000);
+            assert(wait_reg_mask(&regs.int_flags, wrIrpt | 0x8000, true, 2000));
             uint intr_val = volatile_ld(&regs.int_flags);
             volatile_st(&regs.int_flags, wrIrpt | 0x8000);
 
@@ -163,7 +163,7 @@ struct BcmEmmc(uintptr base) {
         }
 
         if (cmd.response_type == RT.r48busy || cmd.is_data) {
-            wait_reg_mask(&regs.int_flags, 0x8002, true, 2000);
+            assert(wait_reg_mask(&regs.int_flags, 0x8002, true, 2000));
             intr_val = volatile_ld(&regs.int_flags);
 
             volatile_st(&regs.int_flags, 0xFFFF0002);

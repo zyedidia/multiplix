@@ -48,7 +48,7 @@ struct RunQ {
     }
 
     void exit(size_t slot) {
-        remove!(runnable)(slot);
+        cast(void) remove!(runnable)(slot);
     }
 
     // Moves the process in from[slot] into to.
