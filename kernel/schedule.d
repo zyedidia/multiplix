@@ -16,7 +16,7 @@ import io = ulib.io;
 struct RunQ {
     uint runpid = -1;
     Vector!(Proc) runnable;
-    Vector!(Proc) blocked;
+    Vector!(Proc) waiting;
 
     size_t length() {
         return runnable.length;
@@ -39,39 +39,40 @@ struct RunQ {
         return Proc.make(p_.get(), binary);
     }
 
-    void unblock(size_t slot) {
-        auto p = remove_blocked(slot);
-        runnable.append(p);
-        runnable[runnable.length - 1].slot = runnable.length - 1;
-        runnable[runnable.length - 1].update_trapframe();
+    bool wait(size_t slot) {
+        return move!(waiting, runnable)(slot);
     }
 
-    void block(size_t slot) {
-        auto p = remove_runnable(slot);
-        blocked.append(p);
-        blocked[blocked.length - 1].slot = blocked.length - 1;
-        blocked[blocked.length - 1].update_trapframe();
+    bool done_wait(size_t slot) {
+        return move!(runnable, waiting)(slot);
     }
 
     void exit(size_t slot) {
-        remove_runnable(slot);
+        remove!(runnable)(slot);
     }
 
-    private Proc remove_blocked(size_t slot) {
-        auto p = blocked[slot];
-        blocked[slot] = blocked[blocked.length - 1];
-        blocked[slot].slot = slot;
-        blocked[slot].update_trapframe();
-        blocked.length--;
-        return p;
+    // Moves the process in from[slot] into to.
+    bool move(alias Vector!(Proc) to, alias Vector!(Proc) from)(size_t slot) {
+        return append!(to)(remove!(from)(slot));
     }
 
-    private Proc remove_runnable(size_t slot) {
-        auto p = runnable[slot];
-        runnable[slot] = runnable[runnable.length - 1];
-        runnable[slot].slot = slot;
-        runnable[slot].update_trapframe();
-        runnable.length--;
+    // Appends p to vec.
+    private bool append(alias Vector!(Proc) vec)(Proc p) {
+        if (!vec.append(p)) {
+            return false;
+        }
+        vec[vec.length - 1].slot = vec.length - 1;
+        vec[vec.length - 1].update_trapframe();
+        return true;
+    }
+
+    // Removes vec[slot].
+    Proc remove(alias Vector!(Proc) vec)(size_t slot) {
+        auto p = vec[slot];
+        vec[slot] = vec[vec.length - 1];
+        vec[slot].slot = slot;
+        vec[slot].update_trapframe();
+        vec.length--;
         return p;
     }
 

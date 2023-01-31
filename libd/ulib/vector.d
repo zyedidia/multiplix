@@ -63,7 +63,7 @@ struct Vector(T) {
             return i >= vec.length;
         }
 
-        T front() {
+        ref T front() {
             return vec[i];
         }
 

@@ -46,6 +46,7 @@ static inline uintptr_t syscall_2(int symno, uintptr_t arg0, uintptr_t arg1) {
 #define SYS_GETPID 1
 #define SYS_EXIT 2
 #define SYS_FORK 3
+#define SYS_WAIT 4
 
 static inline int getpid() {
     return syscall_0(SYS_GETPID);
@@ -61,4 +62,8 @@ static inline void exit() {
 
 static inline int fork() {
     return syscall_0(SYS_FORK);
+}
+
+static inline int wait(int pid) {
+    return syscall_0(SYS_WAIT);
 }

@@ -22,10 +22,13 @@ void nops(unsigned long n) {
 }
 
 int main() {
+    int child = fork();
     fork();
-    fork();
+    if (child != 0) {
+        wait(child);
+    }
     int pid = getpid();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 40; i++) {
         putc('0' + pid);
         putc('\n');
         nops(10000000 / 2);

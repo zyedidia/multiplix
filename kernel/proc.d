@@ -13,8 +13,9 @@ import elf = kernel.elf;
 
 import ulib.option;
 import ulib.memory;
+import ulib.vector;
 
-shared uint nextpid = 0;
+shared int nextpid = 0;
 
 struct Proc {
     enum stackva = 0x7fff0000;
@@ -22,9 +23,10 @@ struct Proc {
 
     Trapframe* trapframe;
 
-    uint pid = -1;
+    int pid = -1;
     size_t slot;
     Pagetable* pt;
+    Vector!(int) waiters;
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // Checkpoint so we can free all memory if there is a failure.
