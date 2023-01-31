@@ -3,7 +3,7 @@ module core.exception;
 import io = ulib.io;
 import sys = ulib.sys;
 
-void panic(Args...)(Args msg) {
+noreturn panic(Args...)(Args msg) {
     io.writeln("panic: ", msg);
     while (1) {}
 }
