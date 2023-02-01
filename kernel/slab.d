@@ -11,6 +11,7 @@ import bits = ulib.bits;
 
 struct SlabAllocator {
     enum slabsize = sys.pagesize;
+    static assert(slabsize >= sys.pagesize && slabsize % sys.pagesize == 0);
 
     // free list
     struct Free {
@@ -18,11 +19,10 @@ struct SlabAllocator {
     }
 
     struct Header {
-        // id of the type
-        immutable(char)* tid;
         // head of free list
         Free* free_head;
         ulong alloc_slots;
+        ulong total_slots;
         ulong slab_idx;
 
         T* allocate(T)() {
@@ -36,11 +36,17 @@ struct SlabAllocator {
         }
     }
 
-    Vector!(Header*) slabs;
+    template slabs(T) {
+        Vector!(Header*) slabs;
+    }
 
     Opt!(T*) kalloc(T, Args...)(Args args) {
-        foreach (slab; slabs) {
-            if (T.mangleof.ptr == slab.tid && slab.free_head != null) {
+        // find a slab for this type that has space.
+        // TODO: we probably want to have a free list of slabs so that we don't
+        // end up iterating over all slabs in the worst case.
+        for (long i = slabs!T.length - 1; i >= 0; i--) {
+            auto slab = slabs!T[i];
+            if (slab.free_head != null) {
                 // have a slab for this type which is not full
                 return Opt!(T*)(slab.allocate!(T)());
             }
@@ -80,18 +86,18 @@ struct SlabAllocator {
 
     private Header* make_slab(T)() {
         // need enough room to store the free next node in the data slot
-        static assert(T.sizeof >= Free.sizeof);
+        static assert(T.sizeof >= Free.sizeof, "slab element is too small");
 
         auto slab_ = alloc.kalloc_block(slabsize);
         if (!slab_.has()) {
             return null;
         }
         Header* slab = cast(Header*) slab_.get();
-        slab.tid = T.mangleof.ptr;
         size_t nelem = (slabsize - Header.sizeof) / T.sizeof;
         T[] data = (cast(T*) (slab + 1))[0 .. nelem];
         slab.free_head = cast(Free*) &data[0];
         slab.alloc_slots = 0;
+        slab.total_slots = nelem;
 
         // set up free list
         for (size_t i = 0; i < data.length - 1; i++) {
@@ -100,8 +106,8 @@ struct SlabAllocator {
         }
         (cast(Free*) &data[data.length - 1]).next = null;
 
-        slab.slab_idx = slabs.length;
-        slabs.append(slab);
+        slab.slab_idx = slabs!T.length;
+        slabs!T.append(slab);
 
         return slab;
     }
