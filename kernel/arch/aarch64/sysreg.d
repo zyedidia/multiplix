@@ -3,19 +3,19 @@ module kernel.arch.aarch64.sysreg;
 // dfmt off
 const char[] GenSysReg(string name) = GenSysRegRdOnly!(name) ~ GenSysRegWrOnly!(name);
 const char[] GenSysRegRdOnly(string name) =
-`static uintptr ` ~ name ~ `() {
+`static alias ` ~ name ~ ` = () {
     uintptr val;
     asm {
         "mrs %0, ` ~ name ~ `" : "=r"(val);
     }
     return val;
-}`;
+};`;
 const char[] GenSysRegWrOnly(string name) =
-`static void ` ~ name ~ `(uintptr v) {
+`static alias ` ~ name ~ ` = (uintptr v) {
     asm {
         "msr ` ~ name ~ `, %0" : : "r"(v);
     }
-}`;
+};`;
 // dfmt on
 
 struct SysReg {

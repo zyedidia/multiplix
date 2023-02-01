@@ -2,18 +2,18 @@ module kernel.arch.riscv64.csr;
 
 // dfmt off
 const char[] GenCsr(string name) =
-`static uintptr ` ~ name ~ `() {
+`static alias ` ~ name ~ ` = () {
     uintptr r;
     asm {
         "csrr %0, ` ~ name ~ `" : "=r"(r);
     }
     return r;
-}
-static void ` ~ name ~ `(uintptr v) {
+};
+static alias ` ~ name ~ ` = (uintptr v) {
     asm {
         "csrw ` ~ name ~ `, %0" :: "r"(v);
     }
-}`;
+};`;
 // dfmt on
 
 struct Csr {
