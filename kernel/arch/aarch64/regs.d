@@ -20,6 +20,16 @@ struct Regs {
     ulong x16;
     ulong x17;
     ulong x18;
+    ulong x19;
+    ulong x20;
+    ulong x21;
+    ulong x22;
+    ulong x23;
+    ulong x24;
+    ulong x25;
+    ulong x26;
+    ulong x27;
+    ulong x28;
     ulong fp;
     ulong lr;
     ulong sp; // loaded from sp_el0
