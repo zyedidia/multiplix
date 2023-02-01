@@ -24,7 +24,12 @@ struct Vector(T) {
 
     bool grow() {
         // double in size by default
-        return grow(cap == 0 ? 4096 : cap * 2);
+        static if (T.sizeof <= 4096) {
+            enum newlen = 4096 / T.sizeof;
+        } else {
+            enum newlen = 1;
+        }
+        return grow(cap == 0 ? newlen : cap * 2);
     }
 
     bool grow(size_t newlen) {
@@ -51,6 +56,11 @@ struct Vector(T) {
 
     Range!T range() {
         return Range!T(0, this);
+    }
+
+    void unordered_remove(size_t idx) {
+        data[idx] = data[length - 1];
+        length--;
     }
 
     alias range this;

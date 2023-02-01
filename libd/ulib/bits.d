@@ -76,6 +76,10 @@ version (LDC) {
         return cast(size_t)(x ? x.sizeof * 8 - llvm_ctlz!ulong(x, true) : 0);
     }
 
+    size_t lsb(ulong x) {
+        return cast(size_t)(x == 0 ? 0 : llvm_ctlz!ulong(x, true));
+    }
+
     T bswap(T)(T val) {
         return llvm_bswap!T(val);
     }
