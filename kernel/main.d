@@ -53,6 +53,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         uint max_clock = Mailbox.get_max_clock_rate(Mailbox.ClockType.arm);
         Mailbox.set_clock_rate(Mailbox.ClockType.arm, max_clock, false);
         io.writeln("arm clock: ", Mailbox.get_clock_rate(Mailbox.ClockType.arm), " Hz");
+        io.writeln("temp: ", Mailbox.get_temp());
     }
 
     /* static if (is(typeof(Emmc.setup))) { */

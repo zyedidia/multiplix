@@ -2,6 +2,7 @@ module kernel.dev.mailbox.bcmmailbox;
 
 import core.volatile;
 import kernel.vm;
+import kernel.timer;
 import ulib.memory;
 import io = ulib.io;
 
@@ -270,6 +271,8 @@ struct BcmMailbox(uintptr base) {
             Data(clock, rate, cast(uint) skipturbo)
         );
         assert(process(cast(uint*) &t, t.sizeof));
+        // let the clock settle
+        Timer.delay_us(500);
     }
 
     static uint get_max_clock_rate(ClockType clock) {
