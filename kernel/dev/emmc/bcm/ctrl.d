@@ -637,31 +637,35 @@ struct BcmEmmc(uintptr base) {
         return true;
     }
 
-    static int do_read(ubyte* b, uint bsize, uint block_no) {
+    static bool do_read(ubyte* b, uint bsize, uint block_no) {
         if (!do_data_command(false, b, bsize, block_no)) {
             io.writeln("EMMC_ERR: do_data_command failed");
-            return -1;
+            return false;
         }
 
-        return bsize;
+        return true;
     }
 
-    static int read(ubyte* buffer, uint size) {
+    static bool read(ubyte* buffer, uint size) {
         if (device.offset % 512 != 0) {
             io.writeln("EMMC_ERR: INVALID OFFSET: ", device.offset);
-            return -1;
+            return false;
         }
 
         uint block = cast(uint) (device.offset / 512);
 
-        int r = do_read(buffer, size, block);
-
-        if (r != size) {
+        bool r = do_read(buffer, size, block);
+        if (!r) {
             io.writeln("EMMC_ERR: READ FAILED: ", r);
-            return -1;
+            return false;
         }
 
-        return size;
+        return true;
+    }
+
+    static bool read_at(ulong offset, ubyte* buffer, uint size) {
+        seek(offset);
+        return read(buffer, size);
     }
 
     static void seek(ulong offset) {

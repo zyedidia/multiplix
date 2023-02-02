@@ -48,9 +48,15 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     Timer.delay_ms(100);
 
-    enable_irq();
+    static if (is(typeof(Emmc.setup))) {
+        assert(Emmc.setup());
+        import fat = kernel.fs.fat32.fat32;
+        assert(fat.getpartition());
+    }
 
-    schedule();
+    /* enable_irq(); */
+    /*  */
+    /* schedule(); */
 }
 
 void enable_irq() {

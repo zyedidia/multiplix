@@ -27,3 +27,15 @@ string itoa(S)(S input, char[] buf, uint base = 10) if (isInt!S) {
 
     return cast(string) buf[pos .. $];
 }
+
+bool equals(string a, string b) {
+    if (a.length != b.length) {
+        return false;
+    }
+    for (uint i = 0; i < a.length; i++) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+    return true;
+}

@@ -47,6 +47,7 @@ local kernel = knit.join(
     knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
     knit.rglob("kernel/dev", "*.d"),
     knit.rglob("kernel/alloc", "*.d"),
+    knit.rglob("kernel/fs", "*.d"),
     knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
     {
         "kernel/arch/package.d",
