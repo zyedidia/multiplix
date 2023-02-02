@@ -10,9 +10,10 @@ _start:
 	add x1, x1, x2
 	mov sp, x1
 	bl dstart
-_hlt:
+.globl _halt
+_halt:
 	wfe
-	b _hlt
+	b _halt
 
 .macro PROLOGUE
 sub sp, sp, #240

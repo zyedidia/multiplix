@@ -10,7 +10,7 @@ import sbi = kernel.arch.riscv64.sbi;
 struct Timer {
     private static void delay_cycles(ulong t) {
         ulong rb = Csr.cycle;
-        while (1) {
+        while (true) {
             ulong ra = Csr.cycle;
             if ((ra - rb) >= t) {
                 break;
@@ -20,7 +20,7 @@ struct Timer {
 
     private static void delay_time(ulong t) {
         ulong rb = volatile_ld(Clint.mtime);
-        while (1) {
+        while (true) {
             ulong ra = volatile_ld(Clint.mtime);
             if ((ra - rb) >= t) {
                 break;

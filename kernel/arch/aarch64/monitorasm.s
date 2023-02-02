@@ -13,8 +13,9 @@ _spin:
 	cbz x2, _spin
 _primary_boot:
 	bl dstart
-_hlt:
-	b _hlt
+.globl _halt
+_halt:
+	b _halt
 
 _reset_sp:
 	// set stack = _kheap_start + (coreid + 1) * 4096

@@ -96,7 +96,7 @@ version (uart) {
 
         if (get_uint() != BootFlags.PutCode) {
             put_uint(BootFlags.BootError);
-            while (1) {}
+            _halt();
         }
         for (uint i = 0; i < nbytes; i++) {
             base[i] = Uart.rx();
@@ -104,7 +104,7 @@ version (uart) {
         const uint crc_calc = crc.crc32(base, nbytes);
         if (crc_calc != crc_recv) {
             put_uint(BootFlags.BadCodeCksum);
-            while (1) {}
+            _halt();
         }
         put_uint(BootFlags.BootSuccess);
         Uart.tx_flush();

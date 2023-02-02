@@ -6,7 +6,7 @@ _start:
 	csrr a1, misa
 	li t0, (1 << 18)
 	and a1, a1, t0
-	beqz a1, _hlt
+	beqz a1, _halt
 	csrr a0, mhartid
 	.option push
 	.option norelax
@@ -26,9 +26,10 @@ _spin:
 	beqz t1, _spin
 _primary_boot:
 	call dstart
-_hlt:
+.globl _halt
+_halt:
 	wfi
-	j _hlt
+	j _halt
 
 .globl boot_lock
 .align 4

@@ -1,5 +1,7 @@
 module object;
 
+public import core.exception : panic;
+
 alias string = immutable(char)[];
 alias size_t = typeof(int.sizeof);
 alias ptrdiff_t = typeof(cast(void*) 0 - cast(void*) 0);
@@ -49,4 +51,15 @@ struct Hex {
     uintptr p;
 }
 
-public import core.exception : panic;
+void unreachable() {
+    import ldc.llvmasm;
+    __ir!("unreachable", void, int)(0);
+}
+
+void assume(bool b) {
+    if (!b) {
+        unreachable();
+    }
+}
+
+extern (C) noreturn _halt();

@@ -12,6 +12,7 @@ _start:
 	slli t0, t0, 12 # t0 = (hartid + 1) * 4096
 	add sp, sp, t0  # sp = _kheap_start + (hartid + 1) * 4096
 	call dstart
+.globl _halt
 _halt:
 	wfi
 	j _halt
