@@ -53,7 +53,14 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         import kernel.fs.fat32.fat32;
         Fat32FS fat;
         assert(fat.setup());
-        fat.list_root();
+        FileRange files = fat.readdir(fat.root());
+        foreach (file; files) {
+            io.writeln(file.name());
+            ubyte[] data = fat.readfile(file.id(), file.size());
+            io.writeln(data.length);
+            import ulib.crc32;
+            io.writeln("crc: ", Hex(crc32(data.ptr, data.length)));
+        }
     }
 
     Reboot.reboot();

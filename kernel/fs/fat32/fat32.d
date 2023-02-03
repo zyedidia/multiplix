@@ -3,6 +3,9 @@ module kernel.fs.fat32.fat32;
 import kernel.board;
 import kernel.alloc;
 
+import ulib.vector;
+import ulib.option;
+
 import str = ulib.string;
 import io = ulib.io;
 import bits = ulib.bits;
@@ -121,18 +124,49 @@ struct Fat32FS {
         return true;
     }
 
-    DirRange range() return {
-        return DirRange(&this, root_cluster);
+    FileRange readdir(uint cluster) {
+        return FileRange(&this, cluster);
     }
 
-    void list_root() {
-        foreach (ent; this.range()) {
-            io.writeln(cast(string) ent.name, " ", ent.fsize);
+    uint root() {
+        return root_cluster;
+    }
+
+    ubyte[] readfile(uint cluster_start, size_t size) {
+        auto data_ = kalloc_block(size);
+        if (!data_.has()) {
+            return null;
         }
+        ubyte[] data = (cast(ubyte*) data_.get())[0 .. size];
+
+        uint datalen;
+        uint sector;
+        uint cluster = cluster_start;
+
+        ubyte[512] sec_data;
+        while (1) {
+            if (cluster == 0xff_ffff) {
+                break;
+            }
+
+            assert(Emmc.read_sector(cluster_lba + (cluster - 2) * sec_per_cluster, sec_data.ptr, sec_data.sizeof));
+            import ulib.math;
+            import ulib.memory;
+            memcpy(&data[datalen], sec_data.ptr, min(sec_data.sizeof, size - datalen));
+            datalen += sec_data.sizeof;
+            sector++;
+            if (sector >= sec_per_cluster) {
+                enum nent = 512 / 4;
+                assert(Emmc.read_sector(fat_lba + cluster / nent, sec_data.ptr, sec_data.sizeof));
+                cluster = (cast(uint*) sec_data.ptr)[0 .. nent][cluster % nent] & 0xff_ffff;
+                sector = 0;
+            }
+        }
+        return data;
     }
 }
 
-struct DirEnt {
+struct File {
     struct Attrib {
         ubyte data;
         mixin(bits.field!(data,
@@ -146,7 +180,7 @@ struct DirEnt {
     }
 
     align(1) {
-        char[11] name;
+        char[11] _name;
         Attrib attrib;
         ubyte _res;
         ubyte ctime_hundths;
@@ -160,34 +194,42 @@ struct DirEnt {
         uint fsize;
     }
 
-    bool dir() {
-        return cast(bool) attrib.directory;
-    }
-
     bool lfn() {
         return bits.get(attrib.data, 3, 0) == 0b1111;
     }
 
     bool eod() {
-        return name[0] == 0;
+        return _name[0] == 0;
     }
 
     bool deleted() {
-        return name[0] == 0xE5;
+        return _name[0] == 0xE5;
     }
 
-    DirRange range(Fat32FS* fs) {
-        return DirRange(fs, (fst_clus_hi << 16) | fst_clus_lo);
+    bool isdir() {
+        return cast(bool) attrib.directory;
+    }
+
+    size_t size() {
+        return fsize;
+    }
+
+    string name() return {
+        return cast(string) _name;
+    }
+
+    uint id() {
+        return (fst_clus_hi << 16) | fst_clus_lo;
     }
 }
 
-struct DirRange {
+struct FileRange {
     Fat32FS* fs;
     uint sector;
     uint ent;
     uint cluster;
 
-    DirEnt[16] ents = void;
+    File[16] ents = void;
 
     @disable this();
 
@@ -208,7 +250,7 @@ struct DirRange {
         return cluster == 0xff_ffff || front.eod();
     }
 
-    DirEnt front() {
+    File front() {
         return ents[ent];
     }
 

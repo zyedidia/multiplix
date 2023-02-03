@@ -110,7 +110,7 @@ struct BcmEmmc(uintptr base) {
         volatile_st(&regs.arg1, arg);
         volatile_st(&regs.cmd_xfer_mode, command_reg);
 
-        Timer.delay_ms(10);
+        /* Timer.delay_ms(10); */
 
         int times = 0;
 
