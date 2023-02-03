@@ -4,54 +4,55 @@ import ulib.trait;
 
 T mask(T)(uint nbits) if (isInt!T) {
     if (nbits == T.sizeof * 8) {
-        return ~(cast(T) 0);
+        return cast(T) ~(cast(T) 0);
     }
-    return ((cast(T) 1) << nbits) - 1;
+    return cast(T) (((cast(T) 1) << nbits) - 1);
 }
 
 T get(T)(T x, uint ub, uint lb) if (isInt!T) {
-    return (x >> lb) & mask!T(ub - lb + 1);
+    return cast(T) ((x >> lb) & mask!T(ub - lb + 1));
 }
 
-bool get(T)(T x, uint bit) if (isInt!T) {
-    return (x >> bit) & (cast(T) 1);
+T get(T)(T x, uint bit) if (isInt!T) {
+    return cast(T) ((x >> bit) & (cast(T) 1));
 }
 
 T clear(T)(T x, uint hi, uint lo) if (isInt!T) {
     T m = mask!T(hi - lo + 1);
-    return x & ~(m << lo);
+    return cast(T) (x & ~(m << lo));
 }
 
 T clear(T)(T x, uint bit) if (isInt!T) {
-    return x & ~((cast(T) 1) << bit);
+    return cast(T) (x & ~((cast(T) 1) << bit));
 }
 
 T set(T)(T x, uint bit) if (isInt!T) {
-    return x | ((cast(T) 1) << bit);
+    return cast(T) (x | ((cast(T) 1) << bit));
 }
 
 T write(T)(T x, uint bit, uint val) if (isInt!T) {
     x = clear(x, bit);
-    return x | (val << bit);
+    return cast(T) (x | (val << bit));
 }
 
 T write(T)(T x, uint hi, uint lo, T val) if (isInt!T) {
-    return clear(x, hi, lo) | (val << lo);
+    return cast(T) (clear(x, hi, lo) | (val << lo));
 }
 
-T remap(T)(T i, uint from, uint to) {
-    return get(i, from) << to;
+T remap(T)(T i, uint from, uint to) if (isInt!T) {
+    return cast(T) (get(i, from) << to);
 }
 
 T remap(T)(T i, uint from_ub, uint from_lb, uint to_ub, uint to_lb) {
-    cast(void) to_ub;
-    return get(i, from_ub, from_lb) << to_lb;
+    return cast(T) (get(i, from_ub, from_lb) << to_lb);
 }
 
+
 T sext(T, UT)(UT x, uint width) {
-    const ulong n = (T.sizeof * 8 - 1) - (width-1);
+    ulong n = (T.sizeof * 8 - 1) - (width-1);
     return (cast(T)(x << n)) >> n;
 }
+
 
 version (GNU) {
     import gcc.builtins;

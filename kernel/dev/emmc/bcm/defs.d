@@ -46,10 +46,10 @@ struct EmmcCommand {
 
 // Response Type
 enum RT {
-    none,
-    r136,
-    r48,
-    r48busy,
+    none    = 0,
+    r136    = 1,
+    r48     = 2,
+    r48busy = 3,
 }
 
 // Command Type

@@ -50,9 +50,13 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     static if (is(typeof(Emmc.setup))) {
         assert(Emmc.setup());
-        import fat = kernel.fs.fat32.fat32;
-        assert(fat.getpartition());
+        import kernel.fs.fat32.fat32;
+        Fat32FS fat;
+        assert(fat.setup());
+        fat.list_root();
     }
+
+    Reboot.reboot();
 
     /* enable_irq(); */
     /*  */

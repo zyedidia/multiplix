@@ -42,6 +42,9 @@ immutable EmmcCommand[] commands = [
 ];
 
 struct BcmEmmc(uintptr base) {
+    enum sector_size = 512;
+    alias sector = ubyte[sector_size];
+
     enum EmmcRegs* regs = cast(EmmcRegs*) base;
     __gshared EmmcDevice device;
 
@@ -78,7 +81,7 @@ struct BcmEmmc(uintptr base) {
             }
 
 
-            uint length = device.block_size;
+            int length = device.block_size;
 
             if (write) {
                 for (; length > 0; length -= 4) {
@@ -646,30 +649,16 @@ struct BcmEmmc(uintptr base) {
         return true;
     }
 
-    static bool read(ubyte* buffer, uint size) {
-        if (device.offset % 512 != 0) {
-            io.writeln("EMMC_ERR: INVALID OFFSET: ", device.offset);
-            return false;
-        }
+    static bool read_sector(uint sector, ubyte* buffer, uint size) {
+        assert(size % sector_size == 0);
 
-        uint block = cast(uint) (device.offset / 512);
-
-        bool r = do_read(buffer, size, block);
+        bool r = do_read(buffer, size, sector);
         if (!r) {
             io.writeln("EMMC_ERR: READ FAILED: ", r);
             return false;
         }
 
         return true;
-    }
-
-    static bool read_at(ulong offset, ubyte* buffer, uint size) {
-        seek(offset);
-        return read(buffer, size);
-    }
-
-    static void seek(ulong offset) {
-        device.offset = offset;
     }
 
     static bool setup() {
