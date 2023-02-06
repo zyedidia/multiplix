@@ -27,7 +27,7 @@ module ulib.iface;
 // }
 //
 // A value `f` of type Foo* can be converted to a Showable with
-// `Showable.impl(f)`
+// `Showable.from(f)`
 
 import ulib.trait;
 
@@ -40,7 +40,7 @@ auto call(Fptr, Args...)(void* this_, Fptr funcptr, Args args) {
 
 // MakeInterface populates the current struct with a self pointer, a vtable
 // pointer, and wrapper functions that forward calls to the vtable. It also
-// creates an `impl` function which converts a value of type `T*` to an
+// creates an `from` function which converts a value of type `T*` to an
 // interface by initializing a vtable and returning a wrapper that points to
 // the object and its vtable. When using GDC the vtable is statically
 // initialized per-type, but for LDC the vtable must be initialized at runtime
@@ -66,7 +66,7 @@ template MakeInterface(Type) {
             static Vtbl vtbldat;
         }
 
-        static auto impl(T)(T* x) {
+        static auto from(T)(T* x) {
             static foreach (m; __traits(allMembers, Vtbl)) {
                 mixin(`(vtbldat!T).` ~ m ~ ` = &T.` ~ m ~ `;`);
             }
@@ -75,7 +75,7 @@ template MakeInterface(Type) {
     } else version (GNU) {
         immutable Vtbl* vtbl;
 
-        static auto impl(T)(T* x) {
+        static auto from(T)(T* x) {
             // returns comma-separated list of functions in the Vtbl, for example:
             // "T.x1,T.x1,T.x3,"
             alias fnlist = () {
