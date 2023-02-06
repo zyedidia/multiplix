@@ -20,3 +20,10 @@ enum isInt64(T) = is(Unqual!T == long) || is(Unqual!T == ulong);
 enum isInt(T) = isInt8!T || isInt16!T || isInt32!T || isInt64!T;
 
 enum isPointer(T) = is(T == U*, U) && __traits(isScalar, T);
+
+// Get return type of a function.
+template ReturnType(func...) if (func.length == 1) {
+    static if (is(func[0] R == return)) {
+        alias ReturnType = R;
+    }
+}
