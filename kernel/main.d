@@ -24,7 +24,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.Trap.setup();
 
     if (cpuinfo.primary) {
-        System.allocator.construct(cast(uintptr) heap);
+        System.allocator.__ctor(cast(uintptr) heap);
 
         if (!runq.start(hello_elf)) {
             io.writeln("could not initialize process 0");
@@ -68,9 +68,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     /*     io.writeln(cast(void*) sector[510], cast(void*) sector[511]); */
     /* } */
 
-    /* enable_irq(); */
-    /*  */
-    /* schedule(); */
+    enable_irq();
+
+    schedule();
 }
 
 void enable_irq() {

@@ -46,13 +46,7 @@ struct System {
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.mb!(512));
     __gshared Buddy buddy;
 
-    // This is a per-thread (TLS) checkpoint allocator.
-    // TODO: should we have a global checkpoint allocator like this? This might
-    // cause problems if an interrupt arrives in the middle of a checkpoint if
-    // the interrupt handler starts allocator space.
-    // Maybe checkpoint allocators should only be used locally.
-    alias CpAlloc = CheckpointAllocator!(Buddy);
-    static CpAlloc allocator = CpAlloc(&buddy);
+    alias allocator = buddy;
 }
 
 alias Uart = BcmMiniUart!(pa2kpa(System.device_base + 0x215000));

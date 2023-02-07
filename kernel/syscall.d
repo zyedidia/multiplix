@@ -88,24 +88,26 @@ struct Syscall {
         }
         auto child = child_.get();
 
-        System.allocator.checkpoint();
+        auto alloc = CheckpointAllocator!(typeof(System.allocator))(&System.allocator);
+
+        alloc.checkpoint();
         // allocate a pagetable
-        Pagetable* pt = knew!(Pagetable)();
+        Pagetable* pt = knew_custom!(Pagetable)(&alloc);
         if (!pt) {
-            System.allocator.free_checkpoint();
+            alloc.free_checkpoint();
             return -1;
         }
         child.pt = pt;
 
         // kalloc+map trapframe
-        void* trapframe = kalloc(sys.pagesize);
+        void* trapframe = kalloc_custom(&alloc, sys.pagesize);
         if (!trapframe) {
-            System.allocator.free_checkpoint();
+            alloc.free_checkpoint();
             return -1;
         }
         child.trapframe = cast(Trapframe*) trapframe;
-        if (!child.pt.map(Proc.trapframeva, vm.ka2pa(cast(uintptr) child.trapframe), Pte.Pg.normal, Perm.krwx, &System.allocator)) {
-            System.allocator.free_checkpoint();
+        if (!child.pt.map(Proc.trapframeva, vm.ka2pa(cast(uintptr) child.trapframe), Pte.Pg.normal, Perm.krwx, &alloc)) {
+            alloc.free_checkpoint();
             return -1;
         }
 
@@ -115,20 +117,20 @@ struct Syscall {
             if (!vmmap.user) {
                 continue;
             }
-            void* block = kalloc(vmmap.size);
+            void* block = kalloc_custom(&alloc, vmmap.size);
             if (!block) {
-                System.allocator.free_checkpoint();
+                alloc.free_checkpoint();
                 return -1;
             }
             memcpy(block, cast(void*) vmmap.ka(), vmmap.size);
-            if (!child.pt.map(vmmap.va, vm.ka2pa(cast(uintptr) block), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
-                System.allocator.free_checkpoint();
+            if (!child.pt.map(vmmap.va, vm.ka2pa(cast(uintptr) block), Pte.Pg.normal, Perm.urwx, &alloc)) {
+                alloc.free_checkpoint();
                 return -1;
             }
             // TODO: only sync ID cache for executable pages
             sync_idmem(cast(ubyte*) block, vmmap.size);
         }
-        System.allocator.done_checkpoint();
+        alloc.done_checkpoint();
 
         memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);
         version (RISCV64) {

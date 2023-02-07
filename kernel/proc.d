@@ -30,44 +30,46 @@ struct Proc {
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // Checkpoint so we can free all memory if there is a failure.
-        System.allocator.checkpoint();
+        auto alloc = CheckpointAllocator!(typeof(System.allocator))(&System.allocator);
+
+        alloc.checkpoint();
         // allocate pagetable
-        Pagetable* pt = knew!(Pagetable)();
+        Pagetable* pt = knew_custom!(Pagetable)(&alloc);
         if (!pt) {
-            System.allocator.free_checkpoint();
+            alloc.free_checkpoint();
             return false;
         }
         proc.pt = pt;
         uintptr entryva;
         const bool ok = elf.load!64(proc.pt, binary.ptr, entryva);
         if (!ok) {
-            System.allocator.free_checkpoint();
+            alloc.free_checkpoint();
             return false;
         }
         // map kernel
         assert(kernel_map(proc.pt));
         // allocate stack/trapframe
-        void* stack = kalloc(sys.pagesize);
+        void* stack = kalloc_custom(&alloc, sys.pagesize);
         if (!stack) {
-            System.allocator.free_checkpoint();
+            alloc.free_checkpoint();
             return false;
         }
-        void* trapframe = kalloc(sys.pagesize);
+        void* trapframe = kalloc_custom(&alloc, sys.pagesize);
         if (!trapframe) {
-            System.allocator.free_checkpoint();
+            alloc.free_checkpoint();
             return false;
         }
         proc.trapframe = cast(Trapframe*) trapframe;
         // map stack/trapframe
-        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
-            System.allocator.free_checkpoint();
+        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack), Pte.Pg.normal, Perm.urwx, &alloc)) {
+            alloc.free_checkpoint();
             return false;
         }
-        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx, &System.allocator)) {
-            System.allocator.free_checkpoint();
+        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx, &alloc)) {
+            alloc.free_checkpoint();
             return false;
         }
-        System.allocator.done_checkpoint();
+        alloc.done_checkpoint();
 
         // initialize registers (stack, pc)
         memset(&proc.trapframe.regs, 0, Regs.sizeof);

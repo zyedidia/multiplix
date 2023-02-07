@@ -29,9 +29,7 @@ struct System {
 
     alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(3));
     __gshared Buddy buddy;
-
-    alias CpAlloc = CheckpointAllocator!(Buddy);
-    static CpAlloc allocator = CpAlloc(&buddy);
+    alias allocator = buddy;
 }
 
 alias Uart = Dw8250!(pa2kpa(0x10000000));
