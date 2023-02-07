@@ -32,18 +32,12 @@ struct Proc {
         // Checkpoint so we can free all memory if there is a failure.
         System.allocator.checkpoint();
         // allocate pagetable
-        auto pt_ = kalloc!(Pagetable)();
-        if (!pt_.has()) {
+        Pagetable* pt = knew!(Pagetable)();
+        if (!pt) {
             System.allocator.free_checkpoint();
             return false;
         }
-        proc.pt = pt_.get();
-        // allocate physical space for binary, and copy it in
-        auto pgs_ = kalloc_block(binary.length);
-        if (!pgs_.has()) {
-            System.allocator.free_checkpoint();
-            return false;
-        }
+        proc.pt = pt;
         uintptr entryva;
         const bool ok = elf.load!64(proc.pt, binary.ptr, entryva);
         if (!ok) {
@@ -53,19 +47,19 @@ struct Proc {
         // map kernel
         assert(kernel_map(proc.pt));
         // allocate stack/trapframe
-        auto stack_ = kalloc_block(sys.pagesize);
-        if (!stack_.has()) {
+        void* stack = kalloc(sys.pagesize);
+        if (!stack) {
             System.allocator.free_checkpoint();
             return false;
         }
-        auto trapframe_ = kalloc_block(sys.pagesize);
-        if (!trapframe_.has()) {
+        void* trapframe = kalloc(sys.pagesize);
+        if (!trapframe) {
             System.allocator.free_checkpoint();
             return false;
         }
-        proc.trapframe = cast(Trapframe*) trapframe_.get();
+        proc.trapframe = cast(Trapframe*) trapframe;
         // map stack/trapframe
-        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack_.get()), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
+        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
             System.allocator.free_checkpoint();
             return false;
         }

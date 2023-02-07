@@ -94,9 +94,10 @@ bool load(int W)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry) {
         assert(ph.vaddr + ph.memsz >= ph.vaddr);
 
         // allocate physical space for segment, and copy it in
-        auto pgs_ = kalloc_block(ph.memsz);
-        assert(pgs_.has());
-        auto code = cast(ubyte[]) pgs_.get()[0 .. ph.memsz];
+        ubyte[] code = knew_array!(ubyte)(ph.memsz);
+        if (!code) {
+            return false;
+        }
         memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
         memset(code.ptr + ph.filesz, 0, ph.memsz - ph.filesz);
 
@@ -114,4 +115,3 @@ bool load(int W)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry) {
     entry = elf.entry;
     return true;
 }
-

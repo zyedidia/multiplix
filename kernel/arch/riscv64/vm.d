@@ -102,48 +102,46 @@ struct Pagetable {
 
     // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
-    Opt!(Pte*) walk(A, bool alloc)(uintptr va, ref Pte.Pg endlevel, A* allocator) {
+    Pte* walk(A, bool alloc)(uintptr va, ref Pte.Pg endlevel, A* allocator) {
         Pagetable* pt = &this;
 
         for (Pte.Pg level = Pte.Pg.max; level > endlevel; level = Pte.down(level)) {
             Pte* pte = &pt.ptes[vpn(level, va)];
             if (pte.leaf(level)) {
                 endlevel = level;
-                return Opt!(Pte*)(pte);
+                return pte;
             } else if (pte.valid) {
                 pt = cast(Pagetable*) pa2ka(pte.pa);
             } else {
                 static if (!alloc) {
                     endlevel = level;
-                    return Opt!(Pte*).none;
+                    return null;
                 } else {
-                    auto pg = kalloc_block(allocator, Pagetable.sizeof);
-                    if (!pg.has()) {
+                    pt = knew_custom!(Pagetable)(allocator);
+                    if (!pt) {
                         endlevel = level;
-                        return Opt!(Pte*).none;
+                        return null;
                     }
-                    pt = cast(Pagetable*) pg.get();
                     memset(pt, 0, Pagetable.sizeof);
                     pte.pa = ka2pa(cast(uintptr) pt);
                     pte.valid = 1;
                 }
             }
         }
-        return Opt!(Pte*)(&pt.ptes[vpn(endlevel, va)]);
+        return &pt.ptes[vpn(endlevel, va)];
     }
 
-    Opt!(Pte*) walk(uintptr va, ref Pte.Pg endlevel) {
+    Pte* walk(uintptr va, ref Pte.Pg endlevel) {
         return walk!(void, false)(va, endlevel, null);
     }
 
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
     bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, uint perm, A* allocator) {
-        auto opte = walk!(A, true)(va, pgtyp, allocator);
-        if (!opte.has()) {
+        Pte* pte = walk!(A, true)(va, pgtyp, allocator);
+        if (!pte) {
             return false;
         }
-        auto pte = opte.get();
         pte.pa = pa;
         pte.perm = perm;
         return true;

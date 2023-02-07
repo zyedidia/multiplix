@@ -66,11 +66,10 @@ struct VaMapping {
 // Look up a virtual address in a pagetable and return the VaMapping.
 Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
     Pte.Pg pgtype;
-    auto pte_ = pt.walk(va, pgtype);
-    if (!pte_.has() || !pte_.get().leaf(pgtype)) {
+    Pte* pte = pt.walk(va, pgtype);
+    if (!pte || !pte.leaf(pgtype)) {
         return Opt!(VaMapping).none;
     }
-    auto pte = pte_.get();
     size_t size = Pagetable.level2size(pgtype);
     return Opt!(VaMapping)(VaMapping(va, size, pte));
 }

@@ -89,21 +89,21 @@ struct Syscall {
         auto child = child_.get();
 
         System.allocator.checkpoint();
-        // kalloc a pagetable
-        auto pt_ = kalloc!(Pagetable)();
-        if (!pt_.has()) {
+        // allocate a pagetable
+        Pagetable* pt = knew!(Pagetable)();
+        if (!pt) {
             System.allocator.free_checkpoint();
             return -1;
         }
-        child.pt = pt_.get();
+        child.pt = pt;
 
         // kalloc+map trapframe
-        auto trapframe_ = kalloc_block(sys.pagesize);
-        if (!trapframe_.has()) {
+        void* trapframe = kalloc(sys.pagesize);
+        if (!trapframe) {
             System.allocator.free_checkpoint();
             return -1;
         }
-        child.trapframe = cast(Trapframe*) trapframe_.get();
+        child.trapframe = cast(Trapframe*) trapframe;
         if (!child.pt.map(Proc.trapframeva, vm.ka2pa(cast(uintptr) child.trapframe), Pte.Pg.normal, Perm.krwx, &System.allocator)) {
             System.allocator.free_checkpoint();
             return -1;
@@ -115,18 +115,18 @@ struct Syscall {
             if (!vmmap.user) {
                 continue;
             }
-            auto block_ = kalloc_block(vmmap.size);
-            if (!block_.has()) {
+            void* block = kalloc(vmmap.size);
+            if (!block) {
                 System.allocator.free_checkpoint();
                 return -1;
             }
-            memcpy(block_.get(), cast(void*) vmmap.ka(), vmmap.size);
-            if (!child.pt.map(vmmap.va, vm.ka2pa(cast(uintptr) block_.get()), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
+            memcpy(block, cast(void*) vmmap.ka(), vmmap.size);
+            if (!child.pt.map(vmmap.va, vm.ka2pa(cast(uintptr) block), Pte.Pg.normal, Perm.urwx, &System.allocator)) {
                 System.allocator.free_checkpoint();
                 return -1;
             }
             // TODO: only sync ID cache for executable pages
-            sync_idmem(cast(ubyte*) block_.get(), vmmap.size);
+            sync_idmem(cast(ubyte*) block, vmmap.size);
         }
         System.allocator.done_checkpoint();
 
