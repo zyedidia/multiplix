@@ -5,7 +5,6 @@ import kernel.dev.gpio.starfive;
 import kernel.dev.reboot.unsupported;
 import kernel.dev.irq.sfclint;
 
-import kernel.buddy;
 import kernel.vm;
 import kernel.alloc;
 

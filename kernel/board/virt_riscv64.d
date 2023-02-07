@@ -5,7 +5,6 @@ import kernel.dev.reboot.qsyscon;
 import kernel.dev.irq.sfclint;
 
 import kernel.vm;
-import kernel.buddy;
 import kernel.alloc;
 
 import sys = kernel.sys;

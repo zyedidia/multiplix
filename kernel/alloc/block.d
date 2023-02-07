@@ -1,4 +1,4 @@
-module kernel.block;
+module kernel.alloc.block;
 
 import sys = kernel.sys;
 import bits = ulib.bits;

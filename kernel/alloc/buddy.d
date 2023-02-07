@@ -1,4 +1,4 @@
-module kernel.buddy;
+module kernel.alloc.buddy;
 
 import kernel.spinlock;
 
