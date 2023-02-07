@@ -68,9 +68,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     /*     io.writeln(cast(void*) sector[510], cast(void*) sector[511]); */
     /* } */
 
-    enable_irq();
-
-    schedule();
+    /* enable_irq(); */
+    /*  */
+    /* schedule(); */
 }
 
 void enable_irq() {
