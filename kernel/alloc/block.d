@@ -12,6 +12,15 @@ struct BlockAllocator(A) {
 
     enum nblocks = log2ceil(sys.pagesize);
 
+    this(A* a) {
+        allocator = a;
+    }
+
+    // call the underlying allocator's constructor.
+    void construct(Args...)(Args args) {
+        allocator.__ctor(args);
+    }
+
     // free list
     struct Free {
         Free* next;

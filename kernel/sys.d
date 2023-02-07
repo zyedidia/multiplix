@@ -1,6 +1,7 @@
 module kernel.sys;
 
 import kernel.alloc.buddy;
+import kernel.alloc.block;
 import kernel.board;
 
 enum gb(ulong n) = 1024 * 1024 * 1024 * n;
@@ -10,4 +11,8 @@ enum pagesize = 4096;
 
 alias Buddy = BuddyAllocator!(pagesize, Machine.memsize);
 __gshared Buddy buddy;
-alias allocator = buddy;
+
+alias Block = BlockAllocator!(typeof(buddy));
+__gshared Block block = Block(&buddy);
+
+alias allocator = block;
