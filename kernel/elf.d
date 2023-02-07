@@ -77,7 +77,7 @@ int getwidth(ubyte* elfdat) {
     assert(0);
 }
 
-bool load(int W)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry) {
+bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, A* alloc) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
     assert(elf.magic == magic);
@@ -103,7 +103,7 @@ bool load(int W)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry) {
 
         // map newly allocated physical space to base va
         for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
-            if (!pt.map(va, pa, Pte.Pg.normal, Perm.urwx, &System.allocator)) {
+            if (!pt.map(va, pa, Pte.Pg.normal, Perm.urwx, alloc)) {
                 // memory will be freed by caller via checkpoint free (in proc creation)
                 return false;
             }

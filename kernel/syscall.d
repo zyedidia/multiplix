@@ -88,7 +88,7 @@ struct Syscall {
         }
         auto child = child_.get();
 
-        auto alloc = CheckpointAllocator!(typeof(System.allocator))(&System.allocator);
+        auto alloc = CheckpointAllocator!(typeof(sys.allocator))(&sys.allocator);
 
         alloc.checkpoint();
         // allocate a pagetable

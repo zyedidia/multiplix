@@ -2,7 +2,7 @@ module kernel.alloc.api;
 
 import ulib.alloc;
 
-import kernel.board;
+import sys = kernel.sys;
 
 // Allocation API.
 
@@ -77,32 +77,32 @@ void kfree_custom(T, A)(A* allocator, T* ptr) {
 
 // Allocation API using the system allocator.
 
-alias SystemAlloc = Alloc!(typeof(System.allocator));
+alias SystemAlloc = Alloc!(typeof(sys.allocator));
 
 void* kalloc(size_t sz) {
-    return SystemAlloc.kalloc(&System.allocator, sz);
+    return SystemAlloc.kalloc(&sys.allocator, sz);
 }
 
 T* knew(T, Args...)(Args args) {
-    return SystemAlloc.knew!(T)(&System.allocator, args);
+    return SystemAlloc.knew!(T)(&sys.allocator, args);
 }
 
 T[] knew_array(T, Args...)(size_t nelem, Args args) {
-    return SystemAlloc.knew_array!(T)(&System.allocator, nelem, args);
+    return SystemAlloc.knew_array!(T)(&sys.allocator, nelem, args);
 }
 
 void kfree(T)(T* ptr) {
-    SystemAlloc.kfree(&System.allocator, ptr);
+    SystemAlloc.kfree(&sys.allocator, ptr);
 }
 
 extern (C) {
     // C-like allocation API for ulib
 
     void* ulib_malloc(size_t sz) {
-        return System.allocator.alloc(sz);
+        return sys.allocator.alloc(sz);
     }
 
     void ulib_free(void* p) {
-        System.allocator.free(p);
+        sys.allocator.free(p);
     }
 }

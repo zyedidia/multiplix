@@ -28,14 +28,14 @@ void kernel_setup(bool primary) {
 
     if (primary) {
         auto pgalloc = BumpAllocator!(4096)(&ptheap[0], ptheap.length);
-        void map_region (System.MemRange range, Pagetable* pt) {
+        void map_region (Machine.MemRange range, Pagetable* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
                 assert(pt.map(addr, addr, Pte.Pg.mega, Ap.krw, &pgalloc));
                 assert(pt.map(vm.pa2ka(addr), addr, Pte.Pg.mega, Ap.krw, &pgalloc));
             }
         }
 
-        foreach (r; System.mem_ranges) {
+        foreach (r; Machine.mem_ranges) {
             map_region(r, cast(Pagetable*) &tbl);
         }
     }

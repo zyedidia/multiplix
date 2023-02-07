@@ -29,7 +29,7 @@ struct Timer {
     }
 
     static void delay_us(ulong t) {
-        delay_time(t * (System.mtime_freq / 1_000_000));
+        delay_time(t * (Machine.mtime_freq / 1_000_000));
     }
 
     static ulong cycles() {
@@ -39,7 +39,7 @@ struct Timer {
     enum interval = 100000;
 
     static ulong freq() {
-        return System.mtime_freq;
+        return Machine.mtime_freq;
     }
 
     static ulong time() {

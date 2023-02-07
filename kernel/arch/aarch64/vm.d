@@ -160,7 +160,7 @@ struct Pagetable {
         }
         pte.sh = 0b11;
         pte.af = 1;
-        pte.index = System.mem_type(pa);
+        pte.index = Machine.mem_type(pa);
         return true;
     }
 
@@ -172,7 +172,7 @@ struct Pagetable {
         ptes[idx].ap = perm;
         ptes[idx].af = 1;
         ptes[idx].sh = 0b11;
-        ptes[idx].index = System.mem_type(pa);
+        ptes[idx].index = Machine.mem_type(pa);
     }
 
     static size_t level2size(Pte.Pg type) {

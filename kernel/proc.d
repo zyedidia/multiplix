@@ -30,7 +30,7 @@ struct Proc {
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // Checkpoint so we can free all memory if there is a failure.
-        auto alloc = CheckpointAllocator!(typeof(System.allocator))(&System.allocator);
+        auto alloc = CheckpointAllocator!(typeof(sys.allocator))(&sys.allocator);
 
         alloc.checkpoint();
         // allocate pagetable
@@ -41,7 +41,7 @@ struct Proc {
         }
         proc.pt = pt;
         uintptr entryva;
-        const bool ok = elf.load!64(proc.pt, binary.ptr, entryva);
+        const bool ok = elf.load!(64)(proc.pt, binary.ptr, entryva, &alloc);
         if (!ok) {
             alloc.free_checkpoint();
             return false;

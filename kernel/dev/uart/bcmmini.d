@@ -51,7 +51,7 @@ struct BcmMiniUart(uintptr base) {
         volatile_st(&uart.lcr, 0b11);
         volatile_st(&uart.mcr, 0);
         volatile_st(&uart.iir, iir_reset | clear_fifos);
-        volatile_st(&uart.baud, System.gpu_freq / (baud * 8) - 1);
+        volatile_st(&uart.baud, Machine.gpu_freq / (baud * 8) - 1);
         volatile_st(&uart.cntl, rx_enable | tx_enable);
 
         device_fence();

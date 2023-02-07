@@ -10,7 +10,7 @@ import kernel.alloc;
 
 import sys = kernel.sys;
 
-struct System {
+struct Machine {
     enum cpu_freq = 1 * 1000 * 1000 * 1000 + 5 * 1000 * 1000;
     enum cpu_freq_mhz = cpu_freq / (1000 * 1000);
     enum ncores = 5;
@@ -26,9 +26,7 @@ struct System {
         MemRange(0, sys.gb!(4)),
     ];
 
-    alias Buddy = BuddyAllocator!(sys.pagesize, sys.gb!(3));
-    __gshared Buddy buddy;
-    alias allocator = buddy;
+    enum size_t memsize = sys.gb!(3);
 }
 
 alias Uart = Dw8250!(pa2kpa(0x10000000));

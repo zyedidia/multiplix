@@ -58,7 +58,7 @@ extern (C) {
         // set up thread-local storage (tls)
         uintptr stack_base = cast(uintptr) &_kheap_start;
         stack_start = stack_base + (coreid + 1) * 4096;
-        uintptr tls_base = stack_base + System.ncores * 4096;
+        uintptr tls_base = stack_base + Machine.ncores * 4096;
 
         size_t tls_size = (&_tbss_end - &_tdata_start) + arch.tcb_size;
         // calculate the start of the tls region for this cpu
@@ -76,7 +76,7 @@ extern (C) {
 
         arch.set_tls_base(tls_start);
 
-        return cast(ubyte*) (tls_base + tls_size * System.ncores);
+        return cast(ubyte*) (tls_base + tls_size * Machine.ncores);
     }
 
     void ulib_tx(ubyte c) {

@@ -39,7 +39,7 @@ struct ScratchFrame {
     uintptr trap_sp;
 }
 
-__gshared ScratchFrame[System.ncores] frames;
+__gshared ScratchFrame[Machine.ncores] frames;
 
 void init() {
     Csr.mtvec = cast(uintptr) &monitorvec;

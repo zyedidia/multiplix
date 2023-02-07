@@ -15,7 +15,7 @@ __gshared Pagetable kpagetable;
 
 bool kernel_map(Pagetable* pt) {
     // Map kernel into the high part of the address space
-    foreach (range; System.mem_ranges) {
+    foreach (range; Machine.mem_ranges) {
         for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
             pt.map_giga(vm.pa2ka(addr), addr, Perm.krwx);
         }
@@ -28,7 +28,7 @@ bool kernel_map(Pagetable* pt) {
 void kernel_setup(bool primary) {
     if (primary) {
         // Set up an identity-mapped pagetable.
-        void map_region (System.MemRange range, Pagetable* pt) {
+        void map_region (Machine.MemRange range, Pagetable* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
                 pt.map_giga(addr, addr, Perm.krwx);
                 pt.map_giga(vm.pa2ka(addr), addr, Perm.krwx);
@@ -37,7 +37,7 @@ void kernel_setup(bool primary) {
 
         Pagetable* pgtbl = &kpagetable;
 
-        foreach (r; System.mem_ranges) {
+        foreach (r; Machine.mem_ranges) {
             map_region(r, pgtbl);
         }
     }

@@ -87,7 +87,7 @@ struct RunQ {
 }
 
 struct GlobalRunQ {
-    shared RunQ[System.ncores] queues;
+    shared RunQ[Machine.ncores] queues;
 
     RunQ* queue() shared return {
         return cast(RunQ*) &queues[cpuinfo.coreid];
