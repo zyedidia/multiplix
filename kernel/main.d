@@ -48,36 +48,12 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     Timer.delay_ms(100);
 
-    static if (raspi) {
-        // raise clock speed to max
-        uint max_clock = Mailbox.get_max_clock_rate(Mailbox.ClockType.arm);
-        Mailbox.set_clock_rate(Mailbox.ClockType.arm, max_clock, false);
-        io.writeln("arm clock: ", Mailbox.get_clock_rate(Mailbox.ClockType.arm), " Hz");
-        io.writeln("temp: ", Mailbox.get_temp());
-    }
-
-    /* static if (is(typeof(Emmc.setup))) { */
-    /*     assert(Emmc.setup()); */
-    /*     ubyte[512] sector; */
-    /*     for (int i = 0; i < 10; i++) { */
-    /*         auto start = arch.Timer.cycles(); */
-    /*         Emmc.read(sector.ptr, sector.length); */
-    /*         auto end = arch.Timer.cycles(); */
-    /*         io.writeln(end - start); */
-    /*     } */
-    /*     io.writeln(cast(void*) sector[510], cast(void*) sector[511]); */
-    /* } */
-
     enable_irq();
 
     schedule();
 }
 
 void enable_irq() {
-    static if (raspi) {
-        CoreTimer.enable_irq();
-    }
-
     arch.Trap.enable();
     arch.Timer.intr();
 }

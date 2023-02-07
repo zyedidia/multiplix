@@ -45,6 +45,8 @@ extern (C) {
             cpuinfo.primary = false;
         }
 
+        Machine.setup();
+
         kmain(coreid, heap);
     }
 

@@ -26,6 +26,8 @@ struct Machine {
     ];
 
     enum size_t memsize = sys.gb!(4);
+
+    static void setup() {}
 }
 
 alias Uart = Ns16550!(pa2kpa(0x10000000));
