@@ -28,12 +28,7 @@ struct Vector(T) {
 
     bool grow() {
         // double in size by default
-        static if (T.sizeof <= 4096) {
-            enum newlen = 4096 / T.sizeof;
-        } else {
-            enum newlen = 1;
-        }
-        return grow(cap == 0 ? newlen : cap * 2);
+        return grow(cap == 0 ? 8 : cap * 2);
     }
 
     bool grow(size_t newlen) {

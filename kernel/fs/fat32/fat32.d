@@ -13,7 +13,7 @@ import bits = ulib.bits;
 struct ChsAddr {
     align(1):
         ubyte head;
-        ubyte sector; // TODO: sector : 6, cylinder_hi : 2
+        ubyte sector; // sector : 6, cylinder_hi : 2
         ubyte cylinder_lo;
 }
 
@@ -165,7 +165,47 @@ struct Fat32FS(Emmc) {
     }
 }
 
+struct LfnEnt {
+    align(1) {
+        ubyte ordinal;
+        ushort[5] c0;
+        ubyte attrib;
+        ubyte type;
+        ubyte cksum;
+        ushort[6] c1;
+        ubyte[2] _res;
+        ushort[2] c2;
+    }
+
+    int opApply(scope int delegate(ref ushort) dg) {
+        foreach (c; c0) {
+            int r = dg(c);
+            if (r) return r;
+        }
+        foreach (c; c1) {
+            int r = dg(c);
+            if (r) return r;
+        }
+        foreach (c; c2) {
+            int r = dg(c);
+            if (r) return r;
+        }
+        return 0;
+    }
+}
+
 struct File {
+    FileEnt ent;
+    string name;
+
+    void destroy() {
+        kfree(name.ptr);
+    }
+
+    alias ent this;
+}
+
+struct FileEnt {
     struct Attrib {
         ubyte data;
         mixin(bits.field!(data,
@@ -228,7 +268,10 @@ struct FileRange(Emmc) {
     uint ent;
     uint cluster;
 
-    File[16] ents = void;
+    FileEnt[16] ents = void;
+
+    ubyte[] cur_lfn;
+    ubyte lfn_ordinal = 0;
 
     @disable this();
 
@@ -250,7 +293,11 @@ struct FileRange(Emmc) {
     }
 
     File front() {
-        return ents[ent];
+        ubyte[] name = knew_array!(ubyte)(cur_lfn.length);
+        assert(name);
+        import ulib.memory;
+        memcpy(name.ptr, cur_lfn.ptr, cur_lfn.length);
+        return File(ents[ent], cast(string) name);
     }
 
     void popFront() {
@@ -258,6 +305,19 @@ struct FileRange(Emmc) {
     }
 
     private void next_ent() {
+        if (ents[ent].lfn()) {
+            LfnEnt* lfn = cast(LfnEnt*) &ents[ent];
+            auto ord = lfn.ordinal & 0b111111;
+            if (bits.get(lfn.ordinal, 6)) {
+                kfree(cur_lfn.ptr);
+                cur_lfn = knew_array!(ubyte)(ord * 13);
+                assert(cur_lfn);
+            }
+            uint i = 0;
+            foreach (c; *lfn) {
+                cur_lfn[(ord - 1) * 13 + i++] = cast(ubyte) c;
+            }
+        }
         ent++;
         if (ent >= 16) {
             ent = 0;
