@@ -11,6 +11,7 @@ import sys = kernel.sys;
 import vm = kernel.vm;
 import elf = kernel.elf;
 
+import ulib.list;
 import ulib.option;
 import ulib.memory;
 import ulib.vector;
@@ -23,10 +24,11 @@ struct Proc {
 
     Trapframe* trapframe;
 
+    // scheduling list node
+    List!(Proc).Node* node;
     int pid = -1;
-    size_t slot;
     Pagetable* pt;
-    Vector!(int) waiters;
+    Vector!(List!(Proc).Node*) waiters;
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // Checkpoint so we can free all memory if there is a failure.

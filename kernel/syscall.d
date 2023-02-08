@@ -18,6 +18,7 @@ import io = ulib.io;
 import ulib.memory;
 import ulib.option;
 import ulib.vector;
+import ulib.list;
 
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     uintptr ret = 0;
@@ -58,23 +59,20 @@ struct Syscall {
 
     enum n_exit = 2;
     static noreturn exit(Proc* p) {
-        io.writeln("process ", p.pid, " exited ", p.slot);
+        io.writeln("process ", p.pid, " exited ");
 
-        foreach (pid; p.waiters) {
-            foreach (waiter; runq.waiting) {
-                if (waiter.pid == pid) {
-                    assert(runq.done_wait(waiter.slot));
-                    version (RISCV64) {
-                        waiter.trapframe.regs.a0 = p.pid;
-                    } else version (AArch64) {
-                        waiter.trapframe.regs.x0 = p.pid;
-                    }
-                }
+        foreach (node; p.waiters) {
+            auto waiter = node.val;
+            version (RISCV64) {
+                waiter.trapframe.regs.a0 = p.pid;
+            } else version (AArch64) {
+                waiter.trapframe.regs.x0 = p.pid;
             }
+            runq.done_wait(node);
         }
 
         // remove p from runnable
-        runq.exit(p.slot);
+        runq.exit(p.node);
 
         // TODO: free the process
         schedule();
@@ -149,22 +147,21 @@ struct Syscall {
 
     enum n_wait = 4;
     static int wait(Proc* waiter, int pid) {
-        void do_wait(Vector!(Proc) queue) {
-            foreach (ref p; runq.runnable) {
-                if (pid == p.pid) {
-                    if (!p.waiters.append(waiter.pid)) {
-                        return;
+        bool do_wait(List!(Proc) queue) {
+            foreach (ref p; queue) {
+                if (pid == p.val.pid) {
+                    if (!p.val.waiters.append(waiter.node)) {
+                        return false;
                     }
-                    if (!runq.wait(waiter.slot)) {
-                        return;
-                    }
+                    runq.wait(waiter.node);
                     schedule();
                 }
             }
+            return true;
         }
-
-        do_wait(runq.runnable);
-        do_wait(runq.waiting);
+        if (!do_wait(runq.runnable)) goto err;
+        if (!do_wait(runq.waiting)) goto err;
+err:
         return -1;
     }
 }

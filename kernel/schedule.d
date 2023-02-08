@@ -8,27 +8,30 @@ import kernel.cpu;
 import arch = kernel.arch;
 
 import ulib.option;
-import ulib.vector;
+import ulib.list;
 import rand = ulib.rand;
 
 import io = ulib.io;
 
 struct RunQ {
     uint runpid = -1;
-    Vector!(Proc) runnable;
-    Vector!(Proc) waiting;
+    List!(Proc) runnable;
+    List!(Proc) waiting;
+
+    alias ProcNode = List!(Proc).Node;
 
     size_t length() {
         return runnable.length;
     }
 
     Opt!(Proc*) next() {
-        if (!runnable.append(Proc())) {
+        auto n = runnable.push_back(Proc());
+        if (!n) {
             return Opt!(Proc*).none;
         }
-        Proc* p = &runnable[runnable.length - 1];
-        p.slot = runnable.length - 1;
-        return Opt!(Proc*)(&runnable[runnable.length - 1]);
+        Proc* p = &n.val;
+        p.node = n;
+        return Opt!(Proc*)(p);
     }
 
     bool start(immutable ubyte[] binary) {
@@ -39,50 +42,32 @@ struct RunQ {
         return Proc.make(p_.get(), binary);
     }
 
-    bool wait(size_t slot) {
-        return move!(waiting, runnable)(slot);
+    void wait(ProcNode* n) {
+        move!(waiting, runnable)(n);
     }
 
-    bool done_wait(size_t slot) {
-        return move!(runnable, waiting)(slot);
+    void done_wait(ProcNode* n) {
+        move!(runnable, waiting)(n);
     }
 
-    void exit(size_t slot) {
-        cast(void) remove!(runnable)(slot);
+    void exit(ProcNode* n) {
+        runnable.remove(n);
     }
 
     // Moves the process in from[slot] into to.
-    bool move(alias Vector!(Proc) to, alias Vector!(Proc) from)(size_t slot) {
-        return append!(to)(remove!(from)(slot));
-    }
-
-    // Appends p to vec.
-    private bool append(alias Vector!(Proc) vec)(Proc p) {
-        if (!vec.append(p)) {
-            return false;
-        }
-        vec[vec.length - 1].slot = vec.length - 1;
-        vec[vec.length - 1].update_trapframe();
-        return true;
-    }
-
-    // Removes vec[slot].
-    Proc remove(alias Vector!(Proc) vec)(size_t slot) {
-        auto p = vec[slot];
-        vec[slot] = vec[vec.length - 1];
-        vec[slot].slot = slot;
-        vec[slot].update_trapframe();
-        vec.length--;
-        return p;
+    void move(alias List!(Proc) to, alias List!(Proc) from)(ProcNode* n) {
+        from.remove(n);
+        to.push_back(n);
     }
 
     // Returns the next process to run, or none if there are no runnable processes.
     Opt!(Proc*) schedule() {
-        if (runnable.length <= 0) {
+        if (runnable.length == 0) {
             return Opt!(Proc*).none;
         }
-        uint choice = rand.gen_uint() % runnable.length;
-        return Opt!(Proc*)(&runnable[choice]);
+        ProcNode* n = runnable.pop_front();
+        runnable.push_back(n);
+        return Opt!(Proc*)(&n.val);
     }
 }
 
