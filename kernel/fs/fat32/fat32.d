@@ -133,11 +133,10 @@ struct Fat32FS {
     }
 
     ubyte[] readfile(uint cluster_start, size_t size) {
-        auto data_ = kalloc_block(size);
-        if (!data_.has()) {
+        ubyte[] data = knew_array!(ubyte)(size);
+        if (!data) {
             return null;
         }
-        ubyte[] data = (cast(ubyte*) data_.get())[0 .. size];
 
         uint datalen;
         uint sector;
