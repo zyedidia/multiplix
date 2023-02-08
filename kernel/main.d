@@ -48,26 +48,26 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     Timer.delay_ms(100);
 
-    static if (is(typeof(Emmc.setup))) {
-        assert(Emmc.setup());
-        import kernel.fs.fat32.fat32;
-        Fat32FS!(Emmc) fat;
-        assert(fat.setup());
-        FileRange!(Emmc) files = fat.readdir(fat.root());
-        foreach (file; files) {
-            io.writeln(file.name);
-            file.destroy();
-            // ubyte[] data = fat.readfile(file.id(), file.size());
-            // io.writeln(data.length);
-            // import ulib.crc32;
-            // io.writeln("crc: ", Hex(crc32(data.ptr, data.length)));
-        }
-    }
+    // static if (is(typeof(Emmc.setup))) {
+    //     assert(Emmc.setup());
+    //     import kernel.fs.fat32.fat32;
+    //     Fat32FS!(Emmc) fat;
+    //     assert(fat.setup());
+    //     FileRange!(Emmc) files = fat.readdir(fat.root());
+    //     foreach (file; files) {
+    //         io.writeln(file.name);
+    //         file.destroy();
+    //         // ubyte[] data = fat.readfile(file.id(), file.size());
+    //         // io.writeln(data.length);
+    //         // import ulib.crc32;
+    //         // io.writeln("crc: ", Hex(crc32(data.ptr, data.length)));
+    //     }
+    // }
 
-    Reboot.reboot();
+    // Reboot.reboot();
 
-    // enable_irq();
-    // schedule();
+    enable_irq();
+    schedule();
 }
 
 void enable_irq() {

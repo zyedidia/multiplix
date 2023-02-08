@@ -1,5 +1,7 @@
 module kernel.alloc.block;
 
+import kernel.spinlock;
+
 import sys = kernel.sys;
 import bits = ulib.bits;
 
@@ -44,6 +46,7 @@ struct BlockAllocator(A) {
         }
     }
 
+    shared Spinlock lock;
     A* allocator;
     Header*[nblocks] partial_blocks;
     Header*[nblocks] full_blocks;
@@ -53,6 +56,10 @@ struct BlockAllocator(A) {
         sz = sz < (Free*).sizeof ? sz = (Free*).sizeof : sz;
         // make sure size is a power of 2.
         sz = pow2ceil(sz);
+
+        lock.lock();
+        scope(exit) lock.unlock();
+
         if (sz >= blocksize) {
             // size is big enough to go to the underlying allocator
             return allocator.alloc(sz);
@@ -93,6 +100,8 @@ struct BlockAllocator(A) {
         if (val == null) {
             return;
         }
+        lock.lock();
+        scope(exit) lock.unlock();
         // round down to nearest page boundary to get the header for the block
         Header* hdr = cast(Header*) (cast(uintptr) val & (~0 << (bits.msb(sys.pagesize) - 1)));
 
