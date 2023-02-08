@@ -63,7 +63,7 @@ struct Bpb {
         uint bpb_lba;
 }
 
-struct Fat32FS {
+struct Fat32FS(Emmc) {
     uint fat_lba;
     uint cluster_lba;
     uint sec_per_cluster;
@@ -124,8 +124,8 @@ struct Fat32FS {
         return true;
     }
 
-    FileRange readdir(uint cluster) {
-        return FileRange(&this, cluster);
+    FileRange!(Emmc) readdir(uint cluster) {
+        return FileRange!(Emmc)(&this, cluster);
     }
 
     uint root() {
@@ -222,8 +222,8 @@ struct File {
     }
 }
 
-struct FileRange {
-    Fat32FS* fs;
+struct FileRange(Emmc) {
+    Fat32FS!(Emmc)* fs;
     uint sector;
     uint ent;
     uint cluster;
@@ -232,7 +232,7 @@ struct FileRange {
 
     @disable this();
 
-    this(Fat32FS* fs, uint cluster) {
+    this(Fat32FS!(Emmc)* fs, uint cluster) {
         this.fs = fs;
         this.cluster = cluster;
         assert(Emmc.read_sector(cluster_lba, cast(ubyte*) ents.ptr, ents.sizeof));

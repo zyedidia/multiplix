@@ -31,7 +31,7 @@ struct Trap {
     }
 
     static bool enabled() {
-        return bits.get(Csr.sstatus, Sstatus.sie);
+        return bits.get(Csr.sstatus, Sstatus.sie) == 1;
     }
 }
 
