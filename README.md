@@ -2,7 +2,7 @@
 
 Multiplix is a small operating system serving as the foundation for some
 research projects in operating systems. It is currently designed as a
-monolithic kernel and plus a special kernel monitor that runs at a higher
+monolithic kernel plus a special kernel monitor that runs at a higher
 privilege level. Multiplix is very much in-progress.
 
 At the moment it is too early to have in-depth instructions on how to set up
