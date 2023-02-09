@@ -17,6 +17,7 @@ struct RunQ {
     uint runpid = -1;
     List!(Proc) runnable;
     List!(Proc) waiting;
+    List!(Proc) exited;
 
     alias ProcNode = List!(Proc).Node;
 
@@ -51,7 +52,7 @@ struct RunQ {
     }
 
     void exit(ProcNode* n) {
-        runnable.remove(n);
+        move!(exited, runnable)(n);
     }
 
     // Moves the process in from[slot] into to.

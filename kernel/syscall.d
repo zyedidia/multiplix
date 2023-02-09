@@ -68,13 +68,13 @@ struct Syscall {
             } else version (AArch64) {
                 waiter.trapframe.regs.x0 = p.pid;
             }
+            io.writeln("waking up ", node.val.pid);
             runq.done_wait(node);
         }
 
         // remove p from runnable
         runq.exit(p.node);
 
-        // TODO: free the process
         schedule();
     }
 
@@ -147,6 +147,7 @@ struct Syscall {
 
     enum n_wait = 4;
     static int wait(Proc* waiter, int pid) {
+        io.writeln(waiter.pid, " waiting for ", pid);
         bool do_wait(List!(Proc) queue) {
             foreach (ref p; queue) {
                 if (pid == p.val.pid) {
@@ -159,6 +160,17 @@ struct Syscall {
             }
             return true;
         }
+
+        foreach (ref p; runq.exited) {
+            if (pid == p.val.pid) {
+                // child already exited
+                // TODO: free p
+                io.writeln(pid, " already exited");
+                runq.exited.remove(p);
+                return pid;
+            }
+        }
+
         if (!do_wait(runq.runnable)) goto err;
         if (!do_wait(runq.waiting)) goto err;
 err:
