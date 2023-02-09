@@ -1,11 +1,11 @@
-local knit = require("knit")
+knit = require("knit")
 
 function sel(cond, t, f)
     if cond then return t else return f end
 end
 
-local build = include("build/build.knit")
-local conf = include("build/default.knit")
+build = include("build/build.knit")
+conf = include("build/default.knit")
 
 local machine = build.machine(conf.board, false)
 if machine == nil then
@@ -22,15 +22,6 @@ local meta = r{
         $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -of $output -makedeps=.kobj/deps/$match.dep
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
-    $ %.boot.elf:B: %.payload
-        knit -f build/bootloader.knit kboot=1 kenter=1 payload=$input bootloader.elf board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
-        mv bootloader.elf $output
-    $ %.boot.bin:B: %.payload
-        knit -f build/bootloader.knit kboot=1 kenter=1 payload=$input bootloader.bin board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
-        mv bootloader.bin $output
-    $ %.boot.list:B: %.payload
-        knit -f build/bootloader.knit kboot=1 kenter=1 payload=$input bootloader.list board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
-        mv bootloader.list $output
     $ %.bin.out: %.bin
         ./firmware/visionfive/fsz.sh $input $output
     $ %.payload: %.elf
@@ -109,13 +100,12 @@ for i, test in ipairs(tests) do
     alltest = alltest .. f" test-$test"
 end
 
+local bootloader = dofile("build/bootloader.knit")
+
 return b{
     $ all:V: kernel.boot.bin
 
     $ comp:V: kernel.boot.bin $(knit.prefix("lint-", allsrc))
-
-    $ bootloader.elf:B:
-        knit -f build/bootloader.knit kboot=1 kenter=1 bootloader.elf board=$(conf.board) release=$(conf.release) lto=$(conf.lto)
 
     $ format:VB:
         dfmt -i --brace_style=otbs $allsrc
@@ -143,8 +133,11 @@ return b{
 
     $ .kobj/kernel/main.o: user/hello/hello.elf
 
-    $ user/hello/hello.elf:B:
-        knit -C user/hello board=$(conf.board)
+    include("user/hello/Knitfile"),
+
+    bootloader.meta(),
+    bootloader.rules("kernel.boot.elf", 1, 1, "kernel.payload"),
+    bootloader.rules("bootloader.elf", 1, 1, nil),
 
     testr,
     kernel,

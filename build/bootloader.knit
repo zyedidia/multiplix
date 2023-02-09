@@ -1,87 +1,81 @@
-function sel(cond, t, f)
-    if cond then return t else return f end
-end
-
-local knit = require("knit")
-
-local build = include("build/build.knit")
-local conf = include("build/default.knit")
-
 local machine = build.machine(conf.board, true)
-if machine == nil then
-    return "could not find machine for board " .. board
+local bootloader = {
+    tools = build.tools(machine),
+    flags = build.flags(machine, conf.lto, conf.release, true)
+}
+
+function bootloader.meta()
+    local flags = bootloader.flags
+    local tools = bootloader.tools
+
+    return r{
+        $ .bootobj/%.o: %.s
+            $(tools.cc) $(flags.as) $input -c -o $output
+        $ .bootobj/%.o:D[.bootobj/deps/%.dep]: %.d
+            $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/$match.dep
+    }
 end
 
-local tools = build.tools(machine)
-local flags = build.flags(machine, conf.lto, conf.release, true)
+function bootloader.rules(bootelf, kboot, kenter, payload)
+    local flags = bootloader.flags
+    local tools = bootloader.tools
 
-local meta = r{
-    $ .bootobj/%.o: %.s
-        $(tools.cc) $(flags.as) $input -c -o $output
-    $ .bootobj/%.o:D[.bootobj/deps/%.dep]: %.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/$match.dep
-    $ %.bin: %.elf
-        $(tools.objcopy) $input -O binary $output
-    $ %.bin.out: %.bin
-        ./firmware/visionfive/fsz.sh $input $output
-    $ %.payload: %.elf
-        plboot make -o $output $input
-    $ %.list: %.elf
-        $(tools.objdump) -D $input > $output
-}
+    local lib = knit.rglob("libd", "*.d")
 
-local lib = knit.rglob("libd", "*.d")
+    local kernel = knit.join(
+        knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
+        knit.rglob("kernel/dev", "*.d"),
+        knit.rglob("kernel/alloc", "*.d"),
+        knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
+        {
+            "kernel/arch/package.d",
+            "kernel/board/package.d",
+            f"kernel/board/$(machine.board).d",
+        }
+    )
 
-local kernel = knit.join(
-    knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
-    knit.rglob("kernel/dev", "*.d"),
-    knit.rglob("kernel/alloc", "*.d"),
-    knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
-    {
-        "kernel/arch/package.d",
-        "kernel/board/package.d",
-        f"kernel/board/$(machine.board).d",
+    local boot = {
+        version = sel(payload == nil, "uart", "payload"),
+        kboot = sel(kboot, "-d-version=kboot", ""),
+        kenter = sel(kenter, "-d-version=kenter", ""),
     }
-)
 
-local src = knit.join(
-    lib,
-    kernel,
-    knit.rglob("bootloader", "*.d")
-)
+    local src = knit.join(
+        lib,
+        kernel
+    )
 
-if cli.payload ~= nil then
-    src = knit.join(src, {"bootloader/payload.o"})
-else
-    cli.payload = ""
+    local obj = knit.join(
+        knit.extrepl(src, ".d", ".o"),
+        {
+            f"kernel/arch/$(machine.arch)/monitorasm.o",
+        }
+    )
+    if payload ~= nil then
+        obj = knit.join(obj, {"bootloader/payload.o"})
+    else
+        payload = ""
+    end
+    obj = knit.join(obj, {f"bootloader/main-$(boot.version).o"})
+    obj = knit.prefix(".bootobj/", obj)
+
+    local link = f"link/$(machine.board)/bootloader.ld"
+    local linkextra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)")
+
+    local rules = b{
+        $ .bootobj/bootloader/main-$(boot.version).o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
+            $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$(boot.version) $(boot.kboot) $(boot.kenter)
+        $ $bootelf: $(obj) $(link)[I]
+            $(tools.ld) $(flags.ld) -T$(link) $(linkextra) $input -o $output
+    }
+
+    if payload ~= "" then
+        rules = rules +
+            $ .bootobj/bootloader/payload.o: bootloader/payload.s $(payload)
+                $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(payload)
+    end
+
+    return rules
 end
 
-local obj = knit.join(
-    knit.extrepl(src, ".d", ".o"),
-    {
-        f"kernel/arch/$(machine.arch)/monitorasm.o",
-    }
-)
-obj = knit.prefix(".bootobj/", obj)
-
-local link = f"link/$(machine.board)/bootloader.ld"
-local linkextra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)")
-
-local boot = {
-    version = sel(cli.payload == "", "uart", "payload"),
-    kboot = sel(tobool(cli.kboot), "-d-version=kboot", ""),
-    kenter = sel(tobool(cli.kenter), "-d-version=kenter", ""),
-}
-
-return b{
-    $ all:V: bootloader.bin
-
-    $ .bootobj/bootloader/main.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
-        $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$(boot.version) $(boot.kboot) $(boot.kenter)
-    $ .bootobj/bootloader/payload.o: bootloader/payload.s $(cli.payload)
-        $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(cli.payload)
-    $ bootloader.elf: $(obj) $(link)[I]
-        $(tools.ld) $(flags.ld) -T$(link) $(linkextra) $input -o $output
-
-    meta
-}
+return bootloader
