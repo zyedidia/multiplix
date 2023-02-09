@@ -23,7 +23,6 @@ void nops(unsigned long n) {
 
 int main() {
     int child = fork();
-    fork();
     if (child != 0) {
         wait(child);
     }

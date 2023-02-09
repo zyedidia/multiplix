@@ -1,7 +1,6 @@
 module core.exception;
 
 import io = ulib.io;
-import sys = ulib.sys;
 
 noreturn panic(Args...)(Args msg) {
     io.writeln("panic: ", msg);

@@ -1,5 +1,7 @@
 module ulib.vector;
 
+import kernel.alloc;
+
 import ulib.sys;
 import ulib.memory;
 
@@ -21,7 +23,7 @@ struct Vector(T) {
     }
 
     void clear() {
-        ulib_free(data.ptr);
+        kfree(data.ptr);
         length = 0;
         data = null;
     }
@@ -32,12 +34,12 @@ struct Vector(T) {
     }
 
     bool grow(size_t newlen) {
-        T* p = cast(T*) ulib_malloc(newlen * T.sizeof);
+        T* p = cast(T*) kalloc(newlen * T.sizeof);
         if (!p) {
             return false;
         }
         memcpy(p, data.ptr, data.length * T.sizeof);
-        ulib_free(data.ptr);
+        kfree(data.ptr);
         data = cast(T[]) p[0 .. newlen];
         return true;
     }

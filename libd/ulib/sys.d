@@ -2,10 +2,6 @@ module ulib.sys;
 
 import io = ulib.io;
 
-extern (C) {
-    void ulib_tx(ubyte b);
-    void* ulib_malloc(size_t sz);
-    void ulib_free(void* p);
-}
+import kernel.board;
 
-__gshared io.File stdout = io.File(function(ubyte c) { ulib_tx(c); });
+__gshared io.File stdout = io.File(function(ubyte c) { Uart.tx(c); });

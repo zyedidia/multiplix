@@ -94,15 +94,3 @@ T[] knew_array(T, Args...)(size_t nelem, Args args) {
 void kfree(T)(T* ptr) {
     SystemAlloc.kfree(&sys.allocator, ptr);
 }
-
-extern (C) {
-    // C-like allocation API for ulib
-
-    void* ulib_malloc(size_t sz) {
-        return sys.allocator.alloc(sz);
-    }
-
-    void ulib_free(void* p) {
-        sys.allocator.free(p);
-    }
-}

@@ -80,8 +80,4 @@ extern (C) {
 
         return cast(ubyte*) (tls_base + tls_size * Machine.ncores);
     }
-
-    void ulib_tx(ubyte c) {
-        Uart.tx(c);
-    }
 }
