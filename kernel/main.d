@@ -12,6 +12,7 @@ import kernel.spinlock;
 import kernel.proc;
 import kernel.schedule;
 import kernel.vm;
+import kernel.fs.console;
 
 import arch = kernel.arch;
 import sys = kernel.sys;
@@ -30,6 +31,8 @@ extern (C) void kmain(int coreid, ubyte* heap) {
             io.writeln("could not initialize process 0");
             return;
         }
+
+        Console.setup();
 
         // boot up the other cores
         arch.Cpu.start_all_cores();
@@ -66,8 +69,10 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     //
     // Reboot.reboot();
 
-    enable_irq();
-    schedule();
+    // Console.stdout.vnode.write(Console.stdout, cast(Proc*) null, cast(ubyte[]) "hello world");
+
+    // enable_irq();
+    // schedule();
 }
 
 void enable_irq() {

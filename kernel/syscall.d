@@ -48,11 +48,11 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
 
 struct Syscall {
     enum Num {
-        putc = 0,
+        putc   = 0,
         getpid = 1,
-        exit = 2,
-        fork = 3,
-        wait = 4,
+        exit   = 2,
+        fork   = 3,
+        wait   = 4,
     }
 
     static void putc(char c) {
