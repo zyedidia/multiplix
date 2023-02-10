@@ -103,7 +103,7 @@ end
 local bootloader = dofile("build/bootloader.knit")
 
 return b{
-    $ all:V: kernel.boot.bin
+    $ all:V: kernel.elf
 
     $ comp:V: kernel.boot.bin $(knit.prefix("lint-", allsrc))
 
@@ -137,6 +137,7 @@ return b{
 
     bootloader.meta(),
     bootloader.rules("kernel.boot.elf", 1, 1, "kernel.payload"),
+    bootloader.rules("kernel.full.boot.elf", 1, 1, "kernel.full.payload"),
     bootloader.rules("bootloader.elf", 1, 1, nil),
 
     testr,

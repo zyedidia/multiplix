@@ -23,19 +23,19 @@ import ulib.list;
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     uintptr ret = 0;
     switch (sysno) {
-        case Syscall.n_putc:
+        case Syscall.Num.putc:
             Syscall.putc(cast(char) args[0]);
             break;
-        case Syscall.n_getpid:
+        case Syscall.Num.getpid:
             ret = Syscall.getpid(p);
             break;
-        case Syscall.n_exit:
+        case Syscall.Num.exit:
             Syscall.exit(p);
             break;
-        case Syscall.n_fork:
+        case Syscall.Num.fork:
             ret = Syscall.fork(p);
             break;
-        case Syscall.n_wait:
+        case Syscall.Num.wait:
             ret = Syscall.wait(p, cast(int) args[0]);
             break;
         default:
@@ -47,17 +47,22 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
 }
 
 struct Syscall {
-    enum n_putc = 0;
+    enum Num {
+        putc = 0,
+        getpid = 1,
+        exit = 2,
+        fork = 3,
+        wait = 4,
+    }
+
     static void putc(char c) {
         io.write(c);
     }
 
-    enum n_getpid = 1;
     static int getpid(Proc* p) {
         return p.pid;
     }
 
-    enum n_exit = 2;
     static noreturn exit(Proc* p) {
         io.writeln("process ", p.pid, " exited ");
 
@@ -78,7 +83,6 @@ struct Syscall {
         schedule();
     }
 
-    enum n_fork = 3;
     static int fork(Proc* p) {
         auto child_ = runq.queue().next();
         if (!child_.has()) {
@@ -145,7 +149,6 @@ struct Syscall {
         return child.pid;
     }
 
-    enum n_wait = 4;
     static int wait(Proc* waiter, int pid) {
         io.writeln(waiter.pid, " waiting for ", pid);
         bool do_wait(List!(Proc) queue) {
