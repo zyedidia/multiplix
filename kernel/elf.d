@@ -94,7 +94,7 @@ bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, A
         assert(ph.vaddr + ph.memsz >= ph.vaddr);
 
         // allocate physical space for segment, and copy it in
-        ubyte[] code = knew_array!(ubyte)(ph.memsz);
+        ubyte[] code = knew_array_custom!(ubyte)(alloc, ph.memsz);
         if (!code) {
             return false;
         }

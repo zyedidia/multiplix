@@ -68,7 +68,7 @@ T* knew_custom(T, A, Args...)(A* allocator, Args args) {
 }
 
 T[] knew_array_custom(T, A, Args...)(A* allocator, size_t nelem, Args args) {
-    return Alloc!(A).knew_array!(T)(allocator, args);
+    return Alloc!(A).knew_array!(T)(allocator, nelem, args);
 }
 
 void kfree_custom(T, A)(A* allocator, T* ptr) {
