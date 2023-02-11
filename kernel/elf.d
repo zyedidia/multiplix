@@ -90,19 +90,25 @@ bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, A
         if (ph.memsz == 0) {
             continue;
         }
+
+        // TODO: these shouldn't be assertions
         assert(ph.memsz >= ph.filesz);
         assert(ph.vaddr + ph.memsz >= ph.vaddr);
 
+        // make sure we map on a page boundary
+        size_t pad = ph.vaddr % sys.pagesize;
+
         // allocate physical space for segment, and copy it in
-        ubyte[] code = knew_array_custom!(ubyte)(alloc, ph.memsz);
+        import ulib.math : max;
+        ubyte[] code = knew_array_custom!(ubyte)(alloc, max(ph.memsz + pad, cast(ulong) sys.pagesize));
         if (!code) {
             return false;
         }
-        memcpy(code.ptr, elfdat + ph.offset, ph.filesz);
-        memset(code.ptr + ph.filesz, 0, ph.memsz - ph.filesz);
+        memcpy(code.ptr + pad, elfdat + ph.offset, ph.filesz);
+        memset(code.ptr + pad + ph.filesz, 0, ph.memsz - ph.filesz);
 
         // map newly allocated physical space to base va
-        for (uintptr va = ph.vaddr, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
+        for (uintptr va = ph.vaddr - pad, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
             if (!pt.map(va, pa, Pte.Pg.normal, Perm.urwx, alloc)) {
                 // memory will be freed by caller via checkpoint free (in proc creation)
                 return false;
