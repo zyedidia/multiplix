@@ -1,12 +1,7 @@
 #include <stdint.h>
-
-#include "syscall.h"
-
-void print(char* s) {
-    for (char c = *s; c != '\0'; c = *++s) {
-        putc(c);
-    }
-}
+#include <unistd.h>
+#include <sys/wait.h>
+#include <stdio.h>
 
 long fact(int n) {
     if (n == 0)
@@ -22,15 +17,15 @@ void nops(unsigned long n) {
 }
 
 int main() {
-    int child = fork();
-    if (child != 0) {
-        wait();
-    }
-    int pid = getpid();
-    for (int i = 0; i < 40; i++) {
-        putc('0' + pid);
-        putc('\n');
-        nops(10000000 / 2);
-    }
-    exit();
+    printf("Hello world\n");
+    /* int child = fork(); */
+    /* if (child != 0) { */
+    /*     wait(NULL); */
+    /* } */
+    /* int pid = getpid(); */
+    /* for (int i = 0; i < 40; i++) { */
+    /*     printf("process: %d\n", pid); */
+    /*     nops(10000000 / 2); */
+    /* } */
+    return 0;
 }
