@@ -31,7 +31,7 @@ function build.machine(board, monitor)
             board = "visionfive",
             mabi = "lp64",
             march = "rv64imac",
-            mattr = "+m,+a,+c,+relax,-d",
+            mattr = "+m,+a,+c,+relax",
             arch = "riscv64",
             mcmodel = "medany",
             qemu = "-M visionfive -bios none -smp 2 -m 2G", -- doesn't exist
@@ -40,7 +40,7 @@ function build.machine(board, monitor)
             board = "visionfive2",
             mabi = "lp64",
             march = "rv64imac",
-            mattr = "+m,+a,+c,+relax,-d",
+            mattr = "+m,+a,+c,+relax",
             arch = "riscv64",
             mcmodel = "medany",
             qemu = "-M visionfive2 -bios none -smp 4 -m 2G", -- doesn't exist
@@ -49,7 +49,7 @@ function build.machine(board, monitor)
             board = "virt_riscv64",
             mabi = "lp64",
             march = "rv64imac",
-            mattr = "+m,+a,+c,+relax,-d",
+            mattr = "+m,+a,+c,+relax",
             arch = "riscv64",
             mcmodel = "medany",
             qemu = "-M virt -bios none -smp 4 -m 2G",
