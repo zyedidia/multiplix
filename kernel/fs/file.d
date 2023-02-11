@@ -16,6 +16,7 @@ alias Path = string;
 
 struct Vnode {
     uint refcount;
+    shared Spinlock lock;
     VnodeIf vnode;
 
     this(uint rc, VnodeIf vn) {
@@ -33,9 +34,6 @@ struct VnodeIf {
         off_t function(File* fd, off_t to, int flag) seek;
         bool function() seekable;
         void function(File* fd) close;
-
-        void function() lock;
-        void function() unlock;
     }
 
     mixin MakeInterface!(VnodeIf);
@@ -94,12 +92,12 @@ struct Fdtable {
         if (closef.refcount <= 0) {
             Vnode* node = closef.vnode;
             node.close(closef);
-            node.lock();
+            node.lock.lock();
             node.refcount--;
             if (node.refcount <= 0) {
                 kfree(node.self);
             } else {
-                node.unlock();
+                node.lock.unlock();
             }
             kfree(closef);
         } else {

@@ -8,17 +8,12 @@ import kernel.alloc;
 import kernel.fs.file;
 
 struct Console {
-    shared Spinlock _lock;
-
-    void lock()   { _lock.lock(); }
-    void unlock() { _lock.unlock(); }
-
     ssize_t read(File* fd, Proc* p, ubyte[] buf) {
         return -1;
     }
 
     ssize_t write(File* fd, Proc* p, ubyte[] buf) {
-        _lock.lock();
+        fd.vnode.lock.lock();
         fd.lock.lock();
 
         if ((fd.perm & Perm.write) == 0) {
@@ -30,7 +25,7 @@ struct Console {
             Uart.tx(b);
         }
         fd.lock.unlock();
-        _lock.unlock();
+        fd.vnode.lock.unlock();
         return buf.length;
     }
 
