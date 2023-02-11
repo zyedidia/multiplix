@@ -12,12 +12,12 @@ import bits = ulib.bits;
 import io = ulib.io;
 
 bool wait_reg_mask(uint* reg, uint mask, bool set, uint timeout) {
-    for (uint ms = 0; ms <= timeout; ms++) {
+    for (uint ms = 0; ms <= timeout * 10; ms++) {
         if ((volatile_ld(reg) & mask) ? set : !set) {
             return true;
         }
 
-        Timer.delay_ms(1);
+        Timer.delay_us(100);
     }
 
     return false;
@@ -109,8 +109,6 @@ struct BcmEmmc(uintptr base) {
         volatile_st(&regs.block_size_count, device.block_size | (device.transfer_blocks << 16));
         volatile_st(&regs.arg1, arg);
         volatile_st(&regs.cmd_xfer_mode, command_reg);
-
-        /* Timer.delay_ms(10); */
 
         int times = 0;
 
@@ -514,7 +512,7 @@ struct BcmEmmc(uintptr base) {
             return false;
         }
 
-        switch_clock_rate(device.base_clock, Sd.clock_normal);
+        // switch_clock_rate(device.base_clock, Sd.clock_normal);
 
         Timer.delay_ms(10);
 
@@ -569,7 +567,7 @@ struct BcmEmmc(uintptr base) {
 
         uint n = volatile_ld(&regs.control[1]);
         n |= Ctrl1.clk_int_en;
-        n |= get_clock_divider(rate, Sd.clock_id);
+        n |= get_clock_divider(rate, Sd.clock_normal);
         n &= ~(0xf << 16);
         n |= (11 << 16);
 
@@ -683,7 +681,7 @@ struct BcmEmmc(uintptr base) {
         device.ocr = 0;
         device.rca = 0;
         device.offset = 0;
-        device.base_clock = 0;
+        device.base_clock = 100_000_000;
 
         bool success = false;
         for (int i = 0; i < 10; i++) {

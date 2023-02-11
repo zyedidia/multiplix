@@ -56,14 +56,14 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     //     FileRange!(Emmc) files = fat.readdir(fat.root());
     //     foreach (file; files) {
     //         io.writeln(file.name);
+    //         ubyte[] data = fat.readfile(file.id(), file.size());
+    //         io.writeln(data.length);
+    //         import ulib.crc32;
+    //         io.writeln("crc: ", Hex(crc32(data.ptr, data.length)));
     //         file.destroy();
-    //         // ubyte[] data = fat.readfile(file.id(), file.size());
-    //         // io.writeln(data.length);
-    //         // import ulib.crc32;
-    //         // io.writeln("crc: ", Hex(crc32(data.ptr, data.length)));
     //     }
     // }
-
+    //
     // Reboot.reboot();
 
     enable_irq();
