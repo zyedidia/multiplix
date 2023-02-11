@@ -52,24 +52,23 @@ struct Trapframe {
     uintptr kgp;
     uintptr epc;
     Regs regs;
-    Proc* p;
 }
 
 extern (C) {
     // userret in uservec.s
-    extern noreturn userret(Trapframe* tf);
+    extern noreturn userret(Proc* p);
     // uservec in uservec.s
     extern void uservec();
 
-    noreturn usertrap(Trapframe* tf) {
+    noreturn usertrap(Proc* p) {
         uintptr scause = Csr.scause;
 
         /* io.writeln("usertrap: scause: ", cast(void*) scause); */
 
         if (scause == Cause.ecall_u) {
-            tf.epc = Csr.sepc + 4;
-            Regs* r = &tf.regs;
-            r.a0 = syscall_handler(tf.p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
+            p.trapframe.epc = Csr.sepc + 4;
+            Regs* r = &p.trapframe.regs;
+            r.a0 = syscall_handler(p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
         } else if (scause == Cause.sti) {
             io.writeln("user timer interrupt");
             Timer.intr(Timer.interval);
@@ -79,7 +78,7 @@ extern (C) {
             assert(0, "unhandled user trap");
         }
 
-        usertrapret(tf.p, false);
+        usertrapret(p, false);
     }
 }
 
@@ -92,6 +91,7 @@ noreturn usertrapret(Proc* p, bool swtch) {
     p.trapframe.ktp = cpuinfo.tls;
     p.trapframe.ksp = cpuinfo.stack;
     p.trapframe.kgp = rd_gp();
+    Csr.sscratch = cast(uintptr) p;
 
     Csr.sstatus = bits.clear(Csr.sstatus, Sstatus.spp); // force return to usermode
     Csr.sstatus = bits.set(Csr.sstatus, Sstatus.spie); // enable interrupts in user mode
@@ -103,5 +103,5 @@ noreturn usertrapret(Proc* p, bool swtch) {
         vm_fence();
     }
 
-    userret(p.trapframe);
+    userret(p);
 }

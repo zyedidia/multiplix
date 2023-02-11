@@ -20,15 +20,23 @@ shared int nextpid = 0;
 
 struct Proc {
     enum stackva = 0x7fff0000;
-    enum trapframeva = stackva - sys.pagesize;
 
-    Trapframe* trapframe;
+    Trapframe trapframe;
 
     // scheduling list node
     List!(Proc).Node* node;
+
     int pid = -1;
     Pagetable* pt;
-    Vector!(List!(Proc).Node*) waiters;
+    Proc* parent;
+
+    enum State {
+        runnable = 0,
+        waiting,
+        exited,
+    }
+
+    State state;
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // Checkpoint so we can free all memory if there is a failure.
@@ -50,24 +58,14 @@ struct Proc {
         }
         // map kernel
         assert(kernel_map(proc.pt));
-        // allocate stack/trapframe
+        // allocate stack
         void* stack = kalloc_custom(&alloc, sys.pagesize);
         if (!stack) {
             alloc.free_checkpoint();
             return false;
         }
-        void* trapframe = kalloc_custom(&alloc, sys.pagesize);
-        if (!trapframe) {
-            alloc.free_checkpoint();
-            return false;
-        }
-        proc.trapframe = cast(Trapframe*) trapframe;
-        // map stack/trapframe
+        // map stack
         if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack), Pte.Pg.normal, Perm.urwx, &alloc)) {
-            alloc.free_checkpoint();
-            return false;
-        }
-        if (!proc.pt.map(trapframeva, vm.ka2pa(cast(uintptr) proc.trapframe), Pte.Pg.normal, Perm.krwx, &alloc)) {
             alloc.free_checkpoint();
             return false;
         }
@@ -77,14 +75,9 @@ struct Proc {
         memset(&proc.trapframe.regs, 0, Regs.sizeof);
         proc.trapframe.regs.sp = stackva + sys.pagesize;
         proc.trapframe.epc = entryva;
-        proc.update_trapframe();
 
         proc.pid = atomic_rmw_add(&nextpid, 1);
 
         return true;
-    }
-
-    void update_trapframe() {
-        this.trapframe.p = &this;
     }
 }

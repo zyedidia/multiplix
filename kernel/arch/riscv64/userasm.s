@@ -1,8 +1,7 @@
 .align 4
 .globl uservec
 uservec:
-	csrw sscratch, a0
-	li a0, 0x7ffef000
+	csrrw a0, sscratch, a0
 
 	sd ra, 32(a0)
 	sd sp, 40(a0)
@@ -46,7 +45,7 @@ uservec:
 
 	j usertrap
 
-# function: userret(Trapframe* tf)
+# function: userret(Proc* p)
 .globl userret
 userret:
 	ld ra, 32(a0)

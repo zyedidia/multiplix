@@ -64,6 +64,6 @@ static inline int fork() {
     return syscall_0(SYS_FORK);
 }
 
-static inline int wait(int pid) {
-    return syscall_1(SYS_WAIT, pid);
+static inline int wait() {
+    return syscall_0(SYS_WAIT);
 }

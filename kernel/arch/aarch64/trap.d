@@ -54,17 +54,17 @@ extern (C) void kernel_interrupt(Regs* regs) {
 struct Trapframe {
     uintptr sp;
     uintptr epc;
+    uintptr tp;
     Regs regs;
-    Proc* p;
 }
 
 extern (C) {
     // userret in uservec.s
-    extern noreturn userret(Trapframe* tf);
+    extern noreturn userret(Proc* p);
     // uservec in uservec.s
     extern void uservec();
 
-    noreturn user_interrupt(Trapframe* tf) {
+    noreturn user_interrupt(Proc* p) {
         import kernel.cpu;
         io.writeln("core: ", cpuinfo.coreid, ", user interrupt");
         Timer.intr();
@@ -72,15 +72,15 @@ extern (C) {
         schedule();
     }
 
-    noreturn user_exception(Trapframe* tf) {
+    noreturn user_exception(Proc* p) {
         const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
         /* io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1); */
         /* io.writeln("far_el1: ", cast(void*) SysReg.far_el1); */
 
         switch (exc_class) {
             case Exception.svc:
-                Regs* r = &tf.regs;
-                r.x0 = syscall_handler(tf.p, r.x7, r.x0, r.x1, r.x2, r.x3, r.x4, r.x5, r.x6);
+                Regs* r = &p.trapframe.regs;
+                r.x0 = syscall_handler(p, r.x7, r.x0, r.x1, r.x2, r.x3, r.x4, r.x5, r.x6);
                 break;
             default:
                 io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1);
@@ -89,7 +89,7 @@ extern (C) {
                 break;
         }
 
-        usertrapret(tf.p, false);
+        usertrapret(p, false);
     }
 }
 
@@ -101,6 +101,7 @@ noreturn usertrapret(Proc* p, bool swtch) {
 
     // set up trapframe
     p.trapframe.sp = cpuinfo.stack;
+    p.trapframe.tp = SysReg.tpidr_el1;
 
     // set elr to p.trapframe.epc
     SysReg.elr_el1 = p.trapframe.epc;
@@ -110,5 +111,5 @@ noreturn usertrapret(Proc* p, bool swtch) {
         vm_fence();
     }
 
-    userret(p.trapframe);
+    userret(p);
 }

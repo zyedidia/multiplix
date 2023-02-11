@@ -36,7 +36,7 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
             ret = Syscall.fork(p);
             break;
         case Syscall.Num.wait:
-            ret = Syscall.wait(p, cast(int) args[0]);
+            ret = Syscall.wait(p);
             break;
         default:
             io.writeln("invalid syscall: ", sysno);
@@ -66,18 +66,16 @@ struct Syscall {
     static noreturn exit(Proc* p) {
         io.writeln("process ", p.pid, " exited ");
 
-        foreach (node; p.waiters) {
-            auto waiter = node.val;
+        if (p.parent && p.parent.state == Proc.State.waiting) {
             version (RISCV64) {
-                waiter.trapframe.regs.a0 = p.pid;
+                p.parent.trapframe.regs.a0 = p.pid;
             } else version (AArch64) {
-                waiter.trapframe.regs.x0 = p.pid;
+                p.parent.trapframe.regs.x0 = p.pid;
             }
-            io.writeln("waking up ", node.val.pid);
-            runq.done_wait(node);
+            runq.done_wait(p.parent.node);
         }
 
-        // remove p from runnable
+        // move p from runnable to exited
         runq.exit(p.node);
 
         schedule();
@@ -100,18 +98,6 @@ struct Syscall {
             return -1;
         }
         child.pt = pt;
-
-        // kalloc+map trapframe
-        void* trapframe = kalloc_custom(&alloc, sys.pagesize);
-        if (!trapframe) {
-            alloc.free_checkpoint();
-            return -1;
-        }
-        child.trapframe = cast(Trapframe*) trapframe;
-        if (!child.pt.map(Proc.trapframeva, vm.ka2pa(cast(uintptr) child.trapframe), Pte.Pg.normal, Perm.krwx, &alloc)) {
-            alloc.free_checkpoint();
-            return -1;
-        }
 
         assert(kernel_map(child.pt));
 
@@ -140,43 +126,26 @@ struct Syscall {
         } else version (AArch64) {
             child.trapframe.regs.x0 = 0;
         }
-
         child.trapframe.epc = p.trapframe.epc;
-        child.update_trapframe();
+        child.parent = p;
 
         child.pid = atomic_rmw_add(&nextpid, 1);
 
         return child.pid;
     }
 
-    static int wait(Proc* waiter, int pid) {
-        io.writeln(waiter.pid, " waiting for ", pid);
-        bool do_wait(List!(Proc) queue) {
-            foreach (ref p; queue) {
-                if (pid == p.val.pid) {
-                    if (!p.val.waiters.append(waiter.node)) {
-                        return false;
-                    }
-                    runq.wait(waiter.node);
-                    schedule();
-                }
-            }
-            return true;
-        }
-
+    static int wait(Proc* waiter) {
         foreach (ref p; runq.exited) {
-            if (pid == p.val.pid) {
+            if (p.val.parent == waiter) {
                 // child already exited
                 // TODO: free p
-                io.writeln(pid, " already exited");
+                int pid = p.val.pid;
                 runq.exited.remove(p);
                 return pid;
             }
         }
-
-        if (!do_wait(runq.runnable)) goto err;
-        if (!do_wait(runq.waiting)) goto err;
-err:
-        return -1;
+        waiter.state = Proc.State.waiting;
+        runq.wait(waiter.node);
+        schedule();
     }
 }

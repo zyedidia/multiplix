@@ -44,19 +44,22 @@ struct RunQ {
     }
 
     void wait(ProcNode* n) {
+        n.val.state = Proc.State.waiting;
         move!(waiting, runnable)(n);
     }
 
     void done_wait(ProcNode* n) {
+        n.val.state = Proc.State.runnable;
         move!(runnable, waiting)(n);
     }
 
     void exit(ProcNode* n) {
+        n.val.state = Proc.State.exited;
         move!(exited, runnable)(n);
     }
 
     // Moves the process in from[slot] into to.
-    void move(alias List!(Proc) to, alias List!(Proc) from)(ProcNode* n) {
+    private void move(alias List!(Proc) to, alias List!(Proc) from)(ProcNode* n) {
         from.remove(n);
         to.push_back(n);
     }

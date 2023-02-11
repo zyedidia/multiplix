@@ -23,9 +23,8 @@ void nops(unsigned long n) {
 
 int main() {
     int child = fork();
-    fork();
     if (child != 0) {
-        wait(child);
+        wait();
     }
     int pid = getpid();
     for (int i = 0; i < 40; i++) {
