@@ -30,7 +30,7 @@ int main() {
     for (int i = 0; i < 40; i++) {
         putc('0' + pid);
         putc('\n');
-        nops(10000000 / 2);
+        nops(10000000);
     }
     exit();
 }

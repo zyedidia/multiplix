@@ -33,4 +33,8 @@ struct Regs {
     ulong fp;
     ulong lr;
     ulong sp; // loaded from sp_el0
+
+    void wr_ret(ulong val) {
+        x0 = val;
+    }
 }

@@ -67,11 +67,8 @@ struct Syscall {
         io.writeln("process ", p.pid, " exited ");
 
         if (p.parent && p.parent.state == Proc.State.waiting) {
-            version (RISCV64) {
-                p.parent.trapframe.regs.a0 = p.pid;
-            } else version (AArch64) {
-                p.parent.trapframe.regs.x0 = p.pid;
-            }
+            p.parent.trapframe.regs.wr_ret(p.pid);
+            p.parent.children--;
             runq.done_wait(p.parent.node);
         }
 
@@ -121,13 +118,10 @@ struct Syscall {
         alloc.done_checkpoint();
 
         memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);
-        version (RISCV64) {
-            child.trapframe.regs.a0 = 0;
-        } else version (AArch64) {
-            child.trapframe.regs.x0 = 0;
-        }
+        child.trapframe.regs.wr_ret(0);
         child.trapframe.epc = p.trapframe.epc;
         child.parent = p;
+        p.children++;
 
         child.pid = atomic_rmw_add(&nextpid, 1);
 
@@ -135,12 +129,17 @@ struct Syscall {
     }
 
     static int wait(Proc* waiter) {
+        if (waiter.children == 0) {
+            return -1;
+        }
+
         foreach (ref p; runq.exited) {
             if (p.val.parent == waiter) {
                 // child already exited
                 // TODO: free p
                 int pid = p.val.pid;
                 runq.exited.remove(p);
+                waiter.children--;
                 return pid;
             }
         }

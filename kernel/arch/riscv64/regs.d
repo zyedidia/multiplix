@@ -32,6 +32,10 @@ struct Regs {
     uintptr t4;
     uintptr t5;
     uintptr t6;
+
+    void wr_ret(uintptr val) {
+        a0 = val;
+    }
 }
 
 import ldc.llvmasm;

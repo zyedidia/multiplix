@@ -30,6 +30,8 @@ struct Proc {
     Pagetable* pt;
     Proc* parent;
 
+    uint children;
+
     enum State {
         runnable = 0,
         waiting,
@@ -75,6 +77,7 @@ struct Proc {
         memset(&proc.trapframe.regs, 0, Regs.sizeof);
         proc.trapframe.regs.sp = stackva + sys.pagesize;
         proc.trapframe.epc = entryva;
+        proc.children = 0;
 
         proc.pid = atomic_rmw_add(&nextpid, 1);
 

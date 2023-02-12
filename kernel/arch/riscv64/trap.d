@@ -43,6 +43,8 @@ extern (C) void kerneltrap() {
 
     if (scause == Cause.sti) {
         Timer.intr(Timer.interval);
+    } else {
+        assert(false);
     }
 }
 
