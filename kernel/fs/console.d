@@ -5,7 +5,7 @@ import kernel.board;
 import kernel.proc;
 import kernel.alloc;
 
-import kernel.fs.file;
+import kernel.fs.vfs;
 
 struct Console {
     ssize_t read(File* fd, Proc* p, ubyte[] buf) {

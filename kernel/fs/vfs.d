@@ -1,4 +1,4 @@
-module kernel.fs.file;
+module kernel.fs.vfs;
 
 import kernel.proc;
 import kernel.spinlock;
