@@ -18,6 +18,10 @@ struct Timer {
         return SysReg.cntfrq_el0;
     }
 
+    static ulong ns() {
+        return SysReg.cntpct_el0 * 1_000_000_000 / freq();
+    }
+
     static ulong cycles() {
         return SysReg.pmccntr_el0;
     }

@@ -17,6 +17,7 @@ struct RunQ {
     uint runpid = -1;
     List!(Proc) runnable;
     List!(Proc) waiting;
+    List!(Proc) sleeping;
     List!(Proc) exited;
 
     alias ProcNode = List!(Proc).Node;
@@ -58,6 +59,23 @@ struct RunQ {
         move!(exited, runnable)(n);
     }
 
+    void sleep(ProcNode* n, ulong end_time) {
+        n.val.state = Proc.State.sleeping;
+        n.val.sleep_end = end_time;
+        move!(sleeping, runnable)(n);
+        assert(sleeping.length > 0);
+    }
+
+    void wakeup_sleepers() {
+        ulong now = arch.Timer.ns();
+        foreach (ProcNode* n; sleeping) {
+            if (n.val.sleep_end <= now) {
+                n.val.state = Proc.State.runnable;
+                move!(runnable, sleeping)(n);
+            }
+        }
+    }
+
     // Moves the process in from[slot] into to.
     private void move(alias List!(Proc) to, alias List!(Proc) from)(ProcNode* n) {
         from.remove(n);
@@ -66,6 +84,7 @@ struct RunQ {
 
     // Returns the next process to run, or none if there are no runnable processes.
     Opt!(Proc*) schedule() {
+        wakeup_sleepers();
         if (runnable.length == 0) {
             return Opt!(Proc*).none;
         }

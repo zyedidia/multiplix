@@ -15,6 +15,8 @@ void nops(unsigned long n) {
     }
 }
 
+struct timespec delay = {.tv_sec = 1, .tv_nsec = 0};
+
 int main() {
     /* int child = fork(); */
     /* if (child != 0) { */
@@ -23,7 +25,7 @@ int main() {
     /* int pid = getpid(); */
     for (int i = 0; i < 40; i++) {
         write(1, "hello\n", 6);
-        nops(10000000);
+        nanosleep(&delay);
     }
     exit();
 }

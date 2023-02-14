@@ -44,9 +44,11 @@ struct Proc {
     enum State {
         runnable = 0,
         waiting,
+        sleeping,
         exited,
     }
     State state;
+    ulong sleep_end;
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
         // Checkpoint so we can free all memory if there is a failure.
