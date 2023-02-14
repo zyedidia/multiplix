@@ -16,7 +16,7 @@ struct Console {
         fd.vnode.lock.lock();
         fd.lock.lock();
 
-        if ((fd.perm & Perm.write) == 0) {
+        if ((fd.perm & File.Perm.write) == 0) {
             // not writable
             return -1;
         }
@@ -44,13 +44,14 @@ struct Console {
     static __gshared File* stderr;
 
     static void setup() {
+        import io = ulib.io;
         Console* console = knew!(Console)();
         assert(console);
         Vnode* node = knew!(Vnode)(0, VnodeIf.from(console));
 
-        stdin = knew!(File)(node, Perm.read);
-        stdout = knew!(File)(node, Perm.write);
-        stderr = knew!(File)(node, Perm.write);
+        stdin = knew!(File)(node, File.Perm.read);
+        stdout = knew!(File)(node, File.Perm.write);
+        stderr = knew!(File)(node, File.Perm.write);
 
         assert(stdin && stdout && stderr);
 

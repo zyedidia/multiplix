@@ -123,17 +123,18 @@ struct BlockAllocator(A) {
             return null;
         }
         size_t nelem = (blocksize - Header.sizeof) / sz;
-        ubyte[] data = (cast(ubyte*) (block + 1))[0 .. blocksize];
+        size_t datasize = blocksize - Header.sizeof;
+        ubyte[] data = (cast(ubyte*) (block + 1))[0 .. datasize];
         block.free_head = cast(Free*) &data[0];
         block.alloc_slots = 0;
         block.total_slots = cast(uint) nelem;
 
         // set up free list
-        for (size_t i = 0; i < blocksize - sz; i += sz) {
+        for (size_t i = 0; i < datasize - sz; i += sz) {
             Free* free = cast(Free*) &data[i];
             free.next = cast(Free*) &data[i+sz];
         }
-        (cast(Free*) &data[blocksize - sz]).next = null;
+        (cast(Free*) &data[datasize - sz]).next = null;
 
         return block;
     }

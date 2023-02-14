@@ -6,12 +6,6 @@ import kernel.alloc;
 
 import ulib.iface;
 
-enum Perm {
-    read  = 0b100000000,
-    write = 0b010000000,
-    exec  = 0b001000000,
-}
-
 alias Path = string;
 
 struct Vnode {
@@ -40,6 +34,12 @@ struct VnodeIf {
 }
 
 struct File {
+    enum Perm {
+        read  = 0b100000000,
+        write = 0b010000000,
+        exec  = 0b001000000,
+    }
+
     Vnode* vnode;
     uint refcount;
     ulong perm;
@@ -58,11 +58,12 @@ struct File {
     }
 }
 
-struct Fdtable {
+struct FdTable {
     enum FnoCount = 16;
 
     File*[FnoCount] files;
     shared Spinlock lock;
+    uint refcount;
 
     File* reference(int fd) {
         lock.lock();

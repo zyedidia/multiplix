@@ -52,6 +52,5 @@ void kernel_setup(bool primary) {
     Csr.sie = (1UL << Sie.stie) | (1UL << Sie.ssie);
 
     // enable SUM bit so supervisor mode can access usermode pages
-    // (currently not necessary, so commented out)
-    // Csr.sstatus = bits.set(Csr.sstatus, Sstatus.sum);
+    Csr.sstatus = Csr.sstatus | (1UL << Sstatus.sum);
 }

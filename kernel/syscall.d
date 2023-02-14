@@ -10,6 +10,8 @@ import kernel.board;
 import kernel.alloc;
 import kernel.arch;
 
+import kernel.fs.vfs;
+
 import sys = kernel.sys;
 import vm = kernel.vm;
 
@@ -23,8 +25,8 @@ import ulib.list;
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     uintptr ret = 0;
     switch (sysno) {
-        case Syscall.Num.putc:
-            Syscall.putc(cast(char) args[0]);
+        case Syscall.Num.write:
+            Syscall.write(p, cast(int) args[0], args[1], cast(size_t) args[2]);
             break;
         case Syscall.Num.getpid:
             ret = Syscall.getpid(p);
@@ -48,15 +50,37 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
 
 struct Syscall {
     enum Num {
-        putc   = 0,
+        write  = 0,
         getpid = 1,
         exit   = 2,
         fork   = 3,
         wait   = 4,
     }
 
-    static void putc(char c) {
-        io.write(c);
+    static int write(Proc* p, int fd, uintptr addr, size_t sz) {
+        // Validate buffer.
+        if (sz != 0) {
+            size_t overflow = addr + sz;
+            if (overflow < addr || addr >= Proc.stackva) {
+                return -1; // E_FAULT
+            }
+
+            for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
+                auto vmap = vm.lookup(p.pt, va);
+                if (!vmap.has() || !vmap.get().user) {
+                    return -1; // E_FAULT
+                }
+            }
+        }
+
+        // Validate file descriptor.
+        if (fd >= FdTable.FnoCount || fd < 0 || !p.fdtable.files[fd]) {
+            return -1; // E_BADF
+        }
+        File* f = p.fdtable.reference(fd);
+        int n = cast(int) f.vnode.write(f, p, (cast(ubyte*) addr)[0 .. sz]);
+        p.fdtable.deref(f);
+        return n;
     }
 
     static int getpid(Proc* p) {

@@ -2,12 +2,6 @@
 
 #include "syscall.h"
 
-void print(char* s) {
-    for (char c = *s; c != '\0'; c = *++s) {
-        putc(c);
-    }
-}
-
 long fact(int n) {
     if (n == 0)
         return 1;
@@ -22,14 +16,13 @@ void nops(unsigned long n) {
 }
 
 int main() {
-    int child = fork();
-    if (child != 0) {
-        wait();
-    }
-    int pid = getpid();
+    /* int child = fork(); */
+    /* if (child != 0) { */
+    /*     wait(); */
+    /* } */
+    /* int pid = getpid(); */
     for (int i = 0; i < 40; i++) {
-        putc('0' + pid);
-        putc('\n');
+        write(1, "hello\n", 6);
         nops(10000000);
     }
     exit();

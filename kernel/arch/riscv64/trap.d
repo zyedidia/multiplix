@@ -39,7 +39,7 @@ extern (C) void kerneltrap() {
     auto sepc = Csr.sepc;
     auto scause = Csr.scause;
 
-    io.writeln("[trap] sepc: ", cast(void*) sepc);
+    io.writeln("[trap] sepc: ", cast(void*) sepc, " cause: ", Hex(scause));
 
     if (scause == Cause.sti) {
         Timer.intr(Timer.interval);
@@ -66,6 +66,7 @@ extern (C) {
         uintptr scause = Csr.scause;
 
         /* io.writeln("usertrap: scause: ", cast(void*) scause); */
+        Csr.stvec = cast(uintptr) &kernelvec;
 
         if (scause == Cause.ecall_u) {
             p.trapframe.epc = Csr.sepc + 4;

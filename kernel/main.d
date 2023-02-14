@@ -27,12 +27,12 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         sys.allocator.construct(cast(uintptr) heap);
 
+        Console.setup();
+
         if (!runq.start(hello_elf)) {
             io.writeln("could not initialize process 0");
             return;
         }
-
-        Console.setup();
 
         // boot up the other cores
         arch.Cpu.start_all_cores();
@@ -71,8 +71,8 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     // Console.stdout.vnode.write(Console.stdout, cast(Proc*) null, cast(ubyte[]) "hello world");
 
-    // enable_irq();
-    // schedule();
+    enable_irq();
+    schedule();
 }
 
 void enable_irq() {

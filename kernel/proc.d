@@ -7,6 +7,9 @@ import kernel.alloc;
 import kernel.board;
 import kernel.spinlock;
 
+import kernel.fs.vfs;
+import kernel.fs.console;
+
 import sys = kernel.sys;
 import vm = kernel.vm;
 import elf = kernel.elf;
@@ -71,6 +74,12 @@ struct Proc {
             alloc.free_checkpoint();
             return false;
         }
+
+        if (!proc.init_fdtable(&alloc)) {
+            alloc.free_checkpoint();
+            return false;
+        }
+
         alloc.done_checkpoint();
 
         // initialize registers (stack, pc)
@@ -81,6 +90,20 @@ struct Proc {
 
         proc.pid = atomic_rmw_add(&nextpid, 1);
 
+        return true;
+    }
+
+    FdTable* fdtable;
+
+    bool init_fdtable(A)(A* alloc) {
+        fdtable = knew_custom!(FdTable)(alloc);
+        if (!fdtable) {
+            return false;
+        }
+        fdtable.files[0] = Console.stdin;
+        fdtable.files[1] = Console.stdout;
+        fdtable.files[2] = Console.stderr;
+        fdtable.refcount = 1;
         return true;
     }
 }
