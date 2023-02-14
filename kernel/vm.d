@@ -3,8 +3,11 @@ module kernel.vm;
 import sys = kernel.sys;
 
 import kernel.arch;
+import kernel.alloc;
 
 import ulib.option;
+import ulib.memory;
+import ulib.math : align_off;
 
 import bits = ulib.bits;
 
@@ -72,6 +75,58 @@ Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
     }
     size_t size = Pagetable.level2size(pgtype);
     return Opt!(VaMapping)(VaMapping(va, size, pte));
+}
+
+void unmap(Pagetable* pt, uintptr va, Pte.Pg pgtyp, bool free) {
+    Pte* pte = pt.walk!(void, false)(va, pgtyp, null);
+    if (!pte) {
+        return;
+    }
+    if (free) {
+        kfree(cast(void*) pa2ka(pte.pa));
+    }
+    pte.data = 0;
+}
+
+uintptr uvmalloc(Pagetable* pt, uintptr oldva, uintptr newva, uint perm) {
+    if (newva < oldva)
+        return oldva;
+    oldva += align_off(oldva, sys.pagesize);
+    for (uintptr va = oldva; va < newva; va += sys.pagesize) {
+        void* mem = kalloc(sys.pagesize);
+        if (!mem) {
+            cast() uvmdealloc(pt, va, oldva);
+            return 0;
+        }
+        memset(mem, 0, sys.pagesize);
+        if (!pt.map(va, ka2pa(cast(uintptr) mem), Pte.Pg.normal, perm, &sys.allocator)) {
+            kfree(mem);
+            cast() uvmdealloc(pt, va, oldva);
+            return 0;
+        }
+    }
+    return newva;
+}
+
+uintptr uvmdealloc(Pagetable* pt, uintptr oldva, uintptr newva) {
+    if (newva >= oldva)
+        return oldva;
+
+    newva += align_off(newva, sys.pagesize);
+    oldva += align_off(oldva, sys.pagesize);
+
+    if (newva < oldva) {
+        size_t npages = (oldva - newva) / sys.pagesize;
+        uvmunmap(pt, newva, npages, true);
+    }
+
+    return newva;
+}
+
+void uvmunmap(Pagetable* pt, uintptr va, size_t npages, bool free) {
+    for (uintptr a = va; a < va + npages * sys.pagesize; va += sys.pagesize) {
+        pt.unmap(a, Pte.Pg.normal, free);
+    }
 }
 
 // Pagetable range (iterator) API.

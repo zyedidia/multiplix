@@ -20,3 +20,9 @@ ulong pow2ceil(ulong x) {
         power *= 2;
     return power;
 }
+
+// Returns the number needed to increase p so that it becomes aligned to
+// 'algn'.
+T align_off(T)(T p, size_t algn) {
+    return ((~p) + 1) & (algn - 1);
+}

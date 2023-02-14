@@ -77,10 +77,12 @@ int getwidth(ubyte* elfdat) {
     assert(0);
 }
 
-bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, A* alloc) {
+uintptr load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, A* alloc) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
     assert(elf.magic == magic);
+
+    uintptr brk;
 
     for (ulong i = 0, off = elf.phoff; i < elf.phnum; i++, off += ProgHeader!(W).sizeof) {
         ProgHeader!(W)* ph = cast(ProgHeader!(W)*) (elfdat + off);
@@ -102,7 +104,7 @@ bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, A
         import ulib.math : max;
         ubyte[] code = knew_array_custom!(ubyte)(alloc, max(ph.memsz + pad, cast(ulong) sys.pagesize));
         if (!code) {
-            return false;
+            return 0;
         }
         memcpy(code.ptr + pad, elfdat + ph.offset, ph.filesz);
         memset(code.ptr + pad + ph.filesz, 0, ph.memsz - ph.filesz);
@@ -111,13 +113,16 @@ bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, A
         for (uintptr va = ph.vaddr - pad, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
             if (!pt.map(va, pa, Pte.Pg.normal, Perm.urwx, alloc)) {
                 // memory will be freed by caller via checkpoint free (in proc creation)
-                return false;
+                return 0;
             }
         }
+
+        import ulib.math : max;
+        brk = max(ph.vaddr + ph.memsz, brk);
 
         sync_idmem(code.ptr, code.length);
     }
 
     entry = elf.entry;
-    return true;
+    return brk;
 }

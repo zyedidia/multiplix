@@ -24,6 +24,7 @@ shared int nextpid = 0;
 struct Proc {
     enum stackva = 0x7fff0000;
 
+    // Must be the first field in Proc.
     Trapframe trapframe;
 
     // scheduling list node
@@ -32,15 +33,19 @@ struct Proc {
     int pid = -1;
     Pagetable* pt;
     Proc* parent;
-
     uint children;
+
+    struct Brk {
+        uintptr initial;
+        uintptr current;
+    }
+    Brk brk;
 
     enum State {
         runnable = 0,
         waiting,
         exited,
     }
-
     State state;
 
     static bool make(Proc* proc, immutable ubyte[] binary) {
@@ -56,11 +61,14 @@ struct Proc {
         }
         proc.pt = pt;
         uintptr entryva;
-        const bool ok = elf.load!(64)(proc.pt, binary.ptr, entryva, &alloc);
-        if (!ok) {
+        uintptr brk = elf.load!(64)(proc.pt, binary.ptr, entryva, &alloc);
+        if (!brk) {
             alloc.free_checkpoint();
             return false;
         }
+        import ulib.math : align_off;
+        brk += align_off(brk, sys.pagesize);
+
         // map kernel
         assert(kernel_map(proc.pt));
         // allocate stack
@@ -87,6 +95,8 @@ struct Proc {
         proc.trapframe.regs.sp = stackva + sys.pagesize;
         proc.trapframe.epc = entryva;
         proc.children = 0;
+        proc.brk.initial = brk;
+        proc.brk.current = 0;
 
         proc.pid = atomic_rmw_add(&nextpid, 1);
 

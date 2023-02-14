@@ -65,6 +65,7 @@ static inline uintptr_t syscall_3(int sysno, uintptr_t arg0, uintptr_t arg1, uin
 #define SYS_EXIT 2
 #define SYS_FORK 3
 #define SYS_WAIT 4
+#define SYS_SBRK 5
 
 static inline int getpid() {
     return syscall_0(SYS_GETPID);
@@ -84,4 +85,8 @@ static inline int fork() {
 
 static inline int wait() {
     return syscall_0(SYS_WAIT);
+}
+
+static inline void* sbrk(int incr) {
+    return syscall_1(SYS_SBRK, incr);
 }

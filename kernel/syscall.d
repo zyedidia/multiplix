@@ -15,6 +15,8 @@ import kernel.fs.vfs;
 import sys = kernel.sys;
 import vm = kernel.vm;
 
+import kernel.vm : unmap;
+
 import io = ulib.io;
 
 import ulib.memory;
@@ -40,6 +42,9 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
         case Syscall.Num.wait:
             ret = Syscall.wait(p);
             break;
+        case Syscall.Num.sbrk:
+            ret = Syscall.sbrk(p, cast(int) args[0]);
+            break;
         default:
             io.writeln("invalid syscall: ", sysno);
             return -1;
@@ -55,6 +60,7 @@ struct Syscall {
         exit   = 2,
         fork   = 3,
         wait   = 4,
+        sbrk   = 5,
     }
 
     static int write(Proc* p, int fd, uintptr addr, size_t sz) {
@@ -146,6 +152,7 @@ struct Syscall {
         child.trapframe.epc = p.trapframe.epc;
         child.parent = p;
         p.children++;
+        child.brk = p.brk;
 
         child.pid = atomic_rmw_add(&nextpid, 1);
 
@@ -170,5 +177,35 @@ struct Syscall {
         waiter.state = Proc.State.waiting;
         runq.wait(waiter.node);
         schedule();
+    }
+
+    static uintptr sbrk(Proc* p, int incr) {
+        // First time sbrk is called we allocate the first brk page.
+        if (p.brk.current == 0) {
+            void* pg = kalloc(sys.pagesize);
+            if (!pg) {
+                return -1;
+            }
+            if (!p.pt.map(p.brk.initial, vm.ka2pa(cast(uintptr) pg), Pte.Pg.normal, Perm.urwx, &sys.allocator)) {
+                kfree(pg);
+                return -1;
+            }
+            p.brk.current = p.brk.initial;
+        }
+
+        if (p.brk.current + incr >= Proc.stackva || p.brk.current + incr < p.brk.initial) {
+            return -1;
+        }
+
+        uintptr newbrk = p.brk.current;
+        if (incr > 0) {
+            newbrk = uvmalloc(p.pt, p.brk.current, p.brk.current + incr, Perm.urwx);
+            if (!newbrk)
+                return -1;
+        } else if (incr < 0) {
+            newbrk = uvmdealloc(p.pt, p.brk.current, p.brk.current + incr);
+        }
+        p.brk.current = newbrk;
+        return newbrk;
     }
 }

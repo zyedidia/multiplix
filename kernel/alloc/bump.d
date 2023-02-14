@@ -1,11 +1,9 @@
 module kernel.alloc.bump;
 
+import ulib.math : align_off;
+
 // Bump allocator (does not support free)
 struct BumpAllocator(size_t alignment = 16) {
-    private static uintptr align_off(uintptr ptr, size_t algn) {
-        return ((~ptr) + 1) & (algn - 1);
-    }
-
     this(ubyte* heap_start, size_t size) {
         uintptr base = cast(uintptr) heap_start;
         base += align_off(base, alignment);
