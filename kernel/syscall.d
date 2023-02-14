@@ -26,7 +26,7 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     uintptr ret = 0;
     switch (sysno) {
         case Syscall.Num.write:
-            Syscall.write(p, cast(int) args[0], args[1], cast(size_t) args[2]);
+            ret = Syscall.write(p, cast(int) args[0], args[1], cast(size_t) args[2]);
             break;
         case Syscall.Num.getpid:
             ret = Syscall.getpid(p);

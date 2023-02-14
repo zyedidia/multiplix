@@ -39,9 +39,9 @@ struct Console {
 
     void close(File* fd) {}
 
-    static __gshared File* stdout;
-    static __gshared File* stdin;
-    static __gshared File* stderr;
+    __gshared File* stdout;
+    __gshared File* stdin;
+    __gshared File* stderr;
 
     static void setup() {
         import io = ulib.io;
