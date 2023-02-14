@@ -43,6 +43,7 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
             break;
         case Syscall.Num.sbrk:
             ret = Syscall.sbrk(p, cast(int) args[0]);
+            break;
         case Syscall.Num.nanosleep:
             ret = Syscall.nanosleep(p, args[0]);
             break;
