@@ -3,7 +3,6 @@ module kernel.syscall;
 import core.sync;
 
 import kernel.proc;
-import kernel.timer;
 import kernel.schedule;
 import kernel.vm;
 import kernel.board;
@@ -40,6 +39,9 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
         case Syscall.Num.wait:
             ret = Syscall.wait(p);
             break;
+        case Syscall.Num.nanosleep:
+            ret = Syscall.nanosleep(p, args[0]);
+            break;
         default:
             io.writeln("invalid syscall: ", sysno);
             return -1;
@@ -50,11 +52,12 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
 
 struct Syscall {
     enum Num {
-        write  = 0,
-        getpid = 1,
-        exit   = 2,
-        fork   = 3,
-        wait   = 4,
+        write     = 0,
+        getpid    = 1,
+        exit      = 2,
+        fork      = 3,
+        wait      = 4,
+        nanosleep = 6,
     }
 
     static int write(Proc* p, int fd, uintptr addr, size_t sz) {
@@ -167,8 +170,18 @@ struct Syscall {
                 return pid;
             }
         }
-        waiter.state = Proc.State.waiting;
         runq.wait(waiter.node);
         schedule();
+    }
+
+    static int nanosleep(Proc* p, ulong ns) {
+        ulong now = Timer.ns();
+        // TODO: will wraparound after ~584.9 years
+        ulong end = now + ns;
+
+        runq.sleep(p.node, end);
+
+        schedule();
+        return 0;
     }
 }

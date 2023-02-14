@@ -32,6 +32,10 @@ struct Timer {
         delay_time(t * (Machine.mtime_freq / 1_000_000));
     }
 
+    static ulong ns() {
+        return volatile_ld(Clint.mtime) * 1_000_000_000 / freq();
+    }
+
     static ulong cycles() {
         return Csr.cycle;
     }

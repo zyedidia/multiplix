@@ -60,11 +60,12 @@ static inline uintptr_t syscall_3(int sysno, uintptr_t arg0, uintptr_t arg1, uin
 }
 #endif
 
-#define SYS_WRITE 0
-#define SYS_GETPID 1
-#define SYS_EXIT 2
-#define SYS_FORK 3
-#define SYS_WAIT 4
+#define SYS_WRITE     0
+#define SYS_GETPID    1
+#define SYS_EXIT      2
+#define SYS_FORK      3
+#define SYS_WAIT      4
+#define SYS_NANOSLEEP 6
 
 static inline int getpid() {
     return syscall_0(SYS_GETPID);
@@ -84,4 +85,15 @@ static inline int fork() {
 
 static inline int wait() {
     return syscall_0(SYS_WAIT);
+}
+
+typedef long time_t;
+struct timespec {
+    time_t tv_sec;
+    long tv_nsec;
+};
+
+static inline int nanosleep(const struct timespec *req) {
+    unsigned long ns = req->tv_sec * 1000000000 + req->tv_nsec;
+    return syscall_1(SYS_NANOSLEEP, ns);
 }
