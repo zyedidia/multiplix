@@ -9,7 +9,22 @@ import kernel.fs.vfs;
 
 struct Console {
     ssize_t read(File* fd, Proc* p, ubyte[] buf) {
-        return -1;
+        fd.vnode.lock.lock();
+        fd.lock.lock();
+
+        if ((fd.perm & File.Perm.read) == 0) {
+            // not readable
+            return -1;
+        }
+
+        for (size_t i = 0; i < buf.length; i++) {
+            buf[i] = Uart.rx();
+        }
+
+        fd.lock.unlock();
+        fd.vnode.lock.unlock();
+
+        return buf.length;
     }
 
     ssize_t write(File* fd, Proc* p, ubyte[] buf) {

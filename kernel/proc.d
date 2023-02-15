@@ -23,6 +23,7 @@ shared int nextpid = 0;
 
 struct Proc {
     enum stackva = 0x7fff0000;
+    enum maxva = stackva + sys.pagesize;
 
     // Must be the first field in Proc.
     Trapframe trapframe;

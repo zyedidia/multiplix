@@ -71,18 +71,20 @@ struct Syscall {
     }
 
     static long write(Proc* p, int fd, uintptr addr, size_t sz) {
-        // Validate buffer.
-        if (sz != 0) {
-            size_t overflow = addr + sz;
-            if (overflow < addr || addr >= Proc.stackva) {
-                return -1; // E_FAULT
-            }
+        if (sz == 0) {
+            return 0;
+        }
 
-            for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
-                auto vmap = vm.lookup(p.pt, va);
-                if (!vmap.has() || !vmap.get().user) {
-                    return -1; // E_FAULT
-                }
+        // Validate buffer.
+        size_t overflow = addr + sz;
+        if (overflow < addr || addr >= Proc.maxva) {
+            return -1; // E_FAULT
+        }
+
+        for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
+            auto vmap = vm.lookup(p.pt, va);
+            if (!vmap.has() || !vmap.get().user) {
+                return -1; // E_FAULT
             }
         }
 
@@ -97,18 +99,20 @@ struct Syscall {
     }
 
     static long read(Proc* p, int fd, uintptr addr, size_t sz) {
-        // Validate buffer.
-        if (sz != 0) {
-            size_t overflow = addr + sz;
-            if (overflow < addr || addr >= Proc.stackva) {
-                return -1; // E_FAULT
-            }
+        if (sz == 0) {
+            return 0;
+        }
 
-            for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
-                auto vmap = vm.lookup(p.pt, va);
-                if (!vmap.has() || !vmap.get().user || !vmap.get().write) {
-                    return -1; // E_FAULT
-                }
+        // Validate buffer.
+        size_t overflow = addr + sz;
+        if (overflow < addr || addr >= Proc.maxva) {
+            return -1; // E_FAULT
+        }
+
+        for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
+            auto vmap = vm.lookup(p.pt, va);
+            if (!vmap.has() || !vmap.get().user || !vmap.get().write) {
+                return -1; // E_FAULT
             }
         }
 
@@ -245,7 +249,7 @@ struct Syscall {
             p.brk.current = p.brk.initial;
         }
 
-        if (p.brk.current + incr >= Proc.stackva || p.brk.current + incr < p.brk.initial) {
+        if (p.brk.current + incr >= Proc.maxva || p.brk.current + incr < p.brk.initial) {
             return -1;
         }
 
