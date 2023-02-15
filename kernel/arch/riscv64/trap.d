@@ -65,7 +65,7 @@ extern (C) {
     noreturn usertrap(Proc* p) {
         uintptr scause = Csr.scause;
 
-        /* io.writeln("usertrap: scause: ", cast(void*) scause); */
+        // io.writeln("usertrap: scause: ", cast(void*) scause, " epc: ", cast(void*) Csr.sepc);
         Csr.stvec = cast(uintptr) &kernelvec;
 
         if (scause == Cause.ecall_u) {

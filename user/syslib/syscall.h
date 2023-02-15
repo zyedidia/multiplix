@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <time.h>
 
 #ifdef RISCV64
 static inline uintptr_t syscall_0(int sysno) {
@@ -60,45 +61,12 @@ static inline uintptr_t syscall_3(int sysno, uintptr_t arg0, uintptr_t arg1, uin
 }
 #endif
 
-#define SYS_WRITE 0
-#define SYS_GETPID 1
-#define SYS_EXIT 2
-#define SYS_FORK 3
-#define SYS_WAIT 4
-#define SYS_SBRK 5
-#define SYS_NANOSLEEP 6
-
-static inline int getpid() {
-    return syscall_0(SYS_GETPID);
-}
-
-static inline void write(int fd, char* buffer, size_t sz) {
-    syscall_3(SYS_WRITE, fd, (uintptr_t) buffer, sz);
-}
-
-static inline void exit() {
-    syscall_0(SYS_EXIT);
-}
-
-static inline int fork() {
-    return syscall_0(SYS_FORK);
-}
-
-static inline int wait() {
-    return syscall_0(SYS_WAIT);
-}
-
-static inline void* sbrk(int incr) {
-    return syscall_1(SYS_SBRK, incr);
-}
-
-typedef long time_t;
-struct timespec {
-    time_t tv_sec;
-    long tv_nsec;
+enum {
+    SYS_WRITE  = 0,
+    SYS_GETPID = 1,
+    SYS_EXIT   = 2,
+    SYS_FORK   = 3,
+    SYS_WAIT   = 4,
+    SYS_SBRK   = 5,
+    SYS_NANOSLEEP = 6,
 };
-
-static inline int nanosleep(const struct timespec *req) {
-    unsigned long ns = req->tv_sec * 1000000000 + req->tv_nsec;
-    return syscall_1(SYS_NANOSLEEP, ns);
-}

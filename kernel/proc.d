@@ -79,6 +79,7 @@ struct Proc {
             alloc.free_checkpoint();
             return false;
         }
+        memset(stack, 0, sys.pagesize);
         // map stack
         if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack), Pte.Pg.normal, Perm.urwx, &alloc)) {
             alloc.free_checkpoint();
@@ -94,7 +95,7 @@ struct Proc {
 
         // initialize registers (stack, pc)
         memset(&proc.trapframe.regs, 0, Regs.sizeof);
-        proc.trapframe.regs.sp = stackva + sys.pagesize;
+        proc.trapframe.regs.sp = stackva + sys.pagesize - 16;
         proc.trapframe.epc = entryva;
         proc.children = 0;
         proc.brk.initial = brk;

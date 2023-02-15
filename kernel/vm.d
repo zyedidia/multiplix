@@ -88,7 +88,7 @@ void unmap(Pagetable* pt, uintptr va, Pte.Pg pgtyp, bool free) {
     pte.data = 0;
 }
 
-uintptr uvmalloc(Pagetable* pt, uintptr oldva, uintptr newva, uint perm) {
+uintptr uvmalloc(Pagetable* pt, uintptr oldva, uintptr newva, ubyte perm) {
     if (newva < oldva)
         return oldva;
     oldva += align_off(oldva, sys.pagesize);

@@ -69,7 +69,7 @@ struct Pte {
         data = bits.write(data, 53, 10, bits.get(pa, 55, 12));
     }
 
-    void perm(uint perm) {
+    void perm(ubyte perm) {
         data = bits.write(data, 7, 0, perm);
     }
 
@@ -137,7 +137,7 @@ struct Pagetable {
 
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
-    bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, uint perm, A* allocator) {
+    bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm, A* allocator) {
         Pte* pte = walk!(A, true)(va, pgtyp, allocator);
         if (!pte) {
             return false;
@@ -150,7 +150,7 @@ struct Pagetable {
     // Simple giga-page mapper. This is equivalent to map(va, pa,
     // Pte.Pg.giga, perm) but does not use any allocation functions so it can
     // be used in the early boot process.
-    void map_giga(uintptr va, uintptr pa, uint perm) {
+    void map_giga(uintptr va, uintptr pa, ubyte perm) {
         auto vpn = vpn(2, va);
         ptes[vpn].perm = perm;
         ptes[vpn].pa = pa;
