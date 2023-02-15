@@ -36,7 +36,7 @@ void inv_dcache()(ubyte* start, size_t size) {
             }
         }
     }
-};
+}
 
 pragma(inline, true)
 void clean_dcache()(ubyte* start, size_t size) {
