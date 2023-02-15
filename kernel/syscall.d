@@ -29,6 +29,9 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
         case Syscall.Num.write:
             ret = Syscall.write(p, cast(int) args[0], args[1], cast(size_t) args[2]);
             break;
+        case Syscall.Num.read:
+            ret = Syscall.read(p, cast(int) args[0], args[1], cast(size_t) args[2]);
+            break;
         case Syscall.Num.getpid:
             ret = Syscall.getpid(p);
             break;
@@ -64,9 +67,10 @@ struct Syscall {
         wait      = 4,
         sbrk      = 5,
         nanosleep = 6,
+        read      = 7,
     }
 
-    static int write(Proc* p, int fd, uintptr addr, size_t sz) {
+    static long write(Proc* p, int fd, uintptr addr, size_t sz) {
         // Validate buffer.
         if (sz != 0) {
             size_t overflow = addr + sz;
@@ -87,7 +91,36 @@ struct Syscall {
             return -1; // E_BADF
         }
         File* f = p.fdtable.reference(fd);
-        int n = cast(int) f.vnode.write(f, p, (cast(ubyte*) addr)[0 .. sz]);
+        long n = f.vnode.write(f, p, (cast(ubyte*) addr)[0 .. sz]);
+        p.fdtable.deref(f);
+        return n;
+    }
+
+    static long read(Proc* p, int fd, uintptr addr, size_t sz) {
+        // Validate buffer.
+        if (sz != 0) {
+            size_t overflow = addr + sz;
+            if (overflow < addr || addr >= Proc.stackva) {
+                return -1; // E_FAULT
+            }
+
+            for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
+                auto vmap = vm.lookup(p.pt, va);
+                if (!vmap.has() || !vmap.get().user || !vmap.get().write) {
+                    return -1; // E_FAULT
+                }
+            }
+        }
+
+        p.fdtable.lock.lock();
+        if (fd >= FdTable.fno_count || !p.fdtable.files[fd]) {
+            p.fdtable.lock.unlock();
+            return -1;
+        }
+        p.fdtable.lock.unlock();
+
+        File* f = p.fdtable.reference(fd);
+        long n = f.vnode.read(f, p, (cast(ubyte*) addr)[0 .. sz]);
         p.fdtable.deref(f);
         return n;
     }

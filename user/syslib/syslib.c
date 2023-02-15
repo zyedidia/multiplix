@@ -59,7 +59,7 @@ int _write(int file, char* ptr, int len) {
 }
 
 int _read(int file, char* ptr, int len) {
-    return -1;
+    return syscall_3(SYS_READ, file, (uintptr_t) ptr, len);
 }
 
 int _fork(void) {

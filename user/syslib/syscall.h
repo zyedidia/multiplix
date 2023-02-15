@@ -69,4 +69,5 @@ enum {
     SYS_WAIT   = 4,
     SYS_SBRK   = 5,
     SYS_NANOSLEEP = 6,
+    SYS_READ   = 7,
 };
