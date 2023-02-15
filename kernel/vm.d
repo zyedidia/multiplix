@@ -108,19 +108,19 @@ uintptr uvmalloc(Pagetable* pt, uintptr oldva, uintptr newva, uint perm) {
     return newva;
 }
 
-uintptr uvmdealloc(Pagetable* pt, uintptr oldva, uintptr newva) {
-    if (newva >= oldva)
-        return oldva;
+uintptr uvmdealloc(Pagetable* pt, uintptr oldva_, uintptr newva_) {
+    if (newva_ >= oldva_)
+        return oldva_;
 
-    newva += align_off(newva, sys.pagesize);
-    oldva += align_off(oldva, sys.pagesize);
+    newva_ += align_off(newva_, sys.pagesize);
+    oldva_ += align_off(oldva_, sys.pagesize);
 
-    if (newva < oldva) {
-        size_t npages = (oldva - newva) / sys.pagesize;
-        uvmunmap(pt, newva, npages, true);
+    if (newva_ < oldva_) {
+        size_t npages = (oldva_ - newva_) / sys.pagesize;
+        uvmunmap(pt, newva_, npages, true);
     }
 
-    return newva;
+    return newva_;
 }
 
 void uvmunmap(Pagetable* pt, uintptr va, size_t npages, bool free) {
