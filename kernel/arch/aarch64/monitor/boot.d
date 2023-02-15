@@ -35,7 +35,7 @@ void enter_el1() {
     // Clear the OS lock.
     SysReg.oslar_el1 = 0;
     // Enable SIMD/FP in kernel.
-    SysReg.cpacr_el1 = bits.write(SysReg.cpacr_el1, 21, 20, 0b01);
+    SysReg.cpacr_el1 = bits.write(SysReg.cpacr_el1, 21, 20, 0b11);
 
     _enter_el1();
 }

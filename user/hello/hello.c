@@ -13,10 +13,9 @@ int main() {
     /* if (child != 0) { */
     /*     wait(); */
     /* } */
-    /* int pid = getpid(); */
-    for (int i = 0; i < 1; i++) {
-        printf("hello %d\n", i);
-        /* write(1, "hello\n", 6); */
+    int pid = getpid();
+    for (int i = 0; i < 5; i++) {
+        printf("%d: hello %d\n", pid, i);
         nanosleep(&delay, NULL);
     }
     exit(0);

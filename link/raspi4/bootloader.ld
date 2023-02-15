@@ -47,13 +47,13 @@ SECTIONS
         _kbss_end = .;
     }
 
-    /* ASSERT((. - ADDR(.text) <= 0x8000), "boot code is larger than 8 pages!") */
-
     .payload : {
         . = ALIGN(8);
         *(.payload*)
         . = ALIGN(8);
     }
+
+    ASSERT((. <= 0x100000 - 4096 * 16), "ERROR: boot code is too large!")
 
     .heap : {
         . = ALIGN(16);

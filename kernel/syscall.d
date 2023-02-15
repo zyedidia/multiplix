@@ -157,6 +157,8 @@ struct Syscall {
         p.children++;
         child.brk = p.brk;
 
+        // TODO: copy the fdtable
+
         child.pid = atomic_rmw_add(&nextpid, 1);
 
         return child.pid;

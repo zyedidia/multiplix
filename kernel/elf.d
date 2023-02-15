@@ -116,7 +116,6 @@ uintptr load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry
                 return 0;
             }
         }
-
         import ulib.math : max;
         brk = max(ph.vaddr + ph.memsz, brk);
 

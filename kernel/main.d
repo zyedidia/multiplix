@@ -19,7 +19,7 @@ import sys = kernel.sys;
 
 shared Spinlock lock;
 
-auto hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
+immutable ubyte[] hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     arch.Trap.setup();

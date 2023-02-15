@@ -52,7 +52,7 @@ SECTIONS
         . = ALIGN(8);
     }
 
-    /* ASSERT((. - ADDR(.text) <= 0x8000), "boot code is larger than 8 pages!") */
+    ASSERT((. <= 0x100000 - 4096 * 16), "ERROR: boot code is too large!")
 
     .heap : {
         . = ALIGN(16);

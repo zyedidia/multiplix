@@ -95,6 +95,7 @@ function build.tools(machine)
         cpp := $prefix-cpp
         objcopy := $prefix-objcopy
         objdump := $prefix-objdump
+        strip := $prefix-strip
         gdb := gdb-multiarch
         qemu := qemu-system-$(machine.arch)
     }
