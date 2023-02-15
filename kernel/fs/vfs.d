@@ -59,9 +59,9 @@ struct File {
 }
 
 struct FdTable {
-    enum FnoCount = 16;
+    enum fno_count = 16;
 
-    File*[FnoCount] files;
+    File*[fno_count] files;
     shared Spinlock lock;
     uint refcount;
 

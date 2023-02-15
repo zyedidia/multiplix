@@ -83,7 +83,7 @@ struct Syscall {
         }
 
         // Validate file descriptor.
-        if (fd >= FdTable.FnoCount || fd < 0 || !p.fdtable.files[fd]) {
+        if (fd >= FdTable.fno_count || fd < 0 || !p.fdtable.files[fd]) {
             return -1; // E_BADF
         }
         File* f = p.fdtable.reference(fd);
@@ -148,6 +148,21 @@ struct Syscall {
             // TODO: only sync ID cache for executable pages
             sync_idmem(cast(ubyte*) block, vmmap.size);
         }
+
+        if (!child.init_fdtable(&alloc)) {
+            alloc.free_checkpoint();
+            return -1;
+        }
+
+        p.fdtable.lock.lock();
+        for (int i = 0; i < FdTable.fno_count; i++) {
+            child.fdtable.files[i] = p.fdtable.files[i];
+            if (p.fdtable.files[i]) {
+                p.fdtable.files[i].refcount++;
+            }
+        }
+        p.fdtable.lock.unlock();
+
         alloc.done_checkpoint();
 
         memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);
