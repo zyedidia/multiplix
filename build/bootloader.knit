@@ -57,7 +57,7 @@ function bootloader.rules(bootelf, kboot, kenter, payload)
         payload = ""
     end
     obj = knit.join(obj, {f"bootloader/main-$(boot.version).o"})
-    obj = knit.prefix(".bootobj/", obj)
+    obj = knit.prefix(obj, ".bootobj/")
 
     local link = f"link/$(machine.board)/bootloader.ld"
     local linkextra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)")

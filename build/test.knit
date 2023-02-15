@@ -71,7 +71,7 @@ local obj = {
         }
     ),
 }
-obj.kernel = knit.prefix(".kobj/", obj.kernel)
+obj.kernel = knit.prefix(obj.kernel, ".kobj/")
 
 local link = {
     kernel = f"link/$(machine.board)/kernel.ld",

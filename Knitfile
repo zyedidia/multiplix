@@ -68,8 +68,8 @@ local obj = {
         asmobj
     ),
 }
-obj.kernel = knit.prefix(".kobj/", obj.kernel)
-asmobj = knit.prefix(".kobj/", asmobj)
+obj.kernel = knit.prefix(obj.kernel, ".kobj/")
+asmobj = knit.prefix(asmobj, ".kobj/")
 
 local link = {
     kernel = f"link/$(machine.board)/kernel.ld",
@@ -105,7 +105,7 @@ local bootloader = dofile("build/bootloader.knit")
 return b{
     $ all:V: kernel.elf
 
-    $ comp:V: kernel.boot.bin $(knit.prefix("lint-", allsrc))
+    $ comp:V: kernel.boot.bin $(knit.prefix(allsrc, "lint-"))
 
     $ format:VB:
         dfmt -i --brace_style=otbs $allsrc
