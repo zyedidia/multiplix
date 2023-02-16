@@ -4,20 +4,20 @@ module kernel.arch.aarch64.sysreg;
 const char[] GenSysReg(string name) = GenSysRegRdOnly!(name) ~ GenSysRegWrOnly!(name);
 const char[] GenSysRegRdOnly(string name) =
 `pragma(inline, true) ` ~
-`static alias ` ~ name ~ ` = () {
+`static uintptr ` ~ name ~ `() {
     uintptr val;
     asm {
         "mrs %0, ` ~ name ~ `" : "=r"(val);
     }
     return val;
-};`;
+}`;
 const char[] GenSysRegWrOnly(string name) =
 `pragma(inline, true) ` ~
-`static alias ` ~ name ~ ` = (uintptr v) {
+`static void ` ~ name ~ `(uintptr v) {
     asm {
         "msr ` ~ name ~ `, %0" : : "r"(v);
     }
-};`;
+}`;
 // dfmt on
 
 struct SysReg {

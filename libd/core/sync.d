@@ -25,7 +25,7 @@ enum SynchronizationScope {
 enum AtomicRmwSizeLimit = size_t.sizeof;
 
 pragma(inline, true)
-alias inv_dcache() = (ubyte* start, size_t size) {
+void inv_dcache()(ubyte* start, size_t size) {
     version (RISCV64) {
         // haven't had any need to flush the dcache on riscv
         static assert(0, "TODO: clean_dcache not implemented for RISC-V");
@@ -39,7 +39,7 @@ alias inv_dcache() = (ubyte* start, size_t size) {
 };
 
 pragma(inline, true)
-alias clean_dcache() = (ubyte* start, size_t size) {
+void clean_dcache()(ubyte* start, size_t size) {
     version (RISCV64) {
         // haven't had any need to flush the dcache on riscv
         static assert(0, "TODO: clean_dcache not implemented for RISC-V");
@@ -50,10 +50,10 @@ alias clean_dcache() = (ubyte* start, size_t size) {
             }
         }
     }
-};
+}
 
 pragma(inline, true)
-alias clean_icache() = (ubyte* start, size_t size) {
+void clean_icache()(ubyte* start, size_t size) {
     version (RISCV64) {
         // haven't had any need to flush the icache on riscv
         static assert(0, "TODO: clean_icache not implemented for RISC-V");
@@ -64,11 +64,11 @@ alias clean_icache() = (ubyte* start, size_t size) {
             }
         }
     }
-};
+}
 
 // Synchronize instruction and data memory in range
 pragma(inline, true)
-alias sync_idmem = (ubyte* start, size_t size) {
+void sync_idmem(ubyte* start, size_t size) {
     version (RISCV64) {
         insn_fence();
     } else version (AArch64) {
@@ -78,10 +78,10 @@ alias sync_idmem = (ubyte* start, size_t size) {
         sync_fence();
         insn_fence();
     }
-};
+}
 
 pragma(inline, true)
-alias insn_fence = () {
+void insn_fence() {
     version (RISCV64) {
         asm {
             "fence.i" ::: "memory";
@@ -91,10 +91,10 @@ alias insn_fence = () {
             "isb sy" ::: "memory";
         }
     }
-};
+}
 
 pragma(inline, true)
-alias device_fence = () {
+void device_fence() {
     version (RISCV64) {
         asm {
             "fence" ::: "memory";
@@ -104,10 +104,10 @@ alias device_fence = () {
             "dsb sy" ::: "memory";
         }
     }
-};
+}
 
 pragma(inline, true)
-alias sync_fence = () {
+void sync_fence() {
     version (RISCV64) {
         asm {
             "fence" ::: "memory";
@@ -117,10 +117,10 @@ alias sync_fence = () {
             "dsb ish" ::: "memory";
         }
     }
-};
+}
 
 pragma(inline, true)
-alias vm_fence = () {
+void vm_fence() {
     version (RISCV64) {
         asm {
             "sfence.vma" ::: "memory";
@@ -133,14 +133,14 @@ alias vm_fence = () {
             "isb" ::: "memory";
         }
     }
-};
+}
 
 pragma(inline, true)
-alias compiler_fence = () {
+void compiler_fence() {
     asm {
         "" ::: "memory";
     }
-};
+}
 
 /// Used to introduce happens-before edges between operations.
 pragma(LDC_fence)

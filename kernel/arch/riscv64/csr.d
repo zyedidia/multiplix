@@ -3,19 +3,19 @@ module kernel.arch.riscv64.csr;
 // dfmt off
 const char[] GenCsr(string name) =
 `pragma(inline, true) ` ~
-`static alias ` ~ name ~ ` = () {
+`static uintptr ` ~ name ~ `() {
     uintptr r;
     asm {
         "csrr %0, ` ~ name ~ `" : "=r"(r);
     }
     return r;
-};
+}
 pragma(inline, true)
-static alias ` ~ name ~ ` = (uintptr v) {
+static void ` ~ name ~ `(uintptr v) {
     asm {
         "csrw ` ~ name ~ `, %0" :: "r"(v);
     }
-};`;
+}`;
 // dfmt on
 
 struct Csr {
