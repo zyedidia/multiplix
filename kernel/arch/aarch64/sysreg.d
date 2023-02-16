@@ -3,7 +3,7 @@ module kernel.arch.aarch64.sysreg;
 // dfmt off
 const char[] GenSysReg(string name) = GenSysRegRdOnly!(name) ~ GenSysRegWrOnly!(name);
 const char[] GenSysRegRdOnly(string name) =
-`pragma(inline, true)` ~
+`pragma(inline, true) ` ~
 `static alias ` ~ name ~ ` = () {
     uintptr val;
     asm {
@@ -12,7 +12,7 @@ const char[] GenSysRegRdOnly(string name) =
     return val;
 };`;
 const char[] GenSysRegWrOnly(string name) =
-`pragma(inline, true)` ~
+`pragma(inline, true) ` ~
 `static alias ` ~ name ~ ` = (uintptr v) {
     asm {
         "msr ` ~ name ~ `, %0" : : "r"(v);

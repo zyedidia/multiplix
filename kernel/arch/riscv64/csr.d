@@ -2,6 +2,7 @@ module kernel.arch.riscv64.csr;
 
 // dfmt off
 const char[] GenCsr(string name) =
+`pragma(inline, true) ` ~
 `static alias ` ~ name ~ ` = () {
     uintptr r;
     asm {
@@ -9,6 +10,7 @@ const char[] GenCsr(string name) =
     }
     return r;
 };
+pragma(inline, true)
 static alias ` ~ name ~ ` = (uintptr v) {
     asm {
         "csrw ` ~ name ~ `, %0" :: "r"(v);
