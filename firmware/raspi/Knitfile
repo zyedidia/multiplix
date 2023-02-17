@@ -26,7 +26,7 @@ local meta = r{
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
     $ %.list: %.elf
-        $(tools.objdump) -D $input > $output
+        $(tools.objdump) -d $input > $output
 }
 
 return b{

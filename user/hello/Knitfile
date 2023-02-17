@@ -22,5 +22,5 @@ return b{
     $ hello.bin: hello.elf
         $(tools.objcopy) $input -O binary $output
     $ hello.list: hello.elf
-        $(tools.objdump) -D $input > $output
+        $(tools.objdump) -d $input > $output
 }

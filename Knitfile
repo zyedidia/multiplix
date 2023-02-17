@@ -27,7 +27,7 @@ local meta = r{
     $ %.payload: %.elf
         plboot make -o $output $input
     $ %.list: %.elf
-        $(tools.objdump) -D $input > $output
+        $(tools.objdump) -d $input > $output
     $ %.img: %.bin
         vf2-imager -i $input -o $output
 }

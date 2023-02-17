@@ -54,9 +54,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     // static if (is(typeof(Emmc.setup))) {
     //     assert(Emmc.setup());
     //     import kernel.fs.fat32.fat32;
-    //     Fat32FS!(Emmc) fat;
+    //     Fat32FS fat;
     //     assert(fat.setup());
-    //     FileRange!(Emmc) files = fat.readdir(fat.root());
+    //     FileRange files = fat.readdir(fat.root());
     //     foreach (file; files) {
     //         io.writeln(file.name);
     //         ubyte[] data = fat.readfile(file.id(), file.size());
