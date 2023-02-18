@@ -25,7 +25,7 @@ void check(bool b) {
 }
 
 extern (C) void brk() {
-    pragma(LDC_never_inline);
+    pragma(inline, false);
     asm {
         "nop";
     }
@@ -35,13 +35,13 @@ version (LDC) {
     extern (C) void _d_array_slice_copy(void* dst, size_t dstlen, void* src,
             size_t srclen, size_t elemsz) {
         cast(void) srclen;
-        import ulib.memory : memmove;
-        memmove(dst, src, dstlen * elemsz);
+        import ulib.memory : memcpy;
+        memcpy(dst, src, dstlen * elemsz);
     }
 } else {
     extern (C) void[] _d_arraycopy(size_t size, void[] from, void[] to) {
-        import ulib.memory : memmove;
-        memmove(to.ptr, from.ptr, to.length * size);
+        import ulib.memory : memcpy;
+        memcpy(to.ptr, from.ptr, to.length * size);
         return to;
     }
 }
@@ -52,8 +52,12 @@ struct Hex {
 }
 
 void unreachable() {
-    import ldc.llvmasm;
-    __ir!("unreachable", void, int)(0);
+    version (LDC) {
+        import ldc.llvmasm;
+        __ir!("unreachable", void, int)(0);
+    } else version (GNU) {
+
+    }
 }
 
 void assume(bool b) {

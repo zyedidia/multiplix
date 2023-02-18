@@ -2,7 +2,7 @@ module ulib.memory;
 
 extern (C):
 
-void* memcpy(void* dst, const(void)* src, size_t n) nothrow {
+void* memcpy(void* dst, const(void)* src, size_t n) {
     char* s = cast(char*) src;
     for (char* d = cast(char*) dst; n > 0; --n, ++s, ++d) {
         *d = *s;
@@ -10,7 +10,7 @@ void* memcpy(void* dst, const(void)* src, size_t n) nothrow {
     return dst;
 }
 
-void* memmove(void* dst, void* src, size_t n) nothrow {
+void* memmove(void* dst, void* src, size_t n) {
     char* s = cast(char*) src;
     char* d = cast(char*) dst;
     if (s < d && s + n > d) {
@@ -26,7 +26,7 @@ void* memmove(void* dst, void* src, size_t n) nothrow {
     return dst;
 }
 
-void* memset(void* v, int c, size_t n) nothrow {
+void* memset(void* v, int c, size_t n) {
     for (char* p = cast(char*) v; n > 0; ++p, --n) {
         *p = cast(char) c;
     }
@@ -45,7 +45,7 @@ int memcmp(const(void)* _s1, const(void)* _s2, size_t nbytes) {
     return 0;
 }
 
-size_t strlen(const(char)* s) nothrow {
+size_t strlen(const(char)* s) {
     size_t n;
     for (n = 0; *s != '\0'; ++s) {
         ++n;

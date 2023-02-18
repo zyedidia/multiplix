@@ -38,15 +38,18 @@ struct Regs {
     }
 }
 
-import ldc.llvmasm;
 uintptr rd_gp() {
-    return __asm!uintptr(
-        "mv $0, gp", "=r"
-    );
+    uintptr gp;
+    asm {
+        "mv %0, gp" : "=r"(gp);
+    }
+    return gp;
 }
 
 uintptr rd_tp() {
-    return __asm!uintptr(
-        "mv $0, tp", "=r"
-    );
+    uintptr tp;
+    asm {
+        "mv %0, tp" : "=r"(tp);
+    }
+    return tp;
 }

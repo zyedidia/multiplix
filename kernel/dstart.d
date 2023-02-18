@@ -55,7 +55,7 @@ extern (C) {
         // Note: this function should not be inlined to ensure that the thread
         // pointer is set before any subsequent operations that involve the
         // thread pointer.
-        pragma(LDC_never_inline);
+        pragma(inline, false);
 
         // set up thread-local storage (tls)
         uintptr stack_base = cast(uintptr) &_kheap_start;

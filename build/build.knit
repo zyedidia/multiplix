@@ -67,6 +67,24 @@ function build.machine(board, monitor)
     return m
 end
 
+function build.tools(machine)
+    local prefix = build.prefix(machine.arch)
+    return {
+        dc = "ldc2",
+        ldc := ldc2
+        gdc := $prefix-gdc
+        cc := $prefix-gcc
+        as := $prefix-as
+        ld := $prefix-ld
+        cpp := $prefix-cpp
+        objcopy := $prefix-objcopy
+        objdump := $prefix-objdump
+        strip := $prefix-strip
+        gdb := gdb-multiarch
+        qemu := qemu-system-$(machine.arch)
+    }
+end
+
 function build.flags_llvm(machine)
     local prefix = build.prefix(machine.arch)
 
@@ -85,20 +103,19 @@ function build.flags_gnu(machine)
     return flags[machine.arch]
 end
 
-function build.tools(machine)
-    local prefix = build.prefix(machine.arch)
-    return {
-        dc = "ldc2",
-        cc := $prefix-gcc
-        as := $prefix-as
-        ld := $prefix-ld
-        cpp := $prefix-cpp
-        objcopy := $prefix-objcopy
-        objdump := $prefix-objdump
-        strip := $prefix-strip
-        gdb := gdb-multiarch
-        qemu := qemu-system-$(machine.arch)
+function build.flags_dc(dc, monitor, machine)
+    vmon = sel(monitor, "monitor", "kernel")
+
+    local flags = {
+        gnu = build.flags_gnu(machine),
+        llvm = build.flags_llvm(machine),
     }
+
+    local compiler = {
+        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -Os -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns
+        ldc := $(flags.llvm) -betterC -Oz -function-sections -data-sections -fthread-model=local-exec -fno-plt -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J.
+    }
+    return compiler[dc]
 end
 
 function build.flags(machine, lto, release, monitor)
@@ -116,10 +133,11 @@ function build.flags(machine, lto, release, monitor)
     local flags = {
         llvm = build.flags_llvm(machine),
         gnu = build.flags_gnu(machine),
+        dc = build.flags_dc("ldc", monitor, machine)
     }
 
     return {
-        dc := -betterC $flto -g -Oz -defaultlib= -function-sections -data-sections -fthread-model=local-exec -d-version=$(machine.board) $(flags.llvm) $(sel(release, '-release', '')) -fno-plt $version -J. -fvisibility=hidden
+        dc := $(flags.dc) $flto
         cc := -Os $(flags.gnu)
         as := -Os $(flags.gnu) -xassembler-with-cpp
         ld := $ltoflags --gc-sections
