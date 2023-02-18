@@ -32,53 +32,78 @@ local meta = r{
         vf2-imager -i $input -o $output
 }
 
-local lib = knit.rglob("libd", "*.d")
+local src = {}
+local obj = {}
 
-local kernel = knit.join(
-    knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
-    knit.rglob("kernel/dev", "*.d"),
-    knit.rglob("kernel/alloc", "*.d"),
-    knit.rglob("kernel/fs", "*.d"),
-    knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
-    {
-        "kernel/arch/package.d",
-        "kernel/board/package.d",
-        f"kernel/board/$(machine.board).d",
-    }
-)
+function src.libd()
+    return knit.rglob("libd", "*.d")
+end
 
-local src = {
-    kernel = knit.join(
-        lib,
-        kernel,
+function src.libkern()
+    return knit.join(
+        knit.glob(f"kernel/arch/$(machine.arch)/*.d"),
+        knit.rglob("kernel/dev", "*.d"),
+        knit.rglob("kernel/alloc", "*.d"),
+        knit.rglob("kernel/fs", "*.d"),
+        knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
         {
-            "kernel/main.d",
+            "kernel/arch/package.d",
+            "kernel/board/package.d",
+            f"kernel/board/$(machine.board).d",
         }
     )
-}
+end
 
-local asmobj = {
-    f"kernel/arch/$(machine.arch)/kernelasm.o",
-    f"kernel/arch/$(machine.arch)/userasm.o",
-}
+function src.kernel()
+    return knit.join(src.libd(), src.libkern(), {"kernel/main.d"})
+end
 
-local obj = {
-    kernel = knit.join(
-        knit.extrepl(src.kernel, ".d", ".o"),
-        asmobj
-    ),
-}
-obj.kernel = knit.prefix(obj.kernel, ".kobj/")
-asmobj = knit.prefix(asmobj, ".kobj/")
+function src.libmonitor()
+    return knit.join(
+        knit.glob(f"kernel/arch/$(machine.arch)/monitor/*.d"),
+        src.libkern(),
+        src.libd()
+    )
+end
+
+function src.monitor()
+    return knit.join(src.libd(), src.libmonitor, {"bootloader/main.d"})
+end
+
+function obj.kasm()
+    return knit.prefix({
+        f"kernel/arch/$(machine.arch)/kernelasm.o",
+        f"kernel/arch/$(machine.arch)/userasm.o",
+    }, ".kobj/")
+end
+
+function obj.masm()
+    return knit.prefix({
+        f"kernel/arch/$(machine.arch)/monitor/monitorasm.o",
+    }, ".bootobj/")
+end
+
+function obj.kernel()
+    return knit.join(
+        knit.prefix(knit.extrepl(src.kernel(), ".d", ".o"), ".kobj/"),
+        obj.kasm()
+    )
+end
+
+function obj.libmonitor()
+    return knit.join(
+        knit.prefix(knit.extrepl(src.libmonitor(), ".d", ".o"), ".bootobj/"),
+        obj.masm()
+    )
+end
 
 local link = {
     kernel = f"link/$(machine.board)/kernel.ld",
-    extra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)"),
 }
 
 local kernel = r{
-    $ kernel.elf: $(obj.kernel) $(link.kernel)[I]
-        $(tools.ld) $(flags.ld) -T$(link.kernel) $(link.extra) $input -o $output
+    $ kernel.elf: $(obj.kernel()) $(link.kernel)[I]
+        $(tools.ld) $(flags.ld) -T$(link.kernel) $input -o $output
     $ qemu:VB: kernel.boot.elf
         $(tools.qemu) $(flags.qemu) -no-reboot -kernel $input
     $ qemu-gdb:VB: kernel.boot.elf
@@ -87,18 +112,6 @@ local kernel = r{
 }
 
 local allsrc = knit.rglob(".", "*.d")
-
-local tests = knit.glob("test/*")
-local testr = r{}
-local alltest = ""
-
-for i, test in ipairs(tests) do
-    testr = testr + r{
-        $ test-$test:VBQ:
-            knit -q -f build/test.knit test=multicore-boot qemu
-    }
-    alltest = alltest .. f" test-$test"
-end
 
 local bootloader = dofile("build/bootloader.knit")
 
@@ -124,22 +137,19 @@ return b{
     $ lint-%:VBQ: %
         dscanner --styleCheck $input --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 
-    $ kernel.full.o: $(src.kernel)
+    $ kernel.full.o: $(src.kernel())
         $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -of $output
-    $ kernel.full.elf: kernel.full.o $(asmobj) $(link.kernel)[I]
-        $(tools.ld) $(flags.ld) -T$(link.kernel) $(link.extra) $input -o $output
-
-    $ test:VB: $alltest
+    $ kernel.full.elf: kernel.full.o $(obj.kasm()) $(link.kernel)[I]
+        $(tools.ld) $(flags.ld) -T$(link.kernel) $input -o $output
 
     $ .kobj/kernel/main.o: user/hello/hello.elf
 
     include("user/hello/Knitfile"),
 
     bootloader.meta(),
-    bootloader.rules("kernel.boot.elf", 1, 1, "kernel.payload"),
-    bootloader.rules("bootloader.elf", 1, 1, nil),
+    bootloader.rules("kernel.boot.elf", "kernel.payload"),
+    bootloader.rules("bootloader.elf", nil),
 
-    testr,
     kernel,
     meta
 }

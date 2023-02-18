@@ -16,57 +16,26 @@ function bootloader.meta()
     }
 end
 
-function bootloader.rules(bootelf, kboot, kenter, payload)
-    local flags = bootloader.flags
-    local tools = bootloader.tools
+function bootloader.rules(bootelf, payload)
+    local version = sel(payload == nil, "uart", "payload")
 
-    local lib = knit.rglob("libd", "*.d")
+    local objects = knit.join(obj.libmonitor(), {
+        f".bootobj/bootloader/main-$version.o",
+    })
 
-    local kernel = knit.join(
-        knit.rglob(f"kernel/arch/$(machine.arch)", "*.d"),
-        knit.rglob("kernel/dev", "*.d"),
-        knit.rglob("kernel/alloc", "*.d"),
-        knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
-        {
-            "kernel/arch/package.d",
-            "kernel/board/package.d",
-            f"kernel/board/$(machine.board).d",
-        }
-    )
-
-    local boot = {
-        version = sel(payload == nil, "uart", "payload"),
-        kboot = sel(kboot, "-d-version=kboot", ""),
-        kenter = sel(kenter, "-d-version=kenter", ""),
-    }
-
-    local src = knit.join(
-        lib,
-        kernel
-    )
-
-    local obj = knit.join(
-        knit.extrepl(src, ".d", ".o"),
-        {
-            f"kernel/arch/$(machine.arch)/monitorasm.o",
-        }
-    )
     if payload ~= nil then
-        obj = knit.join(obj, {"bootloader/payload.o"})
+        objects = knit.join(objects, {".bootobj/bootloader/payload.o"})
     else
         payload = ""
     end
-    obj = knit.join(obj, {f"bootloader/main-$(boot.version).o"})
-    obj = knit.prefix(obj, ".bootobj/")
 
     local link = f"link/$(machine.board)/bootloader.ld"
-    local linkextra = sel(conf.entry == nil, "", f"-Wl,--section-start=.text=$(conf.entry)")
 
     local rules = b{
-        $ .bootobj/bootloader/main-$(boot.version).o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
-            $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$(boot.version) $(boot.kboot) $(boot.kenter)
-        $ $bootelf: $(obj) $(link)[I]
-            $(tools.ld) $(flags.ld) -T$(link) $(linkextra) $input -o $output
+        $ .bootobj/bootloader/main-$version.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
+            $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$version
+        $ $bootelf: $(objects) $(link)[I]
+            $(tools.ld) $(flags.ld) -T$(link) $input -o $output
     }
 
     if payload ~= "" then

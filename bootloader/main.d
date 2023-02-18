@@ -126,14 +126,10 @@ __gshared BootData bootdat;
 extern (C) noreturn kmain(int coreid, ubyte* heap) {
     arch.monitor_init();
 
-    version (kenter) {
-        arch.enter_kernel();
-    }
+    arch.enter_kernel();
 
-    version (kboot) {
-        // We are booting the kernel, so enable virtual memory.
-        arch.kernel_setup(primary);
-    }
+    // We are booting the kernel, so enable virtual memory.
+    arch.kernel_setup(primary);
 
     if (!primary) {
         // Secondary core can jump directly to the entry because the primary

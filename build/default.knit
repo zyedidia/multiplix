@@ -3,6 +3,5 @@ local _, conf = pcall(include, "conf.knit")
 return {
     board = cli.board or conf.board or "visionfive",
     lto = sel(cli.lto == nil, sel(conf.lto == nil, true, conf.lto), tobool(cli.lto)),
-    release = tobool(cli.release) or conf.release or false,
-    entry = cli.entry or conf.entry,
+    release = tobool(cli.release) or conf.release or false
 }
