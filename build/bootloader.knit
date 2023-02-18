@@ -1,7 +1,8 @@
-local machine = build.machine(conf.board, true)
+local monitor = true
+local machine = build.machine(conf.board, monitor)
 local bootloader = {
     tools = build.tools(machine),
-    flags = build.flags(machine, conf.lto, conf.release, true)
+    flags = build.flags(machine, conf.lto, conf.release, monitor)
 }
 
 function bootloader.meta()
@@ -17,9 +18,9 @@ function bootloader.meta()
 end
 
 function bootloader.rules(bootelf, payload, unified)
-    local version = sel(payload == nil, "uart", "payload")
+    local vpayload = sel(payload == nil, "uart", "payload")
 
-    local objects = {f".bootobj/bootloader/main-$version.o"}
+    local objects = {f".bootobj/bootloader/main-$vpayload.o"}
 
     if payload ~= nil then
         objects = knit.join(objects, {".bootobj/bootloader/payload.o"})
@@ -33,7 +34,7 @@ function bootloader.rules(bootelf, payload, unified)
     if conf.unified then
         rules = b{
             $ .bootobj/bootloader/main-$version.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
-                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$version
+                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep $(dversion(vpayload))
             $ .bootobj/bootloader.o: $(src.libmonitor())
                 $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -of $output
             $ $bootelf: .bootobj/bootloader.o $(obj.masm()) $(objects) $(link)[I]
@@ -42,7 +43,7 @@ function bootloader.rules(bootelf, payload, unified)
     else
         rules = b{
             $ .bootobj/bootloader/main-$version.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
-                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$version
+                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep $(dversion(vpayload))
             $ $bootelf: $(obj.libmonitor()) $(objects) $(link)[I]
                 $(tools.ld) $(flags.ld) -T$(link) $input -o $output
         }

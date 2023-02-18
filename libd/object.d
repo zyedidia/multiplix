@@ -73,4 +73,6 @@ void println(Args...)(Args args) {
 
 ref string _d_arrayappendT(return ref scope string x, scope string y) @trusted;
 
+bool __equals(scope const string lhs, scope const string rhs);
+
 extern (C) noreturn _halt();

@@ -2,7 +2,7 @@ module kernel.arch.riscv64.sbi;
 
 import ulib.option;
 
-import ldc.llvmasm;
+// import ldc.llvmasm;
 
 // This library defines an interface to a RISC-V SBI firmware implementation.
 // Environment calls to the firmware are made with the "ecall" instruction. See
@@ -19,13 +19,13 @@ private struct SbiRet {
 private SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1, uintptr a2) {
     SbiRet ret;
 
-    auto result = __asmtuple!(uint, uint) (
-        "ecall",
-        "={a0},={a1},{a7},{a6},{a0},{a1},{a2},~{memory}",
-        ext, fid, a0, a1, a2
-    );
-    ret.error = result.v[0];
-    ret.value = result.v[1];
+    // auto result = __asmtuple!(uint, uint) (
+    //     "ecall",
+    //     "={a0},={a1},{a7},{a6},{a0},{a1},{a2},~{memory}",
+    //     ext, fid, a0, a1, a2
+    // );
+    // ret.error = result.v[0];
+    // ret.value = result.v[1];
 
     return ret;
 }
@@ -34,13 +34,13 @@ private SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1, uintptr a2) {
 private SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1) {
     SbiRet ret;
 
-    auto result = __asmtuple!(uint, uint) (
-        "ecall",
-        "={a0},={a1},{a7},{a6},{a0},{a1},~{memory}",
-        ext, fid, a0, a1
-    );
-    ret.error = result.v[0];
-    ret.value = result.v[1];
+    // auto result = __asmtuple!(uint, uint) (
+    //     "ecall",
+    //     "={a0},={a1},{a7},{a6},{a0},{a1},~{memory}",
+    //     ext, fid, a0, a1
+    // );
+    // ret.error = result.v[0];
+    // ret.value = result.v[1];
 
     return ret;
 }
@@ -49,13 +49,13 @@ private SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1) {
 private SbiRet ecall(uint ext, uint fid, uintptr a0) {
     SbiRet ret;
 
-    auto result = __asmtuple!(uint, uint) (
-        "ecall",
-        "={a0},={a1},{a7},{a6},{a0},~{memory}",
-        ext, fid, a0,
-    );
-    ret.error = result.v[0];
-    ret.value = result.v[1];
+    // auto result = __asmtuple!(uint, uint) (
+    //     "ecall",
+    //     "={a0},={a1},{a7},{a6},{a0},~{memory}",
+    //     ext, fid, a0,
+    // );
+    // ret.error = result.v[0];
+    // ret.value = result.v[1];
 
     return ret;
 }
@@ -64,13 +64,13 @@ private SbiRet ecall(uint ext, uint fid, uintptr a0) {
 private SbiRet ecall(uint ext, uint fid) {
     SbiRet ret;
 
-    auto result = __asmtuple!(uint, uint) (
-        "ecall",
-        "={a0},={a1},{a7},{a6},~{memory}",
-        ext, fid
-    );
-    ret.error = result.v[0];
-    ret.value = result.v[1];
+    // auto result = __asmtuple!(uint, uint) (
+    //     "ecall",
+    //     "={a0},={a1},{a7},{a6},~{memory}",
+    //     ext, fid
+    // );
+    // ret.error = result.v[0];
+    // ret.value = result.v[1];
 
     return ret;
 }

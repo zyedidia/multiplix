@@ -11,19 +11,33 @@ conf = {
 
 build = include("build/build.knit")
 
-local machine = build.machine(conf.board, false)
+function dversion(s)
+    local vflag = sel(conf.dc == "gdc", "-fversion", "-d-version")
+    return f"$vflag=$s"
+end
+
+function makedeps(s)
+    return sel(conf.dc == "gdc", f"-MD -MF $s", f"-makedeps=$s")
+end
+
+build = include("build/build.knit")
+
+local monitor = false
+local machine = build.machine(conf.board, monitor)
 if machine == nil then
     return "could not find machine for board " .. conf.board
 end
 
 local tools = build.tools(machine)
-local flags = build.flags(machine, conf.lto, conf.release, false)
+local flags = build.flags(machine, conf.lto, conf.release, monitor)
+
+local of = sel(conf.dc == "gdc", "o", "of")
 
 local meta = r{
     $ .kobj/%.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
     $ .kobj/%.o:D[.kobj/deps/%.dep]: %.d
-        $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -of $output -makedeps=.kobj/deps/$match.dep
+        $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -$of $output $(makedeps(f".kobj/deps/$match.dep"))
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
     $ %.bin.out: %.bin
