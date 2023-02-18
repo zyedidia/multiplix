@@ -52,12 +52,8 @@ struct Hex {
 }
 
 void unreachable() {
-    version (LDC) {
-        import ldc.llvmasm;
-        __ir!("unreachable", void, int)(0);
-    } else version (GNU) {
-
-    }
+    import ldc.llvmasm;
+    __ir!("unreachable", void, int)(0);
 }
 
 void assume(bool b) {
@@ -65,5 +61,7 @@ void assume(bool b) {
         unreachable();
     }
 }
+
+ref string _d_arrayappendT(return ref scope string x, scope string y) @trusted;
 
 extern (C) noreturn _halt();
