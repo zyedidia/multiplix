@@ -16,12 +16,10 @@ function bootloader.meta()
     }
 end
 
-function bootloader.rules(bootelf, payload)
+function bootloader.rules(bootelf, payload, unified)
     local version = sel(payload == nil, "uart", "payload")
 
-    local objects = knit.join(obj.libmonitor(), {
-        f".bootobj/bootloader/main-$version.o",
-    })
+    local objects = {f".bootobj/bootloader/main-$version.o"}
 
     if payload ~= nil then
         objects = knit.join(objects, {".bootobj/bootloader/payload.o"})
@@ -31,12 +29,24 @@ function bootloader.rules(bootelf, payload)
 
     local link = f"link/$(machine.board)/bootloader.ld"
 
-    local rules = b{
-        $ .bootobj/bootloader/main-$version.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
-            $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$version
-        $ $bootelf: $(objects) $(link)[I]
-            $(tools.ld) $(flags.ld) -T$(link) $input -o $output
-    }
+    local rules
+    if conf.unified then
+        rules = b{
+            $ .bootobj/bootloader/main-$version.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
+                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$version
+            $ .bootobj/bootloader.o: $(src.libmonitor())
+                $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -of $output
+            $ $bootelf: .bootobj/bootloader.o $(obj.masm()) $(objects) $(link)[I]
+                $(tools.ld) $(flags.ld) -T$(link) $input -o $output
+        }
+    else
+        rules = b{
+            $ .bootobj/bootloader/main-$version.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
+                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep -d-version=$version
+            $ $bootelf: $(obj.libmonitor()) $(objects) $(link)[I]
+                $(tools.ld) $(flags.ld) -T$(link) $input -o $output
+        }
+    end
 
     if payload ~= "" then
         rules = rules +
