@@ -29,7 +29,7 @@ struct Timer {
     }
 
     static void delay_us(ulong t) {
-        delay_time(t * (Machine.mtime_freq / 1_000_000));
+        delay_time(t * Machine.mtime_freq / 1_000_000);
     }
 
     static ulong ns() {

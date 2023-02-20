@@ -16,7 +16,7 @@ struct Machine {
     enum cpu_freq_mhz = cpu_freq / (1000 * 1000);
     enum ncores = 5;
 
-    enum mtime_freq = 6_250_000;
+    enum mtime_freq = 4_800_000;
 
     struct MemRange {
         uintptr start;
