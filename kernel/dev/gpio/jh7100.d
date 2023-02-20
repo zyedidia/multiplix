@@ -1,8 +1,8 @@
-module kernel.dev.gpio.starfive;
+module kernel.dev.gpio.jh7100;
 
 import core.volatile;
 
-struct StarfiveGpio(uintptr base) {
+struct Jh7100Gpio(uintptr base) {
     struct Gpo {
         uint val;
         uint en;

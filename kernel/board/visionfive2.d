@@ -1,9 +1,10 @@
 module kernel.board.visionfive2;
 
 import kernel.dev.uart.dw8250;
-import kernel.dev.gpio.starfive;
+import kernel.dev.gpio.jh7110;
 import kernel.dev.reboot.unsupported;
 import kernel.dev.irq.sfclint;
+import kernel.dev.emmc.unsupported;
 
 import kernel.vm;
 import kernel.alloc;
@@ -32,5 +33,7 @@ struct Machine {
 }
 
 alias Uart = Dw8250!(pa2kpa(0x10000000));
+alias Gpio = Jh7110Gpio!(pa2kpa(0x13040000));
 alias Reboot = Unsupported;
 alias Clint = SifiveClint!(pa2kpa(0x200_0000));
+alias Emmc = UnsupportedEmmc;
