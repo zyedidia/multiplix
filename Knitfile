@@ -1,7 +1,15 @@
 knit = require("knit")
 
+local _, uconf = pcall(include, "build/conf.knit")
+
+conf = {
+    board = choose(cli.board, uconf.board, "visionfive"),
+    lto = choose(tobool(cli.lto), uconf.lto, true),
+    release = choose(tobool(cli.release), uconf.release, false),
+    unified = choose(tobool(unified), uconf.unified, true)
+}
+
 build = include("build/build.knit")
-conf = include("build/default.knit")
 
 local machine = build.machine(conf.board, false)
 if machine == nil then
@@ -145,11 +153,13 @@ return b{
     $ lint-%:VBQ: %
         dscanner --styleCheck $input --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 
-    include("user/hello/Knitfile"),
+    include("user/hello/build.knit"),
 
     bootloader.meta(),
     bootloader.rules("kernel.boot.elf", "kernel.payload", conf.unified),
     bootloader.rules("bootloader.elf", nil, conf.unified),
+
+    include("firmware/raspi/build.knit"),
 
     kernel,
     meta

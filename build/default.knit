@@ -1,8 +1,0 @@
-local _, conf = pcall(include, "conf.knit")
-
-return {
-    board = choose(cli.board, conf.board, "visionfive"),
-    lto = choose(tobool(cli.lto), conf.lto, true),
-    release = choose(tobool(cli.release), conf.release, false),
-    unified = choose(tobool(unified), conf.unified, true)
-}

@@ -1,6 +1,3 @@
-local build = include("../../build/build.knit")
-local conf = include("../../build/default.knit")
-
 local machine = build.machine(conf.board, false)
 if machine == nil then
     return "could not find machine for board " .. conf.board
