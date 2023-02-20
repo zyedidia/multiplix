@@ -2,9 +2,6 @@ module kernel.dev.gpio.jh7110;
 
 import core.volatile;
 
-import bits = ulib.bits;
-import io = ulib.io;
-
 struct Jh7110Gpio(uintptr base) {
     enum doen_reg = cast(uint*)(base + 0x0);
     enum dout_reg = cast(uint*)(base + 0x40);
