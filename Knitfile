@@ -1,9 +1,5 @@
 knit = require("knit")
 
-function sel(cond, t, f)
-    if cond then return t else return f end
-end
-
 build = include("build/build.knit")
 conf = include("build/default.knit")
 

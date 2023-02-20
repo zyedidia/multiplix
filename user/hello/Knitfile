@@ -1,7 +1,3 @@
-function sel(cond, t, f)
-    if cond then return t else return f end
-end
-
 local build = include("../../build/build.knit")
 local conf = include("../../build/default.knit")
 
