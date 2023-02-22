@@ -7,7 +7,7 @@ privilege level. Multiplix is very much in-progress.
 
 At the moment it is too early to have in-depth instructions on how to set up
 Multiplix. After more continued development this page will be expanded, so stay
-tuned!
+tuned! (estimate: check back in 1-3 months for more information)
 
 The current status is that Multiplix can boot all cores, enable virtual memory
 and interrupts, and supports multiple user-mode processes with a limited set of
