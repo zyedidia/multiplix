@@ -78,8 +78,6 @@ int _times(struct tms* buf) {
     return -1;
 }
 
-int nanosleep(const struct timespec* req, void* _) {
-    (void) _;
-    unsigned long ns = req->tv_sec * 1000000000 + req->tv_nsec;
-    return syscall_1(SYS_NANOSLEEP, ns);
+int usleep(uint64_t us) {
+    return syscall_1(SYS_USLEEP, us);
 }

@@ -4,6 +4,8 @@ import io = ulib.io;
 
 noreturn panic(Args...)(Args msg) {
     io.writeln("panic: ", msg);
+    import kernel.irq;
+    Irq.off();
     _halt();
 }
 

@@ -46,8 +46,9 @@ extern (C) void kernel_exception(Regs* regs) {
 }
 
 extern (C) void kernel_interrupt(Regs* regs) {
+    import kernel.irq;
+    Irq.handler();
     ArchTimer.intr();
-    // TODO: what to do here?
 }
 
 struct Trapframe {
@@ -64,9 +65,11 @@ extern (C) {
     extern void uservec();
 
     noreturn user_interrupt(Proc* p) {
+        import kernel.irq;
+        Irq.handler();
+
         ArchTimer.intr();
         p.yield();
-
         usertrapret(p);
     }
 

@@ -28,6 +28,9 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
         case Syscall.Num.sbrk:
             ret = Syscall.sbrk(p, cast(int) args[0]);
             break;
+        case Syscall.Num.usleep:
+            Syscall.usleep(p, cast(ulong) args[0]);
+            break;
         default:
             io.writeln("invalid syscall: ", sysno);
             return -1;
@@ -53,6 +56,7 @@ struct Syscall {
         fork      = 3,
         wait      = 4,
         sbrk      = 5,
+        usleep    = 6,
         read      = 7,
     }
 
@@ -62,16 +66,19 @@ struct Syscall {
     }
 
     static int fork(Proc* p) {
+        // Get a new runnable process.
         Proc* child = runq.next();
         if (!child) {
             return -1;
         }
 
+        // Allocate the pagetable and map the kernel.
         child.pt = knew!(Pagetable)();
         if (!child.pt)
             return -1;
         kernel_procmap(child.pt);
 
+        // Map all user pages from the parent.
         foreach (map; VmRange(p.pt)) {
             if (!map.user) {
                 continue;
@@ -88,10 +95,12 @@ struct Syscall {
                 return -1;
             }
             if (map.exec) {
+                // Need to sync instruction/data caches for executable pages.
                 sync_idmem(cast(ubyte*) block, map.size);
             }
         }
 
+        // Initialize the child's context based on the parent.
         memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);
         child.trapframe.regs.retval = 0;
         child.trapframe.epc = p.trapframe.epc;
@@ -103,7 +112,8 @@ struct Syscall {
 
         child.pid = atomic_rmw_add(&nextpid, 1);
 
-        runq.unblock(child.node);
+        // mark the child as runnable.
+        runq.ready(child.node);
 
         return child.pid;
     }
@@ -149,31 +159,97 @@ struct Syscall {
     }
 
     static uintptr sbrk(Proc* p, int incr) {
-        assert(0);
+        // First time sbrk is called we allocate the first brk page.
+        if (p.brk.current == 0) {
+            void* pg = kalloc(sys.pagesize);
+            if (!pg) {
+                return -1;
+            }
+            if (!p.pt.map(p.brk.initial, ka2pa(cast(uintptr) pg), Pte.Pg.normal, Perm.urwx, &sys.allocator)) {
+                kfree(pg);
+                return -1;
+            }
+            p.brk.current = p.brk.initial;
+        }
+
+        // Requested increment brings the brk beyond maxva or the initial brk.
+        if (p.brk.current + incr >= Proc.maxva || p.brk.current + incr < p.brk.initial) {
+            return -1;
+        }
+
+        uintptr newbrk = p.brk.current;
+        if (incr > 0) {
+            newbrk = p.pt.alloc(p.brk.current, p.brk.current + incr, Perm.urwx);
+            if (!newbrk)
+                return -1;
+        } else if (incr < 0) {
+            newbrk = p.pt.dealloc(p.brk.current, p.brk.current + incr);
+        }
+        p.brk.current = newbrk;
+        return newbrk;
     }
 
-    static void usleep(ulong us) {
-        assert(0);
+    static void usleep(Proc* p, ulong us) {
+        import kernel.timer;
+
+        ulong start_time = Timer.time();
+
+        while (true) {
+            runq.block(p.node);
+            p.yield();
+
+            if (Timer.us_since(start_time) >= us) {
+                return;
+            }
+        }
     }
 
     static int open(Proc* p, char* path, int flags) {
-        assert(0);
+        return -1;
     }
 
     static long read(Proc* p, int fd, uintptr addr, size_t sz) {
-        assert(0);
+        return -1;
     }
 
     static long write(Proc* p, int fd, uintptr addr, size_t sz) {
-        assert(0);
+        if (sz == 0) {
+            return 0;
+        }
+
+        // Validate buffer.
+        size_t overflow = addr + sz;
+        if (overflow < addr || addr >= Proc.maxva) {
+            return -1; // E_FAULT
+        }
+
+        for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
+            auto vmap = p.pt.lookup(va);
+            if (!vmap.has() || !vmap.get().user) {
+                return -1; // E_FAULT
+            }
+        }
+
+        // TODO: We only support console stdout for now.
+        if (fd != 1) {
+            return -1;
+        }
+
+        ubyte[] buf = (cast(ubyte*) addr)[0 .. sz];
+        import kernel.board;
+        foreach (c; buf) {
+            Uart.tx(c);
+        }
+
+        return sz;
     }
 
     static int close(Proc* p, int fd) {
-        assert(0);
+        return -1;
     }
 
     static int exec(char* path, char** argv) {
-        assert(0);
+        return -1;
     }
 }
 

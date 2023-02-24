@@ -3,6 +3,13 @@ module kernel.irq;
 import kernel.arch;
 
 struct Irq {
+    static void handler() {
+        import kernel.schedule;
+        foreach (ref p; runq.blocked) {
+            runq.unblock(p);
+        }
+    }
+
     static int noff;   // depth of push_off
     static bool irqen; // were irqs enabled before push_off
 

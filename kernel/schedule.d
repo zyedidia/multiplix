@@ -1,5 +1,6 @@
 module kernel.schedule;
 
+import kernel.spinlock;
 import kernel.proc;
 import kernel.arch;
 import ulib.list;
@@ -10,11 +11,15 @@ struct RunQ {
     List!(Proc) blocked;
     List!(Proc) exited;
 
+    shared Spinlock lock;
+
     Context context;
 
     alias Node = List!(Proc).Node;
 
     size_t length() {
+        lock.lock();
+        scope(exit) lock.unlock();
         return runnable.length;
     }
 
@@ -41,8 +46,16 @@ struct RunQ {
             kfree(p.node);
             return false;
         }
-        unblock(p.node);
+        ready(p.node);
         return true;
+    }
+
+    // Puts n in the runnable queue.
+    void ready(Node* n) {
+        n.val.state = Proc.State.runnable;
+        lock.lock();
+        runnable.push_back(n);
+        lock.unlock();
     }
 
     void block(Node* n) {
@@ -62,12 +75,16 @@ struct RunQ {
 
     // Moves the process from one queue to another.
     private void move(alias List!(Proc) to, alias List!(Proc) from)(Node* n) {
+        lock.lock();
         from.remove(n);
         to.push_back(n);
+        lock.unlock();
     }
 
     // Returns the next process to run, or null if there are no runnable processes.
     Proc* schedule() {
+        lock.lock();
+        scope(exit) lock.unlock();
         if (runnable.length == 0) {
             return null;
         }
@@ -88,11 +105,14 @@ noreturn scheduler() {
         // Allow devices to interrupt in case all processes are sleeping.
         Irq.on();
 
+        import io = ulib.io;
+
         Proc* p = null;
         while (!p) {
             p = runq.schedule();
             // TODO: wait in low power state if there are no processes
         }
+        Irq.off();
         assert(p.state == Proc.State.runnable);
         runq.curproc = p;
         kswitch(&runq.context, &p.context);

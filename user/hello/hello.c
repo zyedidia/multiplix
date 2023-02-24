@@ -12,11 +12,9 @@ int main() {
         wait();
     }
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 5; i++) {
         getpid();
-        for (int j = 0; j < 50000000; j++) {
-            asm volatile ("nop");
-        }
+        usleep(100 * 1000);
     }
     exit(0);
 }

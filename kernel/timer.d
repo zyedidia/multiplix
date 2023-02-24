@@ -33,6 +33,10 @@ struct Timer {
         delay_us(ms * 1000);
     }
 
+    static ulong us_since(ulong prev_time) {
+        return (ArchTimer.time - prev_time) * 1_000_000 / ArchTimer.freq();
+    }
+
     // Delay for `n` nops.
     static void delay_nops(ulong n) {
         for (ulong i = 0; i < n; i++) {

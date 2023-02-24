@@ -40,6 +40,8 @@ extern (C) void kerneltrap() {
     // io.writeln("[kernel trap] sepc: ", cast(void*) sepc, " cause: ", Hex(scause));
 
     if (scause == Cause.sti) {
+        import kernel.irq;
+        Irq.handler();
         ArchTimer.intr();
     } else {
         import core.exception;
@@ -72,6 +74,9 @@ extern (C) {
             Regs* r = &p.trapframe.regs;
             r.a0 = syscall_handler(p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
         } else if (scause == Cause.sti) {
+            import kernel.irq;
+            Irq.handler();
+
             ArchTimer.intr();
             p.yield();
         } else {
