@@ -12,8 +12,9 @@ int main() {
         wait();
     }
 
+    int pid = getpid();
     for (int i = 0; i < 5; i++) {
-        getpid();
+        printf("%d: loop %d\n", pid, i);
         usleep(100 * 1000);
     }
     exit(0);

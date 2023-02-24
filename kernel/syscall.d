@@ -61,7 +61,6 @@ struct Syscall {
     }
 
     static int getpid(Proc* p) {
-        io.writeln("getpid: ", p.pid);
         return p.pid;
     }
 
