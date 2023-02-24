@@ -3,7 +3,7 @@ knit = require("knit")
 local _, uconf = pcall(include, "build/conf.knit")
 
 conf = {
-    board = choose(cli.board, uconf.board, "visionfive"),
+    board = choose(cli.board, uconf.board, "virt_riscv64"),
     lto = choose(tobool(cli.lto), uconf.lto, true),
     release = choose(tobool(cli.release), uconf.release, false),
     unified = choose(tobool(unified), uconf.unified, true)
