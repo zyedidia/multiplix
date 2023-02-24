@@ -76,7 +76,7 @@ extern (C) {
             assert(0, "TODO: schedule");
         } else {
             import core.exception;
-            panic("unhandled user trap");
+            panic("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
         }
 
         usertrapret(p, false);

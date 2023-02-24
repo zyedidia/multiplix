@@ -101,6 +101,11 @@ struct Proc {
         context.sp = kstackp();
         context.retaddr = cast(uintptr) &forkret;
 
+        // foreach (vmmap; VmRange(pt)) {
+        //     import io = ulib.io;
+        //     io.writeln(cast(void*) vmmap.va, " -> ", cast(void*) vmmap.pa);
+        // }
+
         return true;
     }
 
