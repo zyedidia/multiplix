@@ -2,15 +2,6 @@ module kernel.vm;
 
 import sys = kernel.sys;
 
-import kernel.arch;
-import kernel.alloc;
-
-import ulib.option;
-import ulib.memory;
-import ulib.math : align_off;
-
-import bits = ulib.bits;
-
 // Converts kernel address to physical address.
 uintptr ka2pa(uintptr ka) {
     return ka - sys.highmem_base;
@@ -42,31 +33,29 @@ uintptr pa2kpa(uintptr pa) {
     }
 }
 
+// Virtual memory permissions.
+enum Perm {
+    r = 1 << 0, // read
+    w = 1 << 1, // write
+    x = 1 << 2, // execute
+    u = 1 << 3, // user-accessible
+
+    rw  = r | w,
+    rwx = rw | x,
+    urw  = u | rw,
+    urwx = urw | x,
+}
+
 struct VaMapping {
     uintptr va;
     uintptr pa;
     size_t size;
-    bool read;
-    bool write;
-    bool exec;
-    bool user;
-
-    this(uintptr va, size_t size, Pte* pte) {
-        this.va = va;
-        this.pa = pte.pa();
-        this.size = size;
-        this.read = pte.read() != 0;
-        this.write = pte.write() != 0;
-        this.exec = pte.exec() != 0;
-        this.user = pte.user() != 0;
-    }
-
-    uintptr ka() {
-        return pa2ka(pa);
-    }
+    Perm perm;
 }
 
-// Look up a virtual address in a pagetable and return the VaMapping.
+import kernel.arch;
+import ulib.option;
+
 Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
     Pte.Pg pgtype;
     Pte* pte = pt.walk(va, pgtype);
@@ -74,10 +63,12 @@ Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
         return Opt!(VaMapping).none;
     }
     size_t size = Pagetable.level2size(pgtype);
-    return Opt!(VaMapping)(VaMapping(va, size, pte));
+    return Opt!(VaMapping)(VaMapping(va, pte.pa, size, pte.perm));
 }
 
-void unmap(Pagetable* pt, uintptr va, Pte.Pg pgtyp, bool free) {
+import kernel.alloc;
+
+void unmappg(Pagetable* pt, uintptr va, Pte.Pg pgtyp, bool free) {
     Pte* pte = pt.walk!(void, false)(va, pgtyp, null);
     if (!pte) {
         return;
@@ -85,121 +76,55 @@ void unmap(Pagetable* pt, uintptr va, Pte.Pg pgtyp, bool free) {
     if (free) {
         kfree(cast(void*) pa2ka(pte.pa));
     }
+    // TODO: need to invalidate this entry from TLB when we switch to this pagetable
     pte.data = 0;
 }
 
-uintptr uvmalloc(Pagetable* pt, uintptr oldva, uintptr newva, ubyte perm) {
-    if (newva < oldva)
-        return oldva;
-    oldva += align_off(oldva, sys.pagesize);
-    for (uintptr va = oldva; va < newva; va += sys.pagesize) {
+import ulib.math : align_off;
+import ulib.memory;
+
+// Utility functions for managing memory that is mapped in a pagetable.
+
+// Allocate/map a new region from va_start to va_end.
+uintptr alloc(Pagetable* pt, uintptr va_start, uintptr va_end, Perm perm) {
+    if (va_end < va_start)
+        return va_start;
+    va_start += align_off(va_start, sys.pagesize);
+    for (uintptr va = va_start; va < va_end; va += sys.pagesize) {
         void* mem = kalloc(sys.pagesize);
         if (!mem) {
-            cast() uvmdealloc(pt, va, oldva);
+            cast() dealloc(pt, va_start, va);
             return 0;
         }
         memset(mem, 0, sys.pagesize);
         if (!pt.map(va, ka2pa(cast(uintptr) mem), Pte.Pg.normal, perm, &sys.allocator)) {
             kfree(mem);
-            cast() uvmdealloc(pt, va, oldva);
+            cast() dealloc(pt, va_start, va);
             return 0;
         }
     }
-    return newva;
+    return va_end;
 }
 
-uintptr uvmdealloc(Pagetable* pt, uintptr oldva_, uintptr newva_) {
-    if (newva_ >= oldva_)
-        return oldva_;
+// Deallocate/unmap the region from va_start to va_end.
+uintptr dealloc(Pagetable* pt, uintptr va_start, uintptr va_end) {
+    if (va_start >= va_end)
+        return va_end;
 
-    newva_ += align_off(newva_, sys.pagesize);
-    oldva_ += align_off(oldva_, sys.pagesize);
+    va_start += align_off(va_start, sys.pagesize);
+    va_end += align_off(va_end, sys.pagesize);
 
-    if (newva_ < oldva_) {
-        size_t npages = (oldva_ - newva_) / sys.pagesize;
-        uvmunmap(pt, newva_, npages, true);
+    if (va_start < va_end) {
+        size_t npages = (va_end - va_start) / sys.pagesize;
+        unmap(pt, va_start, npages, true);
     }
 
-    return newva_;
+    return va_start;
 }
 
-void uvmunmap(Pagetable* pt, uintptr va, size_t npages, bool free) {
+// Unmap `npages` pages starting at `va`. Pages are freed if `free`.
+void unmap(Pagetable* pt, uintptr va, size_t npages, bool free) {
     for (uintptr a = va; a < va + npages * sys.pagesize; va += sys.pagesize) {
-        pt.unmap(a, Pte.Pg.normal, free);
-    }
-}
-
-// Pagetable range (iterator) API.
-alias Range = LevelRange!(Pte.Pg.max);
-
-Range range(Pagetable* pt) {
-    return Range(pt, 0);
-}
-
-struct LevelRange(Pte.Pg level) {
-    enum lastlevel = level == Pte.Pg.min;
-
-    Pagetable* pt;
-    uint idx;
-    static if (!lastlevel) {
-        LevelRange!(Pte.down(level)) next;
-    }
-
-    // reached the last pte
-    bool ended() {
-        return idx >= pt.ptes.length;
-    }
-
-    bool empty() {
-        return !get_mapping().has();
-    }
-
-    VaMapping front() {
-        return get_mapping().get();
-    }
-
-    Opt!(VaMapping) get_mapping() {
-        if (ended()) {
-            return Opt!(VaMapping).none;
-        }
-        Pte* pte = &pt.ptes[idx];
-        if (pte.leaf(level) && pte.valid()) {
-            return Opt!(VaMapping)(VaMapping(
-                bits.sext!(long, ulong)(idx * Pagetable.level2size(cast(Pte.Pg) level), 39),
-                Pagetable.level2size(cast(Pte.Pg) level),
-                pte,
-            ));
-        }
-        static if (!lastlevel) {
-            if (pte.valid() && next.pt == null) {
-                next = LevelRange!(Pte.down(level))(cast(Pagetable*) pa2ka(pt.ptes[idx].pa()));
-            }
-            if (pte.valid() && !next.empty()) {
-                auto nf = next.front();
-                nf.va += idx * Pagetable.level2size(cast(Pte.Pg) level);
-                return Opt!(VaMapping)(nf);
-            }
-        }
-        do {
-            idx++;
-        } while (!ended() && !pt.ptes[idx].valid());
-        static if (!lastlevel) {
-            if (!ended() && pt.ptes[idx].valid() && !pt.ptes[idx].leaf(level)) {
-                next = LevelRange!(Pte.down(level))(cast(Pagetable*) pa2ka(pt.ptes[idx].pa()));
-            }
-        }
-        return get_mapping();
-    }
-
-    void popFront() {
-        static if (!lastlevel) {
-            if (!next.empty()) {
-                next.popFront();
-            } else {
-                idx++;
-            }
-        } else {
-            idx++;
-        }
+        pt.unmappg(a, Pte.Pg.normal, free);
     }
 }

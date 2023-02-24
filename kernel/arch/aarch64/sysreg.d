@@ -73,16 +73,6 @@ struct SysReg {
 
     mixin(GenSysReg!("daif"));
 
-    // a clunkier but more flexible interface for debug registers
-    /* struct dbgbcr_el1(uint n) { */
-    /*     static void wr(uintptr v) { */
-    /*         import ulib.meta; */
-    /*         mixin(`asm { */
-    /*             "msr dbgbcr` ~ itoa!uint(n) ~ `_el1, %0" :: "r"(v); */
-    /*         }`); */
-    /*     } */
-    /* } */
-
     // CPUECTLR
     mixin(GenSysReg!("S3_1_C15_C2_1"));
 }
@@ -161,13 +151,13 @@ enum Spsr {
 
     el2h = 0b1001,
     el1h = 0b0101,
-    el0 = 0b0000,
+    el0  = 0b0000,
 }
 
 enum Exception {
-    smc = 0b010111,
-    svc = 0b010101,
-    hvc = 0b010110,
+    smc   = 0b010111,
+    svc   = 0b010101,
+    hvc   = 0b010110,
     brkpt = 0b110000,
-    ss = 0b110010,
+    ss    = 0b110010,
 }

@@ -10,27 +10,25 @@ import kernel.proc;
 import kernel.cpu;
 import kernel.syscall;
 
-import sys = kernel.sys;
-
 import bits = ulib.bits;
 import io = ulib.io;
 
 extern (C) extern void kernelvec();
 
-struct Trap {
+struct ArchTrap {
     static void setup() {
         Csr.stvec = cast(uintptr) &kernelvec;
     }
 
-    static void enable() {
+    static void on() {
         Csr.sstatus = bits.set(Csr.sstatus, Sstatus.sie);
     }
 
-    static void disable() {
+    static void off() {
         Csr.sstatus = bits.clear(Csr.sstatus, Sstatus.sie);
     }
 
-    static bool enabled() {
+    static bool is_on() {
         return bits.get(Csr.sstatus, Sstatus.sie) == 1;
     }
 }
@@ -42,9 +40,10 @@ extern (C) void kerneltrap() {
     io.writeln("[trap] sepc: ", cast(void*) sepc, " cause: ", Hex(scause));
 
     if (scause == Cause.sti) {
-        Timer.intr(Timer.interval);
+        ArchTimer.intr();
     } else {
-        assert(false);
+        import core.exception;
+        panic("[unhandled kernel trap] epc: ", cast(void*) sepc, " cause: ", Hex(scause));
     }
 }
 
@@ -73,12 +72,11 @@ extern (C) {
             Regs* r = &p.trapframe.regs;
             r.a0 = syscall_handler(p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
         } else if (scause == Cause.sti) {
-            io.writeln("user timer interrupt");
-            Timer.intr(Timer.interval);
-            import kernel.schedule;
-            schedule();
+            ArchTimer.intr();
+            assert(0, "TODO: schedule");
         } else {
-            assert(0, "unhandled user trap");
+            import core.exception;
+            panic("unhandled user trap");
         }
 
         usertrapret(p, false);
@@ -86,13 +84,13 @@ extern (C) {
 }
 
 noreturn usertrapret(Proc* p, bool swtch) {
-    Trap.disable();
+    ArchTrap.off();
 
     Csr.stvec = cast(uintptr) &uservec;
 
     // set up trapframe
     p.trapframe.ktp = cpuinfo.tls;
-    p.trapframe.ksp = cpuinfo.stack;
+    p.trapframe.ksp = p.kstackp();
     p.trapframe.kgp = rd_gp();
     Csr.sscratch = cast(uintptr) p;
 

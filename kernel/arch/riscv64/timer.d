@@ -7,40 +7,10 @@ import kernel.arch.riscv64.csr;
 
 import sbi = kernel.arch.riscv64.sbi;
 
-struct Timer {
-    private static void delay_cycles(ulong t) {
-        ulong rb = Csr.cycle;
-        while (true) {
-            ulong ra = Csr.cycle;
-            if ((ra - rb) >= t) {
-                break;
-            }
-        }
-    }
-
-    private static void delay_time(ulong t) {
-        ulong rb = volatile_ld(Clint.mtime);
-        while (true) {
-            ulong ra = volatile_ld(Clint.mtime);
-            if ((ra - rb) >= t) {
-                break;
-            }
-        }
-    }
-
-    static void delay_us(ulong t) {
-        delay_time(t * Machine.mtime_freq / 1_000_000);
-    }
-
-    static ulong ns() {
-        return volatile_ld(Clint.mtime) * 1_000_000_000 / freq();
-    }
-
+struct ArchTimer {
     static ulong cycles() {
         return Csr.cycle;
     }
-
-    enum interval = 100000;
 
     static ulong freq() {
         return Machine.mtime_freq;
@@ -49,6 +19,8 @@ struct Timer {
     static ulong time() {
         return volatile_ld(Clint.mtime);
     }
+
+    enum interval = 100000;
 
     static void intr() {
         intr(interval);

@@ -1,40 +1,32 @@
 module kernel.proc;
 
-import core.sync;
-
-import kernel.arch;
-import kernel.alloc;
-import kernel.board;
 import kernel.spinlock;
-
-import kernel.fs.vfs;
-import kernel.fs.console;
-
+import kernel.arch;
 import sys = kernel.sys;
-import vm = kernel.vm;
-import elf = kernel.elf;
-
 import ulib.list;
-import ulib.option;
-import ulib.memory;
-import ulib.vector;
 
 shared int nextpid = 0;
 
 struct Proc {
-    enum stackva = 0x7fff0000;
-    enum maxva = stackva + sys.pagesize;
-
     // Must be the first field in Proc.
     Trapframe trapframe;
 
-    // scheduling list node
+    enum stackva = 0x7fff0000;
+    enum maxva = stackva + sys.pagesize;
+
+    // Context for kernel switches.
+    Context context;
+
+    // Scheduling node.
     List!(Proc).Node* node;
+
+    shared Spinlock lock;
 
     int pid = -1;
     Pagetable* pt;
     Proc* parent;
     uint children;
+    void* ustack;
 
     struct Brk {
         uintptr initial;
@@ -44,80 +36,96 @@ struct Proc {
 
     enum State {
         runnable = 0,
-        waiting,
-        sleeping,
+        blocked,
         exited,
     }
+
     State state;
-    ulong sleep_end;
 
-    static bool make(Proc* proc, immutable ubyte[] binary) {
-        // Checkpoint so we can free all memory if there is a failure.
-        auto alloc = CheckpointAllocator!(typeof(sys.allocator))(&sys.allocator);
+    enum magic = 0xdeadbeef;
+    uint canary = magic;
 
-        alloc.checkpoint();
-        // allocate pagetable
-        Pagetable* pt = knew_custom!(Pagetable)(&alloc);
+    align(16) ubyte[2048] kstack;
+
+    import kernel.vm;
+
+    bool initialize(immutable ubyte[] code) {
+        import kernel.alloc;
+        import elf = kernel.elf;
+        import ulib.math;
+        import ulib.memory;
+
+        auto alloc = CkptAllocator!(typeof(sys.allocator))(&sys.allocator);
+        alloc.ckpt();
+
+        pt = knew_custom!(Pagetable)(&alloc);
         if (!pt) {
-            alloc.free_checkpoint();
+            alloc.free_ckpt();
             return false;
         }
-        proc.pt = pt;
-        uintptr entryva;
-        uintptr brk = elf.load!(64)(proc.pt, binary.ptr, entryva, &alloc);
-        if (!brk) {
-            alloc.free_checkpoint();
+        uintptr entryva, brk;
+        if (!elf.load!(64)(pt, code.ptr, entryva, brk, &alloc)) {
+            alloc.free_ckpt();
             return false;
         }
-        import ulib.math : align_off;
         brk += align_off(brk, sys.pagesize);
 
         // map kernel
-        assert(kernel_map(proc.pt));
+        kernel_procmap(pt);
         // allocate stack
-        void* stack = kalloc_custom(&alloc, sys.pagesize);
-        if (!stack) {
-            alloc.free_checkpoint();
+        ustack = kalloc_custom(&alloc, sys.pagesize);
+        if (!ustack) {
+            alloc.free_ckpt();
             return false;
         }
-        memset(stack, 0, sys.pagesize);
+        memset(ustack, 0, sys.pagesize);
         // map stack
-        if (!proc.pt.map(stackva, vm.ka2pa(cast(uintptr) stack), Pte.Pg.normal, Perm.urwx, &alloc)) {
-            alloc.free_checkpoint();
+        if (!pt.map(stackva, ka2pa(cast(uintptr) ustack), Pte.Pg.normal, Perm.urw, &alloc)) {
+            alloc.free_ckpt();
             return false;
         }
 
-        if (!proc.init_fdtable(&alloc)) {
-            alloc.free_checkpoint();
-            return false;
-        }
+        alloc.done_ckpt();
 
-        alloc.done_checkpoint();
+        // initialize registers and user process information
+        memset(&trapframe.regs, 0, Regs.sizeof);
+        trapframe.regs.sp = stackva + sys.pagesize - 16;
+        trapframe.epc = entryva;
+        children = 0;
+        this.brk.initial = brk;
+        this.brk.current = 0;
+        import core.sync;
+        pid = atomic_rmw_add(&nextpid, 1);
 
-        // initialize registers (stack, pc)
-        memset(&proc.trapframe.regs, 0, Regs.sizeof);
-        proc.trapframe.regs.sp = stackva + sys.pagesize - 16;
-        proc.trapframe.epc = entryva;
-        proc.children = 0;
-        proc.brk.initial = brk;
-        proc.brk.current = 0;
-
-        proc.pid = atomic_rmw_add(&nextpid, 1);
+        // initialize kernel context
+        context.sp = kstackp();
+        context.retaddr = cast(uintptr) &forkret;
 
         return true;
     }
 
-    FdTable* fdtable;
+    uintptr kstackp() {
+        return cast(uintptr) &kstack[$-1];
+    }
 
-    bool init_fdtable(A)(A* alloc) {
-        fdtable = knew_custom!(FdTable)(alloc);
-        if (!fdtable) {
-            return false;
-        }
-        fdtable.files[0] = Console.stdin;
-        fdtable.files[1] = Console.stdout;
-        fdtable.files[2] = Console.stderr;
-        fdtable.refcount = 1;
-        return true;
+    void free() {
+        unmappg(pt, stackva, Pte.Pg.normal, true);
+        pt.free();
+    }
+
+    void yield() {
+        import kernel.schedule;
+        import kernel.irq;
+        assert(!Irq.is_on());
+        assert(canary == Proc.magic);
+
+        bool irqen = Irq.irqen;
+        kswitch(&context, &runq.context);
+        Irq.irqen = irqen;
+    }
+
+    static void forkret() {
+        import kernel.schedule;
+        usertrapret(runq.curproc, true);
     }
 }

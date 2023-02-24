@@ -1,8 +1,39 @@
 module kernel.timer;
 
-import arch = kernel.arch;
+import kernel.arch;
 
 struct Timer {
+    // Forward all functions from ArchTimer.
+    enum ArchTimer timer = ArchTimer();
+    alias timer this;
+
+    // Delay until `t` ticks have expired from `tfn`.
+    private static void delay(alias tfn)(ulong t) {
+        ulong rb = tfn();
+        while (true) {
+            ulong ra = tfn();
+            if ((ra - rb) >= t) {
+                break;
+            }
+        }
+    }
+
+    // Delay for `cyc` cycles.
+    static void delay_cycles(ulong cyc) {
+        delay!(ArchTimer.cycles)(cyc);
+    }
+
+    // Delay for `us` microseconds.
+    static void delay_us(ulong us) {
+        delay!(ArchTimer.time)(us * ArchTimer.freq() / 1_000_000);
+    }
+
+    // Delay for `ms` milliseconds.
+    static void delay_ms(ulong ms) {
+        delay_us(ms * 1000);
+    }
+
+    // Delay for `n` nops.
     static void delay_nops(ulong n) {
         for (ulong i = 0; i < n; i++) {
             asm {
@@ -10,20 +41,14 @@ struct Timer {
             }
         }
     }
-    static void delay_us(ulong us) {
-        arch.Timer.delay_us(us);
-    }
 
-    static void delay_ms(ulong t) {
-        delay_us(t * 1000);
-    }
-
+    // Timing function for micro-benchmarks.
     static ulong time_fn(ulong iters)(void function() fn) {
-        auto start = arch.Timer.cycles();
+        auto start = ArchTimer.cycles();
         static foreach (j; 0 .. iters) {
             fn();
         }
-        auto end = arch.Timer.cycles();
+        auto end = ArchTimer.cycles();
         return end - start;
     }
 }

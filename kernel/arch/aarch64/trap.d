@@ -17,38 +17,37 @@ import bits = ulib.bits;
 
 extern (C) extern void kernelvec();
 
-struct Trap {
+struct ArchTrap {
     static void setup() {
         SysReg.vbar_el1 = cast(uintptr) &kernelvec;
     }
 
     // TODO: use daifset and daifclr instead
     // enable/disble fiq and irq
-    static void enable() {
+    static void on() {
         // setting a bit to 0 unmasks (enables) the irq
         SysReg.daif = bits.write(SysReg.daif, 9, 6, 0b0000);
     }
 
-    static void disable() {
+    static void off() {
         SysReg.daif = bits.write(SysReg.daif, 9, 6, 0b0111);
     }
 
-    static bool enabled() {
-        return ((SysReg.daif >> 6) & 0b11) != 0;
+    static bool is_on() {
+        return ((SysReg.daif >> 6) & 0b11) != 0b11;
     }
 }
 
 extern (C) void kernel_exception(Regs* regs) {
+    import core.exception;
+
     const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
-    io.writeln("elr: ", cast(void*) SysReg.elr_el1);
-    io.writeln("kernel exception: ", cast(void*) exc_class);
-    assert(0, "unhandled kernel exception");
+    panic("[unhandled kernel exception] esr: ", Hex(exc_class), " elr: ", cast(void*) SysReg.elr_el1);
 }
 
 extern (C) void kernel_interrupt(Regs* regs) {
-    import kernel.cpu;
-    io.writeln("core: ", cpuinfo.coreid, ", kernel interrupt");
-    Timer.intr();
+    ArchTimer.intr();
+    // TODO: what to do here?
 }
 
 struct Trapframe {
@@ -65,17 +64,13 @@ extern (C) {
     extern void uservec();
 
     noreturn user_interrupt(Proc* p) {
-        import kernel.cpu;
-        io.writeln("core: ", cpuinfo.coreid, ", user interrupt");
-        Timer.intr();
-        import kernel.schedule;
-        schedule();
+        ArchTimer.intr();
+        // TODO: schedule
+        while (1) {}
     }
 
     noreturn user_exception(Proc* p) {
         const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
-        /* io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1); */
-        /* io.writeln("far_el1: ", cast(void*) SysReg.far_el1); */
 
         switch (exc_class) {
             case Exception.svc:
@@ -83,9 +78,8 @@ extern (C) {
                 r.x0 = syscall_handler(p, r.x7, r.x0, r.x1, r.x2, r.x3, r.x4, r.x5, r.x6);
                 break;
             default:
-                io.writeln("usertrap: ", cast(void*) exc_class, " elr: ", cast(void*) SysReg.elr_el1);
                 import core.exception;
-                panic("unhandled exception");
+                panic("[unhandled user exception] esr: ", Hex(exc_class), " elr: ", cast(void*) SysReg.elr_el1);
                 break;
         }
 
@@ -94,13 +88,13 @@ extern (C) {
 }
 
 noreturn usertrapret(Proc* p, bool swtch) {
-    Trap.disable();
+    ArchTrap.off();
 
     // return to el0 aarch64 with no interrupts masked
     SysReg.spsr_el1 = Spsr.el0;
 
     // set up trapframe
-    p.trapframe.sp = cpuinfo.stack;
+    p.trapframe.sp = p.kstackp();
     p.trapframe.tp = SysReg.tpidr_el1;
 
     // set elr to p.trapframe.epc

@@ -1,26 +1,15 @@
 module kernel.elf;
 
-import core.sync;
+private enum magic = 0x464C457FU; // "\x7ELF" in little endian
 
-import kernel.alloc;
-import kernel.board;
-import kernel.arch;
-
-import sys = kernel.sys;
-import vm = kernel.vm;
-
-import ulib.memory;
-
-enum magic = 0x464C457FU; // "\x7ELF" in little endian
-
-enum Prog {
+private enum Prog {
     load = 1,
     flagexec = 1,
     flagwrite = 2,
     flagread = 4,
 }
 
-struct FileHeader(int W) if (W == 64 || W == 32) {
+private struct FileHeader(int W) if (W == 64 || W == 32) {
     static if (W == 64) {
         alias uword = ulong;
     } else {
@@ -45,7 +34,7 @@ struct FileHeader(int W) if (W == 64 || W == 32) {
     ushort shstrndx;
 }
 
-struct ProgHeader(int W) if (W == 64 || W == 32) {
+private struct ProgHeader(int W) if (W == 64 || W == 32) {
     static if (W == 64) {
         alias uword = ulong;
     } else {
@@ -67,7 +56,7 @@ struct ProgHeader(int W) if (W == 64 || W == 32) {
     uword align_;
 }
 
-int getwidth(ubyte* elfdat) {
+private int getwidth(ubyte* elfdat) {
     FileHeader!(32)* elf = cast(FileHeader!(32)*) elfdat;
     if (elf.width == 1) {
         return 32;
@@ -77,25 +66,28 @@ int getwidth(ubyte* elfdat) {
     assert(0);
 }
 
-uintptr load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, A* alloc) {
+import kernel.alloc;
+import kernel.arch;
+import kernel.vm;
+import sys = kernel.sys;
+import ulib.memory;
+
+// Should be called with a Checkpoint allocator to ensure segments can be freed.
+bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, out uintptr brk, A* alloc) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
-    assert(elf.magic == magic);
-
-    uintptr brk;
+    if (elf.magic != magic)
+        return false;
 
     for (ulong i = 0, off = elf.phoff; i < elf.phnum; i++, off += ProgHeader!(W).sizeof) {
         ProgHeader!(W)* ph = cast(ProgHeader!(W)*) (elfdat + off);
-        if (ph.type != Prog.load) {
+        if (ph.type != Prog.load || ph.memsz == 0)
             continue;
-        }
-        if (ph.memsz == 0) {
-            continue;
-        }
 
-        // TODO: these shouldn't be assertions
-        assert(ph.memsz >= ph.filesz);
-        assert(ph.vaddr + ph.memsz >= ph.vaddr);
+        if (ph.memsz < ph.filesz)
+            return false;
+        if (ph.vaddr + ph.memsz < ph.vaddr)
+            return false;
 
         // make sure we map on a page boundary
         size_t pad = ph.vaddr % sys.pagesize;
@@ -104,24 +96,26 @@ uintptr load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry
         import ulib.math : max;
         ubyte[] code = knew_array_custom!(ubyte)(alloc, max(ph.memsz + pad, cast(ulong) sys.pagesize));
         if (!code) {
-            return 0;
+            return false;
         }
         memcpy(code.ptr + pad, elfdat + ph.offset, ph.filesz);
         memset(code.ptr + pad + ph.filesz, 0, ph.memsz - ph.filesz);
 
+        uintptr pa = ka2pa(cast(uintptr) code.ptr);
         // map newly allocated physical space to base va
-        for (uintptr va = ph.vaddr - pad, pa = vm.ka2pa(cast(uintptr) code.ptr); va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
+        for (uintptr va = ph.vaddr - pad; va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
             if (!pt.map(va, pa, Pte.Pg.normal, Perm.urwx, alloc)) {
-                // memory will be freed by caller via checkpoint free (in proc creation)
-                return 0;
+                // segments will be freed by the checkpoint allocator this was called with
+                return false;
             }
         }
         import ulib.math : max;
         brk = max(ph.vaddr + ph.memsz, brk);
 
+        import core.sync;
         sync_idmem(code.ptr, code.length);
     }
 
     entry = elf.entry;
-    return brk;
+    return true;
 }

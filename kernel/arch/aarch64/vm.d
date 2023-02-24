@@ -5,17 +5,21 @@ import io = ulib.io;
 
 import sys = kernel.sys;
 
-import ulib.option;
-import ulib.memory;
-
 import kernel.vm;
 import kernel.alloc;
-import kernel.board;
 
 // AArch64 MMU configuration with 39-bit virtual addresses and a granule of 4KB.
 
+enum PtPerm {
+    r,
+    w,
+    x,
+    u,
+}
+
 struct Pte {
     ulong data;
+
     // dfmt off
     mixin(bits.field!(data,
         "valid", 1,
@@ -50,20 +54,30 @@ struct Pte {
         return !this.table;
     }
 
-    bool read() {
-        return true;
+    void perm(Perm perm) {
+        valid = (perm & Perm.r) != 0;
+        pxn = (perm & Perm.x) == 0;
+        uxn = (perm & Perm.x) == 0 || (perm & Perm.u) == 0;
+        ubyte ap = 0;
+        if ((perm & Perm.u) != 0)
+            ap |= 0b01; // user-accessible
+        if ((perm & Perm.w) == 0)
+            ap |= 0b10; // read-only
+        this.ap = ap;
     }
 
-    bool write() {
-        return ap == Ap.krw || ap == Ap.urw;
-    }
-
-    bool exec() {
-        return !pxn;
-    }
-
-    bool user() {
-        return ap == Ap.urw || ap == Ap.ur;
+    Perm perm() {
+        Perm p;
+        if (valid)
+            p |= Perm.r;
+        if (!uxn || !pxn)
+            p |= Perm.x;
+        // user-accessible if user could execute or read/write
+        if (!uxn || (ap & 0b01) != 0)
+            p |= Perm.u;
+        if ((ap & 0b10) != 0)
+            p |= Perm.w;
+        return p;
     }
 
     enum Pg {
@@ -81,26 +95,8 @@ struct Pte {
     }
 }
 
-enum Ap {
-    krw = 0b00,
-    urw = 0b01,
-    kr = 0b10,
-    ur = 0b11,
-}
-
-enum Perm {
-    krwx = Ap.krw,
-    urwx = Ap.urw,
-}
-
 private uintptr vpn(uint level, uintptr va) {
     return (va >> 12+9*level) & bits.mask!uintptr(9);
-}
-
-struct VaMapping {
-    uintptr va;
-    uintptr pa;
-    bool user;
 }
 
 struct Pagetable {
@@ -128,6 +124,7 @@ struct Pagetable {
                         endlevel = level;
                         return null;
                     }
+                    import ulib.memory;
                     memset(pt, 0, Pagetable.sizeof);
                     pte.pa = kpa2pa(cast(uintptr) pt);
                     pte.valid = 1;
@@ -142,15 +139,30 @@ struct Pagetable {
         return walk!(void, false)(va, endlevel, null);
     }
 
+    // Recursively free all pagetable pages.
+    void free(Pte.Pg level = Pte.Pg.max) {
+        for (int i = 0; i < ptes.length; i++) {
+            Pte* pte = &ptes[i];
+            if (pte.valid && pte.leaf(level)) {
+                pte.data = 0;
+            } else if (pte.valid) {
+                Pagetable* child = cast(Pagetable*) pa2ka(pte.pa);
+                child.free(Pte.down(level));
+                pte.data = 0;
+            }
+        }
+        kfree(&this);
+    }
+
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
-    bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, ubyte perm, A* allocator) {
+    bool map(A)(uintptr va, uintptr pa, Pte.Pg pgtyp, Perm perm, A* allocator) {
         Pte* pte = walk!(A, true)(va, pgtyp, allocator);
         if (!pte) {
             return false;
         }
         pte.pa = pa;
-        pte.ap = perm;
+        pte.perm = perm;
         pte.valid = 1;
         if (pgtyp == Pte.Pg.normal) {
             // last level PTEs need this bit enabled (confusing)
@@ -160,18 +172,22 @@ struct Pagetable {
         }
         pte.sh = 0b11;
         pte.af = 1;
+
+        import kernel.board : Machine;
         pte.index = Machine.mem_type(pa);
         return true;
     }
 
-    void map_giga(uintptr va, uintptr pa, ubyte perm) {
+    void map_giga(uintptr va, uintptr pa, Perm perm) {
         auto idx = bits.get(va, 38, 30);
         ptes[idx].pa = pa;
         ptes[idx].valid = 1;
         ptes[idx].table = 0;
-        ptes[idx].ap = perm;
+        ptes[idx].perm = perm;
         ptes[idx].af = 1;
         ptes[idx].sh = 0b11;
+
+        import kernel.board : Machine;
         ptes[idx].index = Machine.mem_type(pa);
     }
 

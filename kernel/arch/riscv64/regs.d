@@ -1,53 +1,76 @@
 module kernel.arch.riscv64.regs;
 
 struct Regs {
-    uintptr ra;
-    uintptr sp;
-    uintptr gp;
-    uintptr tp;
-    uintptr t0;
-    uintptr t1;
-    uintptr t2;
-    uintptr s0;
-    uintptr s1;
-    uintptr a0;
-    uintptr a1;
-    uintptr a2;
-    uintptr a3;
-    uintptr a4;
-    uintptr a5;
-    uintptr a6;
-    uintptr a7;
-    uintptr s2;
-    uintptr s3;
-    uintptr s4;
-    uintptr s5;
-    uintptr s6;
-    uintptr s7;
-    uintptr s8;
-    uintptr s9;
-    uintptr s10;
-    uintptr s11;
-    uintptr t3;
-    uintptr t4;
-    uintptr t5;
-    uintptr t6;
+    ulong ra;
+    ulong sp;
+    ulong gp;
+    ulong tp;
+    ulong t0;
+    ulong t1;
+    ulong t2;
+    ulong s0;
+    ulong s1;
+    ulong a0;
+    ulong a1;
+    ulong a2;
+    ulong a3;
+    ulong a4;
+    ulong a5;
+    ulong a6;
+    ulong a7;
+    ulong s2;
+    ulong s3;
+    ulong s4;
+    ulong s5;
+    ulong s6;
+    ulong s7;
+    ulong s8;
+    ulong s9;
+    ulong s10;
+    ulong s11;
+    ulong t3;
+    ulong t4;
+    ulong t5;
+    ulong t6;
 
-    void wr_ret(uintptr val) {
+    void retval(ulong val) {
         a0 = val;
     }
 }
 
-uintptr rd_gp() {
-    uintptr gp;
+struct Context {
+    ulong ra;
+    ulong sp;
+
+    // callee-saved
+    ulong s0;
+    ulong s1;
+    ulong s2;
+    ulong s3;
+    ulong s4;
+    ulong s5;
+    ulong s6;
+    ulong s7;
+    ulong s8;
+    ulong s9;
+    ulong s10;
+    ulong s11;
+
+    void retaddr(uintptr addr) {
+        ra = addr;
+    }
+}
+
+ulong rd_gp() {
+    ulong gp;
     asm {
         "mv %0, gp" : "=r"(gp);
     }
     return gp;
 }
 
-uintptr rd_tp() {
-    uintptr tp;
+ulong rd_tp() {
+    ulong tp;
     asm {
         "mv %0, tp" : "=r"(tp);
     }

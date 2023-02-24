@@ -4,7 +4,7 @@ import ulib.vector;
 
 // Checkpoint allocator (records allocations in a vector allowing you to free
 // them all at once).
-struct CheckpointAllocator(A) {
+struct CkptAllocator(A) {
     A* internal;
 
     this(A* a) {
@@ -35,12 +35,12 @@ struct CheckpointAllocator(A) {
     }
 
     // start a checkpoint
-    void checkpoint() {
+    void ckpt() {
         active = true;
     }
 
     // free all allocations since the last checkpoint
-    void free_checkpoint() {
+    void free_ckpt() {
         foreach (p; allocs) {
             internal.free(p);
         }
@@ -50,7 +50,7 @@ struct CheckpointAllocator(A) {
 
     // finished checkpoint without freeing (only frees the underlying
     // allocation vector)
-    void done_checkpoint() {
+    void done_ckpt() {
         allocs.clear();
     }
 }
