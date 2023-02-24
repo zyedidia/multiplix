@@ -12,11 +12,11 @@ import kernel.alloc;
 import sys = kernel.sys;
 
 struct Machine {
-    enum cpu_freq = 1 * 1000 * 1000 * 1000 + 5 * 1000 * 1000;
+    enum cpu_freq = 1_250_000_000;
     enum cpu_freq_mhz = cpu_freq / (1000 * 1000);
     enum ncores = 5;
 
-    enum mtime_freq = 4_800_000;
+    enum mtime_freq = 4_000_000;
 
     struct MemRange {
         uintptr start;

@@ -27,7 +27,6 @@ struct Proc {
     Proc* parent;
     uint children;
     void* ustack;
-    ubyte[] code;
 
     struct Brk {
         uintptr initial;
@@ -103,7 +102,7 @@ struct Proc {
     }
 
     uintptr kstackp() {
-        return cast(uintptr) &kstack[$-1];
+        return cast(uintptr) &kstack[$-16];
     }
 
     void free() {
