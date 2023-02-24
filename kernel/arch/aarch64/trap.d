@@ -65,8 +65,9 @@ extern (C) {
 
     noreturn user_interrupt(Proc* p) {
         ArchTimer.intr();
-        // TODO: schedule
-        while (1) {}
+        p.yield();
+
+        usertrapret(p);
     }
 
     noreturn user_exception(Proc* p) {
@@ -83,11 +84,11 @@ extern (C) {
                 break;
         }
 
-        usertrapret(p, false);
+        usertrapret(p);
     }
 }
 
-noreturn usertrapret(Proc* p, bool swtch) {
+noreturn usertrapret(Proc* p) {
     ArchTrap.off();
 
     // return to el0 aarch64 with no interrupts masked
@@ -100,10 +101,8 @@ noreturn usertrapret(Proc* p, bool swtch) {
     // set elr to p.trapframe.epc
     SysReg.elr_el1 = p.trapframe.epc;
 
-    if (swtch) {
-        SysReg.ttbr0_el1 = vm.ka2pa(cast(uintptr) p.pt);
-        vm_fence();
-    }
+    SysReg.ttbr0_el1 = vm.ka2pa(cast(uintptr) p.pt);
+    vm_fence();
 
     userret(p);
 }

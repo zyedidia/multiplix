@@ -19,10 +19,14 @@ struct RunQ {
     }
 
     Proc* next() {
-        auto n = runnable.push_back(Proc());
+        Node* n = knew!(Node)();
         if (!n) {
             return null;
         }
+        import ulib.alloc;
+        emplace_init(&n.val);
+        runnable.push_back(n);
+
         Proc* p = &n.val;
         p.node = n;
         return p;

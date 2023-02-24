@@ -133,7 +133,7 @@ struct Pagetable {
                     }
                     memset(pt, 0, Pagetable.sizeof);
                     pte.pa = ka2pa(cast(uintptr) pt);
-                    pte.validate();
+                    pte.valid = 1;
                 }
             }
         }
@@ -172,9 +172,9 @@ struct Pagetable {
         return true;
     }
 
-    // Simple giga-page mapper. This is equivalent to map(va, pa,
-    // Pte.Pg.giga, perm) but does not use any allocation functions so it can
-    // be used easily in the early boot process.
+    // Simple giga-page mapper. This is equivalent to map(va, pa, Pte.Pg.giga,
+    // perm) but does not use any allocation functions so it can be used easily
+    // in the early boot process.
     void map_giga(uintptr va, uintptr pa, Perm perm) {
         auto vpn = vpn(2, va);
         ptes[vpn].perm = perm;

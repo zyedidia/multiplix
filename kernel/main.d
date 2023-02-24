@@ -32,19 +32,28 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     }
 
     import kernel.timer;
-    Timer.delay_ms(10);
+    Timer.delay_ms(100);
 
     if (!runq.start(hello_elf)) {
         io.writeln("could not initialize hello.elf");
         return;
     }
+    if (!runq.start(hello_elf)) {
+        io.writeln("could not initialize hello.elf");
+        return;
+    }
+    if (!runq.start(hello_elf)) {
+        io.writeln("could not initialize hello.elf");
+        return;
+    }
+    if (!runq.start(hello_elf)) {
+        io.writeln("could not initialize hello.elf");
+        return;
+    }
+
+    import kernel.arch;
+    // start generating timer interrupts
+    ArchTimer.intr();
 
     scheduler();
-}
-
-void enable_irq() {
-    import kernel.arch;
-
-    ArchTrap.on();
-    ArchTimer.intr();
 }

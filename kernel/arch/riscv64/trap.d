@@ -37,7 +37,7 @@ extern (C) void kerneltrap() {
     auto sepc = Csr.sepc;
     auto scause = Csr.scause;
 
-    io.writeln("[trap] sepc: ", cast(void*) sepc, " cause: ", Hex(scause));
+    // io.writeln("[kernel trap] sepc: ", cast(void*) sepc, " cause: ", Hex(scause));
 
     if (scause == Cause.sti) {
         ArchTimer.intr();
@@ -73,17 +73,17 @@ extern (C) {
             r.a0 = syscall_handler(p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
         } else if (scause == Cause.sti) {
             ArchTimer.intr();
-            assert(0, "TODO: schedule");
+            p.yield();
         } else {
             import core.exception;
             panic("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
         }
 
-        usertrapret(p, false);
+        usertrapret(p);
     }
 }
 
-noreturn usertrapret(Proc* p, bool swtch) {
+noreturn usertrapret(Proc* p) {
     ArchTrap.off();
 
     Csr.stvec = cast(uintptr) &uservec;
@@ -99,10 +99,8 @@ noreturn usertrapret(Proc* p, bool swtch) {
 
     Csr.sepc = p.trapframe.epc;
 
-    if (swtch) {
-        Csr.satp = p.pt.satp(0);
-        vm_fence();
-    }
+    Csr.satp = p.pt.satp(0);
+    vm_fence();
 
     userret(p);
 }

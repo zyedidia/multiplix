@@ -45,7 +45,10 @@ struct Proc {
     enum magic = 0xdeadbeef;
     uint canary = magic;
 
-    align(16) ubyte[2048] kstack;
+    // The proc struct contains the entire kernel stack. Do not create Proc
+    // structs on the stack.
+    align(16) ubyte[2000] kstack;
+    static assert(kstack.length % 16 == 0);
 
     import kernel.vm;
 
@@ -101,11 +104,6 @@ struct Proc {
         context.sp = kstackp();
         context.retaddr = cast(uintptr) &forkret;
 
-        // foreach (vmmap; VmRange(pt)) {
-        //     import io = ulib.io;
-        //     io.writeln(cast(void*) vmmap.va, " -> ", cast(void*) vmmap.pa);
-        // }
-
         return true;
     }
 
@@ -131,6 +129,6 @@ struct Proc {
 
     static void forkret() {
         import kernel.schedule;
-        usertrapret(runq.curproc, true);
+        usertrapret(runq.curproc);
     }
 }

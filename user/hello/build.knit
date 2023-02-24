@@ -10,8 +10,7 @@ local flags = build.flags(machine, conf.lto, conf.release, false)
 
 return b{
     $ hello.elf: hello.c ../syslib/syslib.c ../syslib/syscall.h[I]
-        $(tools.cc) $(flags.cc) $input -o $output -I../syslib -nostartfiles -T../../link/user.ld $darch
-        $(tools.strip) $output
+        $(tools.cc) $(flags.cc) $input -o $output -I../syslib -nostartfiles -T../../link/user.ld $darch -ffunction-sections -fdata-sections -Wl,--gc-sections
     $ hello.bin: hello.elf
         $(tools.objcopy) $input -O binary $output
     $ hello.list: hello.elf
