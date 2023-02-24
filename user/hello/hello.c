@@ -7,7 +7,12 @@
 #include "syslib.h"
 
 int main() {
-    for (int i = 0; i < 5; i++) {
+    int child = fork();
+    if (child != 0) {
+        wait();
+    }
+
+    for (int i = 0; i < 20; i++) {
         getpid();
         for (int j = 0; j < 50000000; j++) {
             asm volatile ("nop");

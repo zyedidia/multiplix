@@ -25,7 +25,6 @@ struct RunQ {
         }
         import ulib.alloc;
         emplace_init(&n.val);
-        runnable.push_back(n);
 
         Proc* p = &n.val;
         p.node = n;
@@ -39,9 +38,10 @@ struct RunQ {
             return false;
         }
         if (!p.initialize(binary)) {
-            kfree(runnable.pop_back());
+            kfree(p.node);
             return false;
         }
+        unblock(p.node);
         return true;
     }
 

@@ -38,18 +38,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         io.writeln("could not initialize hello.elf");
         return;
     }
-    if (!runq.start(hello_elf)) {
-        io.writeln("could not initialize hello.elf");
-        return;
-    }
-    if (!runq.start(hello_elf)) {
-        io.writeln("could not initialize hello.elf");
-        return;
-    }
-    if (!runq.start(hello_elf)) {
-        io.writeln("could not initialize hello.elf");
-        return;
-    }
 
     import kernel.arch;
     // start generating timer interrupts

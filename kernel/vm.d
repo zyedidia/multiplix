@@ -51,6 +51,15 @@ struct VaMapping {
     uintptr pa;
     size_t size;
     Perm perm;
+
+    uintptr ka() {
+        return pa2ka(pa);
+    }
+
+    bool read()  { return (perm & Perm.r) != 0; }
+    bool write() { return (perm & Perm.w) != 0; }
+    bool exec()  { return (perm & Perm.x) != 0; }
+    bool user()  { return (perm & Perm.u) != 0; }
 }
 
 import kernel.arch;

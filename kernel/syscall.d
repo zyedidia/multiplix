@@ -38,6 +38,13 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
 
 struct Syscall {
     import io = ulib.io;
+    import kernel.schedule;
+    import kernel.vm;
+    import kernel.arch;
+    import kernel.alloc;
+    import ulib.memory;
+    import core.sync;
+    import sys = kernel.sys;
 
     enum Num {
         write     = 0,
@@ -55,11 +62,73 @@ struct Syscall {
     }
 
     static int fork(Proc* p) {
-        assert(0);
+        Proc* child = runq.next();
+        if (!child) {
+            return -1;
+        }
+
+        child.pt = knew!(Pagetable)();
+        if (!child.pt)
+            return -1;
+        kernel_procmap(child.pt);
+
+        foreach (map; VmRange(p.pt)) {
+            if (!map.user) {
+                continue;
+            }
+            void* block = kalloc(map.size);
+            if (!block) {
+                child.free();
+                return -1;
+            }
+            memcpy(block, cast(void*) map.ka, map.size);
+            if (!child.pt.map(map.va, ka2pa(cast(uintptr) block), Pte.Pg.normal, Perm.urwx, &sys.allocator)) {
+                kfree(block);
+                child.free();
+                return -1;
+            }
+            if (map.exec) {
+                sync_idmem(cast(ubyte*) block, map.size);
+            }
+        }
+
+        memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);
+        child.trapframe.regs.retval = 0;
+        child.trapframe.epc = p.trapframe.epc;
+        child.context.sp = child.kstackp();
+        child.context.retaddr = cast(uintptr) &Proc.forkret;
+        child.parent = p;
+        p.children++;
+        child.brk = p.brk;
+
+        child.pid = atomic_rmw_add(&nextpid, 1);
+
+        runq.unblock(child.node);
+
+        return child.pid;
     }
 
     static int wait(Proc* waiter) {
-        assert(0);
+        if (waiter.children == 0)
+            return -1;
+
+        while (true) {
+            foreach (ref zombie; runq.exited) {
+                if (zombie.val.parent == waiter) {
+                    // child already exited
+                    int pid = zombie.val.pid;
+                    runq.exited.remove(zombie);
+                    zombie.val.free();
+                    kfree(zombie);
+                    waiter.children--;
+                    return pid;
+                }
+            }
+            // block and wait for something to exit
+            runq.block(waiter.node);
+            waiter.yield();
+            // we have woken up, so check the zombies again for a child
+        }
     }
 
     static noreturn exit(Proc* p) {
