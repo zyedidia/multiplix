@@ -3,13 +3,14 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/wait.h>
 
 #include "syslib.h"
 
 int main() {
     int child = fork();
     if (child != 0) {
-        wait();
+        wait(NULL);
     }
 
     int pid = getpid();

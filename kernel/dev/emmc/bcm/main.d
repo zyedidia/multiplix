@@ -1,4 +1,4 @@
-module kernel.dev.emmc.bcm.ctrl;
+module kernel.dev.emmc.bcm.main;
 
 import core.volatile;
 
