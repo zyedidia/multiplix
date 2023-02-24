@@ -1,3 +1,5 @@
 #pragma once
 
-int nanosleep(const struct timespec*, void*);
+#include <stdint.h>
+
+int usleep(uint64_t us);

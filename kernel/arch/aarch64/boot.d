@@ -9,17 +9,17 @@ import fwi = kernel.arch.aarch64.fwi;
 
 import kernel.board;
 import kernel.alloc;
+import kernel.vm;
 
-import vm = kernel.vm;
 import sys = kernel.sys;
 
 shared Pagetable tbl;
 
 align(4096) __gshared ubyte[4096 * 4] ptheap;
 
-bool kernel_map(Pagetable* pt) {
+// Map the kernel into the high region of the address space. Called during initialization.
+void kernel_procmap(Pagetable* pt) {
     // don't have to do anything here because ttbr1_el1 already contains the kernel pagetable
-    return true;
 }
 
 void kernel_setup(bool primary) {
@@ -30,8 +30,8 @@ void kernel_setup(bool primary) {
         auto pgalloc = BumpAllocator!(4096)(&ptheap[0], ptheap.length);
         void map_region (Machine.MemRange range, Pagetable* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
-                assert(pt.map(addr, addr, Pte.Pg.mega, Ap.krw, &pgalloc));
-                assert(pt.map(vm.pa2ka(addr), addr, Pte.Pg.mega, Ap.krw, &pgalloc));
+                assert(pt.map(addr, addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &pgalloc));
+                assert(pt.map(pa2ka(addr), addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &pgalloc));
             }
         }
 

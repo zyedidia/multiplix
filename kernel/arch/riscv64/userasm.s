@@ -1,3 +1,4 @@
+# User-mode trap handler.
 .align 4
 .globl uservec
 uservec:

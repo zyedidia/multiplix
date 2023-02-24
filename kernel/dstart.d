@@ -2,11 +2,6 @@ module kernel.dstart;
 
 import core.volatile;
 
-import kernel.board;
-import kernel.cpu;
-
-import arch = kernel.arch;
-
 import ulib.memory;
 
 __gshared uint primary = 1;
@@ -20,6 +15,9 @@ extern (C) {
     void kmain(int coreid, ubyte* heap);
 
     void dstart(int coreid) {
+        import kernel.cpu;
+        import kernel.board;
+
         uintptr tls_start, stack_start;
         ubyte* heap = init_tls(coreid, tls_start, stack_start);
         cpuinfo.coreid = coreid;
@@ -29,8 +27,7 @@ extern (C) {
         // We use volatile for loading/storing primary because it is essential
         // that primary not be stored in the BSS (since it is used before BSS
         // initialization). Otherwise the compiler will actually invert primary
-        // so that it can be stored in the BSS (seems like an aggressive
-        // optimization?).
+        // so that it can be stored in the BSS.
         if (volatile_ld(&primary)) {
             uint* bss = &_kbss_start;
             uint* bss_end = &_kbss_end;
@@ -38,6 +35,7 @@ extern (C) {
                 volatile_st(bss++, 0);
             }
 
+            import kernel.board;
             Uart.setup(115200);
             volatile_st(&primary, 0);
             cpuinfo.primary = true;
@@ -56,6 +54,9 @@ extern (C) {
         // pointer is set before any subsequent operations that involve the
         // thread pointer.
         pragma(inline, false);
+
+        import arch = kernel.arch;
+        import kernel.board;
 
         // set up thread-local storage (tls)
         uintptr stack_base = cast(uintptr) &_kheap_start;

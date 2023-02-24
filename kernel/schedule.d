@@ -1,122 +1,123 @@
 module kernel.schedule;
 
-import kernel.proc;
 import kernel.spinlock;
-import kernel.board;
-import kernel.cpu;
-
-import arch = kernel.arch;
-
-import ulib.option;
+import kernel.proc;
+import kernel.arch;
 import ulib.list;
-import rand = ulib.rand;
-
-import io = ulib.io;
 
 struct RunQ {
-    uint runpid = -1;
+    Proc* curproc;
     List!(Proc) runnable;
-    List!(Proc) waiting;
-    List!(Proc) sleeping;
+    List!(Proc) blocked;
     List!(Proc) exited;
 
-    alias ProcNode = List!(Proc).Node;
+    shared Spinlock lock;
+
+    Context context;
+
+    alias Node = List!(Proc).Node;
 
     size_t length() {
+        lock.lock();
+        scope(exit) lock.unlock();
         return runnable.length;
     }
 
-    Opt!(Proc*) next() {
-        auto n = runnable.push_back(Proc());
+    Proc* next() {
+        Node* n = knew!(Node)();
         if (!n) {
-            return Opt!(Proc*).none;
+            return null;
         }
+        import ulib.alloc;
+        emplace_init(&n.val);
+
         Proc* p = &n.val;
         p.node = n;
-        return Opt!(Proc*)(p);
+        return p;
     }
 
+    import kernel.alloc;
     bool start(immutable ubyte[] binary) {
-        auto p_ = next();
-        if (!p_.has()) {
+        Proc* p = next();
+        if (!p) {
             return false;
         }
-        return Proc.make(p_.get(), binary);
+        if (!p.initialize(binary)) {
+            kfree(p.node);
+            return false;
+        }
+        ready(p.node);
+        return true;
     }
 
-    void wait(ProcNode* n) {
-        n.val.state = Proc.State.waiting;
-        move!(waiting, runnable)(n);
-    }
-
-    void done_wait(ProcNode* n) {
+    // Puts n in the runnable queue.
+    void ready(Node* n) {
         n.val.state = Proc.State.runnable;
-        move!(runnable, waiting)(n);
+        lock.lock();
+        runnable.push_back(n);
+        lock.unlock();
     }
 
-    void exit(ProcNode* n) {
+    void block(Node* n) {
+        n.val.state = Proc.State.blocked;
+        move!(blocked, runnable)(n);
+    }
+
+    void unblock(Node* n) {
+        n.val.state = Proc.State.runnable;
+        move!(runnable, blocked)(n);
+    }
+
+    void exit(Node* n) {
         n.val.state = Proc.State.exited;
         move!(exited, runnable)(n);
     }
 
-    void sleep(ProcNode* n, ulong end_time) {
-        n.val.state = Proc.State.sleeping;
-        n.val.sleep_end = end_time;
-        move!(sleeping, runnable)(n);
-        assert(sleeping.length > 0);
-    }
-
-    void wakeup_sleepers() {
-        ulong now = arch.Timer.ns();
-        foreach (ProcNode* n; sleeping) {
-            if (n.val.sleep_end <= now) {
-                n.val.state = Proc.State.runnable;
-                move!(runnable, sleeping)(n);
-            }
-        }
-    }
-
-    // Moves the process in from[slot] into to.
-    private void move(alias List!(Proc) to, alias List!(Proc) from)(ProcNode* n) {
+    // Moves the process from one queue to another.
+    private void move(alias List!(Proc) to, alias List!(Proc) from)(Node* n) {
+        lock.lock();
         from.remove(n);
         to.push_back(n);
+        lock.unlock();
     }
 
-    // Returns the next process to run, or none if there are no runnable processes.
-    Opt!(Proc*) schedule() {
-        wakeup_sleepers();
+    // Returns the next process to run, or null if there are no runnable processes.
+    Proc* schedule() {
+        lock.lock();
+        scope(exit) lock.unlock();
         if (runnable.length == 0) {
-            return Opt!(Proc*).none;
+            return null;
         }
-        ProcNode* n = runnable.pop_front();
+        Node* n = runnable.pop_front();
         runnable.push_back(n);
-        return Opt!(Proc*)(&n.val);
+        return &n.val;
     }
 }
 
-struct GlobalRunQ {
-    shared RunQ[Machine.ncores] queues;
+RunQ runq;
 
-    RunQ* queue() shared return {
-        return cast(RunQ*) &queues[cpuinfo.coreid];
-    }
+extern (C) void kswitch(Context* oldp, Context* newp);
 
-    alias queue this;
-}
+noreturn scheduler() {
+    import kernel.irq;
 
-shared GlobalRunQ runq;
+    while (1) {
+        // Allow devices to interrupt in case all processes are sleeping.
+        Irq.on();
 
-noreturn schedule() {
-    Opt!(Proc*) p;
-    while (!p.has()) {
-        p = runq.schedule();
-    }
+        import io = ulib.io;
 
-    if (runq.runpid != -1 && runq.runpid == p.get().pid) {
-        // continue running the same process
-        arch.usertrapret(p.get(), false);
-    } else {
-        runq.runpid = p.get().pid;
-        arch.usertrapret(p.get(), true);
+        Proc* p = null;
+        while (!p) {
+            p = runq.schedule();
+            // TODO: wait in low power state if there are no processes
+        }
+        Irq.off();
+        assert(p.state == Proc.State.runnable);
+        runq.curproc = p;
+        kswitch(&runq.context, &p.context);
+
+        // process is done running for now
+        runq.curproc = null;
     }
 }

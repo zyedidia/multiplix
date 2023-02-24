@@ -15,6 +15,9 @@ _halt:
 	wfe
 	b _halt
 
+// Kernel trap prologue and epilogue
+
+// Save all registers so that the trap handler can inspect them on the stack.
 .macro PROLOGUE
 sub sp, sp, #240
 stp x0, x1,   [sp, #0+16*0]
@@ -34,6 +37,8 @@ stp x26, x27, [sp, #0+16*13]
 stp x28, x29, [sp, #0+16*14]
 stp x30, xzr, [sp, #0+16*15]
 .endm
+
+// Only need to restore caller-saved registers
 
 .macro EPILOGUE
 ldp x0, x1,   [sp, #0+16*0]
@@ -111,3 +116,23 @@ interrupt_entry:
 	mov x0, sp
 	bl kernel_interrupt
 	EPILOGUE
+
+.globl kswitch
+kswitch:
+	mov x9, sp
+	stp lr, x9,   [x0, #0+16*0]
+	stp x19, x20, [x0, #0+16*1]
+	stp x21, x22, [x0, #0+16*2]
+	stp x23, x24, [x0, #0+16*3]
+	stp x25, x26, [x0, #0+16*4]
+	stp x27, x28, [x0, #0+16*5]
+
+	ldp lr, x9,   [x1, #0+16*0]
+	ldp x19, x20, [x1, #0+16*1]
+	ldp x21, x22, [x1, #0+16*2]
+	ldp x23, x24, [x1, #0+16*3]
+	ldp x25, x26, [x1, #0+16*4]
+	ldp x27, x28, [x1, #0+16*5]
+	mov sp, x9
+
+	ret

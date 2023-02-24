@@ -34,7 +34,30 @@ struct Regs {
     ulong lr;
     ulong sp; // loaded from sp_el0
 
-    void wr_ret(ulong val) {
+    void retval(ulong val) {
         x0 = val;
+    }
+}
+
+// Kernel thread context
+struct Context {
+    ulong lr;
+    ulong sp;
+    // TODO: do we want to save fp (x29)?
+
+    // callee-saved
+    ulong x19;
+    ulong x20;
+    ulong x21;
+    ulong x22;
+    ulong x23;
+    ulong x24;
+    ulong x25;
+    ulong x26;
+    ulong x27;
+    ulong x28;
+
+    void retaddr(uintptr addr) {
+        lr = addr;
     }
 }

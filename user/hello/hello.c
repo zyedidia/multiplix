@@ -3,20 +3,20 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/wait.h>
 
 #include "syslib.h"
-
-struct timespec delay = {.tv_sec = 1, .tv_nsec = 0};
 
 int main() {
     int child = fork();
     if (child != 0) {
-        wait();
+        wait(NULL);
     }
+
     int pid = getpid();
     for (int i = 0; i < 5; i++) {
-        printf("%d: hello %d\n", pid, i);
-        nanosleep(&delay, NULL);
+        printf("%d: loop %d\n", pid, i);
+        usleep(100 * 1000);
     }
     exit(0);
 }

@@ -1,4 +1,4 @@
-module kernel.fs.fat32.fat32;
+module kernel.fs.fat.fat;
 
 import kernel.board;
 import kernel.alloc;
@@ -79,9 +79,7 @@ struct Fat32FS {
         uint bpb_lba;
         {
             Mbr* mbr = cast(Mbr*) sector.ptr;
-            // TODO: shouldn't print -- instead return the error
             if (mbr.signature != 0xAA55) {
-                io.writeln("fat error: invalid sector signature");
                 return false;
             }
             foreach (i, p; mbr.partitions) {
@@ -107,12 +105,10 @@ struct Fat32FS {
         Bpb* bpb = cast(Bpb*) sector.ptr;
 
         if (bpb.spf16 > 0) {
-            io.writeln("partition is not fat32");
             return false;
         }
 
         if (!str.equals(cast(string) bpb.fst2[0 .. 5], "FAT32")) {
-            io.writeln("incorrect filesystem type: ", cast(string) bpb.fst2[0 .. 5]);
             return false;
         }
 
@@ -198,7 +194,7 @@ struct File {
     FileEnt ent;
     string name;
 
-    void destroy() {
+    void free() {
         kfree(name.ptr);
     }
 

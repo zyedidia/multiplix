@@ -71,6 +71,7 @@ struct Debug {
         cast() hvc(ext, Fid.step_start_at, addr);
     }
 
+    // stop single stepping
     static void step_stop() {
         cast() hvc(ext, Fid.step_stop);
     }
