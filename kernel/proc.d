@@ -27,6 +27,7 @@ struct Proc {
     Proc* parent;
     uint children;
     void* ustack;
+    ubyte[] code;
 
     struct Brk {
         uintptr initial;
@@ -51,24 +52,20 @@ struct Proc {
     static assert(kstack.length % 16 == 0);
 
     import kernel.vm;
+    import kernel.alloc;
 
-    bool initialize(immutable ubyte[] code) {
-        import kernel.alloc;
+    bool initialize(immutable ubyte[] bin) {
         import elf = kernel.elf;
         import ulib.math;
         import ulib.memory;
 
-        auto alloc = CkptAllocator!(typeof(sys.allocator))(&sys.allocator);
-        alloc.ckpt();
-
-        pt = knew_custom!(Pagetable)(&alloc);
+        pt = knew!(Pagetable)();
         if (!pt) {
-            alloc.free_ckpt();
             return false;
         }
         uintptr entryva, brk;
-        if (!elf.load!(64)(pt, code.ptr, entryva, brk, &alloc)) {
-            alloc.free_ckpt();
+        if (!elf.load!(64)(pt, bin.ptr, entryva, brk)) {
+            free();
             return false;
         }
         brk += align_off(brk, sys.pagesize);
@@ -76,19 +73,17 @@ struct Proc {
         // map kernel
         kernel_procmap(pt);
         // allocate stack
-        ustack = kalloc_custom(&alloc, sys.pagesize);
+        ustack = kalloc(sys.pagesize);
         if (!ustack) {
-            alloc.free_ckpt();
+            free();
             return false;
         }
         memset(ustack, 0, sys.pagesize);
         // map stack
-        if (!pt.map(stackva, ka2pa(cast(uintptr) ustack), Pte.Pg.normal, Perm.urw, &alloc)) {
-            alloc.free_ckpt();
+        if (!pt.map(stackva, ka2pa(cast(uintptr) ustack), Pte.Pg.normal, Perm.urw, &sys.allocator)) {
+            free();
             return false;
         }
-
-        alloc.done_ckpt();
 
         // initialize registers and user process information
         memset(&trapframe.regs, 0, Regs.sizeof);
@@ -112,7 +107,12 @@ struct Proc {
     }
 
     void free() {
-        unmappg(pt, stackva, Pte.Pg.normal, true);
+        foreach (map; VmRange(pt)) {
+            if (map.va < sys.highmem_base) {
+                kfree(cast(void*) pa2ka(map.pa));
+            }
+        }
+
         pt.free();
     }
 

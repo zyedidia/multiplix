@@ -73,7 +73,7 @@ import sys = kernel.sys;
 import ulib.memory;
 
 // Should be called with a Checkpoint allocator to ensure segments can be freed.
-bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, out uintptr brk, A* alloc) {
+bool load(int W)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, out uintptr brk) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
     if (elf.magic != magic)
@@ -92,28 +92,36 @@ bool load(int W, A)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, o
         // make sure we map on a page boundary
         size_t pad = ph.vaddr % sys.pagesize;
 
-        // allocate physical space for segment, and copy it in
-        import ulib.math : max;
-        ubyte[] code = knew_array_custom!(ubyte)(alloc, max(ph.memsz + pad, cast(ulong) sys.pagesize));
-        if (!code) {
-            return false;
-        }
-        memcpy(code.ptr + pad, elfdat + ph.offset, ph.filesz);
-        memset(code.ptr + pad + ph.filesz, 0, ph.memsz - ph.filesz);
-
-        uintptr pa = ka2pa(cast(uintptr) code.ptr);
-        // map newly allocated physical space to base va
-        for (uintptr va = ph.vaddr - pad; va < ph.vaddr + ph.memsz; va += sys.pagesize, pa += sys.pagesize) {
-            if (!pt.map(va, pa, Pte.Pg.normal, Perm.urwx, alloc)) {
-                // segments will be freed by the checkpoint allocator this was called with
+        import ulib.math : max, min;
+        uintptr va_start = ph.vaddr - pad;
+        size_t sz = max(ph.memsz + pad, cast(ulong) sys.pagesize);
+        for (uintptr va = va_start; va < va_start + sz; va += sys.pagesize) {
+            ubyte* mem = cast(ubyte*) kalloc(sys.pagesize);
+            if (!mem) {
                 return false;
             }
+            memset(mem, 0, pad);
+            mem += pad;
+            size_t written = pad;
+            pad = 0;
+            size_t soff = va - ph.vaddr;
+            if (ph.filesz > soff) {
+                size_t n = min(sys.pagesize - written, ph.filesz - soff);
+                memcpy(mem + written, elfdat + ph.offset + soff, n);
+                written += n;
+            }
+            memset(mem + written, 0, sys.pagesize - written);
+            if (!pt.map(va, ka2pa(cast(uintptr) mem), Pte.Pg.normal, Perm.urwx, &sys.allocator)) {
+                kfree(mem);
+                return false;
+            }
+
+            import core.sync;
+            sync_idmem(mem, written);
         }
+
         import ulib.math : max;
         brk = max(ph.vaddr + ph.memsz, brk);
-
-        import core.sync;
-        sync_idmem(code.ptr, code.length);
     }
 
     entry = elf.entry;
