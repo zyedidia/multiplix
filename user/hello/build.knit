@@ -9,10 +9,13 @@ local tools = build.tools(machine)
 local flags = build.flags(machine, conf.lto, conf.release, false)
 
 return b{
-    $ hello.elf: hello.c ../syslib/syslib.c ../syslib/syscall.h[I]
+    $ hello.elf: hello.dbg.elf
+        mv $input $output
+        $(tools.strip) $output
+    $ hello.dbg.elf: hello.c ../syslib/syslib.c ../syslib/syscall.h[I]
         $(tools.cc) $(flags.cc) $input -o $output -I../syslib -nostartfiles -T../../link/user.ld $darch -ffunction-sections -fdata-sections -Wl,--gc-sections
     $ hello.bin: hello.elf
         $(tools.objcopy) $input -O binary $output
-    $ hello.list: hello.elf
+    $ hello.list: hello.dbg.elf
         $(tools.objdump) -D $input > $output
 }
