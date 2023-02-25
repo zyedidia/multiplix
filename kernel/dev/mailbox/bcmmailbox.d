@@ -4,7 +4,6 @@ import core.volatile;
 import kernel.vm;
 import kernel.timer;
 import ulib.memory;
-import io = ulib.io;
 
 import core.sync;
 

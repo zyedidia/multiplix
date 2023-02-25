@@ -3,8 +3,6 @@ module kernel.syscall;
 import kernel.proc;
 
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
-    import io = ulib.io;
-
     uintptr ret = 0;
     switch (sysno) {
         case Syscall.Num.write:
@@ -40,7 +38,6 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
 }
 
 struct Syscall {
-    import io = ulib.io;
     import kernel.schedule;
     import kernel.vm;
     import kernel.arch;

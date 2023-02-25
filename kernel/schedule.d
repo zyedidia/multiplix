@@ -105,12 +105,12 @@ noreturn scheduler() {
         // Allow devices to interrupt in case all processes are sleeping.
         Irq.on();
 
-        import io = ulib.io;
-
         Proc* p = null;
         while (!p) {
             p = runq.schedule();
-            // TODO: wait in low power state if there are no processes
+            // wait in low power state if there are no processes
+            if (!p)
+                wfi();
         }
         Irq.off();
         assert(p.state == Proc.State.runnable);

@@ -109,3 +109,10 @@ noreturn usertrapret(Proc* p) {
 
     userret(p);
 }
+
+void wfi() {
+    assert(ArchTrap.is_on());
+    asm {
+        "wfi" ::: "memory";
+    }
+}

@@ -9,7 +9,6 @@ import kernel.timer : Timer;
 import arch = kernel.arch;
 
 import crc = ulib.crc32;
-import io = ulib.io;
 
 import ulib.memory;
 

@@ -1,7 +1,6 @@
 module kernel.arch.aarch64.vm;
 
 import bits = ulib.bits;
-import io = ulib.io;
 
 import sys = kernel.sys;
 

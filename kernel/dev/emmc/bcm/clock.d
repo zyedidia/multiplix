@@ -3,8 +3,6 @@ module kernel.dev.emmc.bcm.clock;
 import kernel.dev.emmc.bcm.main;
 import kernel.dev.emmc.bcm.defs;
 
-import io = ulib.io;
-
 uint get_clock_divider(uint base_clock, uint target_rate) {
     uint target_div = 1;
 
