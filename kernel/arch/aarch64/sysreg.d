@@ -160,4 +160,6 @@ enum Exception {
     hvc   = 0b010110,
     brkpt = 0b110000,
     ss    = 0b110010,
+
+    data_abort_lower = 0b100100,
 }

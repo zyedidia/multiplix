@@ -42,6 +42,7 @@ enum Perm {
 
     rw  = r | w,
     rwx = rw | x,
+    urx = u | r | x,
     urw  = u | rw,
     urwx = urw | x,
 }

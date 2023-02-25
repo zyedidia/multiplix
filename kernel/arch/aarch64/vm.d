@@ -75,7 +75,7 @@ struct Pte {
         // user-accessible if user could execute or read/write
         if (!uxn || (ap & 0b01) != 0)
             p |= Perm.u;
-        if ((ap & 0b10) != 0)
+        if ((ap & 0b10) == 0)
             p |= Perm.w;
         return p;
     }

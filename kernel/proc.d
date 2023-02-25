@@ -107,7 +107,9 @@ struct Proc {
 
     void free() {
         foreach (map; VmRange(pt)) {
-            if (map.va < sys.highmem_base) {
+            // only free writable pages because those are the only pages that
+            // are owned by the process (copy-on-write).
+            if (map.va < sys.highmem_base && map.write()) {
                 kfree(cast(void*) pa2ka(map.pa));
             }
         }

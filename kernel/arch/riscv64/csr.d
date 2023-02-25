@@ -43,6 +43,7 @@ struct Csr {
     mixin(GenCsr!("pmpaddr0"));
 
     mixin(GenCsr!("stvec"));
+    mixin(GenCsr!("stval"));
     mixin(GenCsr!("satp"));
     mixin(GenCsr!("sie"));
     mixin(GenCsr!("sepc"));
@@ -106,4 +107,5 @@ enum Cause {
     ecall_u = 8,
     ecall_s = 9,
     ecall_m = 11,
+    wpgflt = 15,
 }

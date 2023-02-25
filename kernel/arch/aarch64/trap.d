@@ -81,6 +81,11 @@ extern (C) {
                 Regs* r = &p.trapframe.regs;
                 r.x0 = syscall_handler(p, r.x7, r.x0, r.x1, r.x2, r.x3, r.x4, r.x5, r.x6);
                 break;
+            case Exception.data_abort_lower:
+                ubyte direction = SysReg.esr_el1 & 1;
+                import kernel.trap;
+                pgflt_handler(p, cast(void*) SysReg.far_el1, direction == 1 ? Fault.write : Fault.read);
+                break;
             default:
                 import core.exception;
                 panic("[unhandled user exception] esr: ", Hex(exc_class), " elr: ", cast(void*) SysReg.elr_el1);

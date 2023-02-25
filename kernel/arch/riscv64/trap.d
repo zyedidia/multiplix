@@ -69,19 +69,26 @@ extern (C) {
         // io.writeln("usertrap: scause: ", cast(void*) scause, " epc: ", cast(void*) Csr.sepc);
         Csr.stvec = cast(uintptr) &kernelvec;
 
-        if (scause == Cause.ecall_u) {
-            p.trapframe.epc = Csr.sepc + 4;
-            Regs* r = &p.trapframe.regs;
-            r.a0 = syscall_handler(p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
-        } else if (scause == Cause.sti) {
-            import kernel.irq;
-            Irq.handler();
+        switch (scause) {
+            case Cause.ecall_u:
+                p.trapframe.epc = Csr.sepc + 4;
+                Regs* r = &p.trapframe.regs;
+                r.a0 = syscall_handler(p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
+                break;
+            case Cause.sti:
+                import kernel.irq;
+                Irq.handler();
 
-            ArchTimer.intr();
-            p.yield();
-        } else {
-            import core.exception;
-            panic("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
+                ArchTimer.intr();
+                p.yield();
+                break;
+            case Cause.wpgflt:
+                import kernel.trap;
+                pgflt_handler(p, cast(void*) Csr.stval, Fault.write);
+                break;
+            default:
+                import core.exception;
+                panic("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
         }
 
         usertrapret(p);
