@@ -19,8 +19,9 @@ void pgflt_handler(Proc* p, void* addr, Fault fault) {
         Syscall.exit(p);
     }
 
-    auto map_ = p.pt.lookup(cast(uintptr) addr);
-    if (!map_.has() || !map_.get().user()) {
+    uintptr pgaddr = cast(uintptr) addr - (cast(uintptr) addr & 0xFFF);
+    auto map_ = p.pt.lookup(pgaddr);
+    if (!map_.has() || !map_.get().user() || map_.get().size != sys.pagesize) {
         kill();
     }
     auto map = map_.get();
@@ -54,4 +55,9 @@ void pgflt_handler(Proc* p, void* addr, Fault fault) {
     }
 
     kill();
+}
+
+noreturn unhandled(Proc* p) {
+    import kernel.syscall;
+    Syscall.exit(p);
 }

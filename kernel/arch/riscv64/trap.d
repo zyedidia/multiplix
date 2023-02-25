@@ -68,6 +68,7 @@ extern (C) {
 
         // io.writeln("usertrap: scause: ", cast(void*) scause, " epc: ", cast(void*) Csr.sepc);
         Csr.stvec = cast(uintptr) &kernelvec;
+        import kernel.trap;
 
         switch (scause) {
             case Cause.ecall_u:
@@ -83,12 +84,11 @@ extern (C) {
                 p.yield();
                 break;
             case Cause.wpgflt:
-                import kernel.trap;
                 pgflt_handler(p, cast(void*) Csr.stval, Fault.write);
                 break;
             default:
-                import core.exception;
-                panic("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
+                io.writeln("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
+                unhandled(p);
         }
 
         usertrapret(p);

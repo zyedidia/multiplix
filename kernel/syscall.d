@@ -82,9 +82,20 @@ struct Syscall {
             if (!map.user) {
                 continue;
             }
-            if (!child.pt.map(map.va, map.pa, Pte.Pg.normal, Perm.urx, &sys.allocator)) {
+            void* block = kalloc(map.size);
+            if (!block) {
                 child.free();
                 return -1;
+            }
+            memcpy(block, cast(void*) map.ka, map.size);
+            if (!child.pt.map(map.va, ka2pa(cast(uintptr) block), Pte.Pg.normal, Perm.urwx, &sys.allocator)) {
+                kfree(block);
+                child.free();
+                return -1;
+            }
+            if (map.exec) {
+                // Need to sync instruction/data caches for executable pages.
+                sync_idmem(cast(ubyte*) block, map.size);
             }
         }
 

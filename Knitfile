@@ -6,7 +6,7 @@ conf = {
     board = choose(cli.board, uconf.board, "virt_riscv64"),
     lto = choose(tobool(cli.lto), uconf.lto, true),
     release = choose(tobool(cli.release), uconf.release, false),
-    unified = choose(tobool(unified), uconf.unified, true)
+    unified = choose(tobool(cli.unified), uconf.unified, true)
 }
 
 build = include("build/build.knit")

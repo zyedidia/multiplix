@@ -87,9 +87,9 @@ extern (C) {
                 pgflt_handler(p, cast(void*) SysReg.far_el1, direction == 1 ? Fault.write : Fault.read);
                 break;
             default:
-                import core.exception;
-                panic("[unhandled user exception] esr: ", Hex(exc_class), " elr: ", cast(void*) SysReg.elr_el1);
-                break;
+                import kernel.trap;
+                io.writeln("[unhandled user exception] esr: ", Hex(exc_class), " elr: ", cast(void*) SysReg.elr_el1);
+                unhandled(p);
         }
 
         usertrapret(p);

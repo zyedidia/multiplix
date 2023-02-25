@@ -13,7 +13,7 @@ return b{
         cp $input $output
         $(tools.strip) $output
     $ hello.dbg.elf: hello.c ../syslib/syslib.c ../syslib/syscall.h[I] ../../link/user.ld[I]
-        $(tools.cc) $(flags.cc) $input -o $output -I../syslib -nostartfiles -T../../link/user.ld $darch -ffunction-sections -fdata-sections -Wl,--gc-sections
+        $(tools.cc) $(flags.cc) $input -o $output -I../syslib -nostdlib -T../../link/user.ld $darch -ffunction-sections -fdata-sections -Wl,--gc-sections -lc -lgcc
     $ hello.bin: hello.elf
         $(tools.objcopy) $input -O binary $output
     $ hello.list: hello.dbg.elf
