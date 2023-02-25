@@ -1,16 +1,42 @@
 module kernel.trap;
 
 import kernel.proc;
-import kernel.vm;
-import sys = kernel.sys;
 
-enum Fault {
+enum IrqType {
+    timer,
+}
+
+// Irq handler for kernel interrupts.
+void irq_handler(IrqType irq) {
+    if (irq == IrqType.timer) {
+        import kernel.schedule;
+        foreach (ref p; runq.blocked) {
+            runq.unblock(p);
+        }
+        import kernel.timer;
+        Timer.intr();
+    }
+}
+
+// Irq handler for user interrupts.
+void irq_handler(Proc* p, IrqType irq) {
+    irq_handler(irq);
+
+    if (irq == IrqType.timer) {
+        p.yield();
+    }
+}
+
+enum FaultType {
     read,
     write,
     exec,
 }
 
-void pgflt_handler(Proc* p, void* addr, Fault fault) {
+import kernel.vm;
+import sys = kernel.sys;
+
+void pgflt_handler(Proc* p, void* addr, FaultType fault) {
     noreturn kill() {
         import kernel.syscall;
         println(p.pid, ": killed: attempted to access ", addr, " (pc=", cast(void*) p.trapframe.epc, ")");
@@ -24,7 +50,7 @@ void pgflt_handler(Proc* p, void* addr, Fault fault) {
     }
     auto map = map_.get();
 
-    if (fault == Fault.write && !map.write() && map.read()) {
+    if (fault == FaultType.write && !map.write() && map.read()) {
         // copy-on-write
         void* mem = null;
         while (!mem) {

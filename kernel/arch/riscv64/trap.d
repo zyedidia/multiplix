@@ -38,10 +38,9 @@ extern (C) void kerneltrap() {
 
     // println("[kernel trap] sepc: ", cast(void*) sepc, " cause: ", Hex(scause));
 
+    import kernel.trap;
     if (scause == Cause.sti) {
-        import kernel.irq;
-        Irq.handler();
-        ArchTimer.intr();
+        irq_handler(IrqType.timer);
     } else {
         import core.exception;
         panic("[unhandled kernel trap] epc: ", cast(void*) sepc, " cause: ", Hex(scause));
@@ -76,14 +75,10 @@ extern (C) {
                 r.a0 = syscall_handler(p, r.a7, r.a0, r.a1, r.a2, r.a3, r.a4, r.a5, r.a6);
                 break;
             case Cause.sti:
-                import kernel.irq;
-                Irq.handler();
-
-                ArchTimer.intr();
-                p.yield();
+                irq_handler(p, IrqType.timer);
                 break;
             case Cause.wpgflt:
-                pgflt_handler(p, cast(void*) Csr.stval, Fault.write);
+                pgflt_handler(p, cast(void*) Csr.stval, FaultType.write);
                 break;
             default:
                 println("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));

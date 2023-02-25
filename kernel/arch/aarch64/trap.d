@@ -45,9 +45,8 @@ extern (C) void kernel_exception(Regs* regs) {
 }
 
 extern (C) void kernel_interrupt(Regs* regs) {
-    import kernel.irq;
-    Irq.handler();
-    ArchTimer.intr();
+    import kernel.trap;
+    irq_handler(IrqType.timer);
 }
 
 struct Trapframe {
@@ -64,10 +63,8 @@ extern (C) {
     extern void uservec();
 
     noreturn user_interrupt(Proc* p) {
-        import kernel.irq;
-        Irq.handler();
-
-        ArchTimer.intr();
+        import kernel.trap;
+        irq_handler(p, IrqType.timer);
         p.yield();
         usertrapret(p);
     }
@@ -75,6 +72,7 @@ extern (C) {
     noreturn user_exception(Proc* p) {
         const auto exc_class = bits.get(SysReg.esr_el1, 31, 26);
 
+        import kernel.trap;
         switch (exc_class) {
             case Exception.svc:
                 Regs* r = &p.trapframe.regs;
@@ -82,11 +80,9 @@ extern (C) {
                 break;
             case Exception.data_abort_lower:
                 ubyte direction = SysReg.esr_el1 & 1;
-                import kernel.trap;
-                pgflt_handler(p, cast(void*) SysReg.far_el1, direction == 1 ? Fault.write : Fault.read);
+                pgflt_handler(p, cast(void*) SysReg.far_el1, direction == 1 ? FaultType.write : FaultType.read);
                 break;
             default:
-                import kernel.trap;
                 println("[unhandled user exception] esr: ", Hex(exc_class), " elr: ", cast(void*) SysReg.elr_el1);
                 unhandled(p);
         }
