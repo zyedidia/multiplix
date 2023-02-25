@@ -25,7 +25,7 @@ jobs:
     # set up riscv64 gnu toolchain
     - name: Install RISC-V toolchain
       run: |
-        wget -q https://static.dev.sifive.com/dev-tools/freedom-tools/v2020.12/riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz -O /opt/riscv.tar.gz
+        wget -q https://github.com/zyedidia/build-gdc/releases/download/multiplix-toolchain-5/gnu-riscv64-unknown-elf-linux-amd64.tar.gz -O /opt/riscv.tar.gz
         mkdir /opt/riscv-toolchain && tar -xf /opt/riscv.tar.gz -C /opt/riscv-toolchain --strip-components=1
         echo "/opt/riscv-toolchain/bin" >> $GITHUB_PATH
 

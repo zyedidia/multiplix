@@ -30,7 +30,7 @@ function build.machine(board, monitor)
         visionfive = {
             board = "visionfive",
             mabi = "lp64",
-            march = "rv64imac",
+            march = "rv64imac_zicsr_zifencei",
             mattr = "+m,+a,+c,+relax",
             arch = "riscv64",
             mcmodel = "medany",
@@ -39,7 +39,7 @@ function build.machine(board, monitor)
         visionfive2 = {
             board = "visionfive2",
             mabi = "lp64",
-            march = "rv64imac",
+            march = "rv64imac_zicsr_zifencei",
             mattr = "+m,+a,+c,+relax",
             arch = "riscv64",
             mcmodel = "medany",
@@ -48,7 +48,7 @@ function build.machine(board, monitor)
         virt_riscv64 = {
             board = "virt_riscv64",
             mabi = "lp64",
-            march = "rv64imac",
+            march = "rv64imac_zicsr_zifencei",
             mattr = "+m,+a,+c,+relax",
             arch = "riscv64",
             mcmodel = "medany",
