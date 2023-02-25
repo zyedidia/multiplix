@@ -11,7 +11,6 @@ import kernel.cpu;
 import kernel.syscall;
 
 import bits = ulib.bits;
-import io = ulib.io;
 
 extern (C) extern void kernelvec();
 
@@ -37,7 +36,7 @@ extern (C) void kerneltrap() {
     auto sepc = Csr.sepc;
     auto scause = Csr.scause;
 
-    // io.writeln("[kernel trap] sepc: ", cast(void*) sepc, " cause: ", Hex(scause));
+    // println("[kernel trap] sepc: ", cast(void*) sepc, " cause: ", Hex(scause));
 
     if (scause == Cause.sti) {
         import kernel.irq;
@@ -66,7 +65,7 @@ extern (C) {
     noreturn usertrap(Proc* p) {
         uintptr scause = Csr.scause;
 
-        // io.writeln("usertrap: scause: ", cast(void*) scause, " epc: ", cast(void*) Csr.sepc);
+        // println("usertrap: scause: ", cast(void*) scause, " epc: ", cast(void*) Csr.sepc);
         Csr.stvec = cast(uintptr) &kernelvec;
         import kernel.trap;
 
@@ -87,7 +86,7 @@ extern (C) {
                 pgflt_handler(p, cast(void*) Csr.stval, Fault.write);
                 break;
             default:
-                io.writeln("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
+                println("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
                 unhandled(p);
         }
 

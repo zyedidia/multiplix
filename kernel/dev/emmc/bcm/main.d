@@ -9,7 +9,6 @@ import kernel.board;
 import kernel.timer;
 
 import bits = ulib.bits;
-import io = ulib.io;
 
 bool wait_reg_mask(uint* reg, uint mask, bool set, uint timeout) {
     for (uint ms = 0; ms <= timeout * 10; ms++) {
@@ -102,7 +101,7 @@ struct BcmEmmc(uintptr base) {
         uint command_reg = device.last_command_value;
 
         if (device.transfer_blocks > 0xFFFF) {
-            io.writeln("EMMC_ERR: transferBlocks too large: ", device.transfer_blocks);
+            println("EMMC_ERR: transferBlocks too large: ", device.transfer_blocks);
             return false;
         }
 
@@ -125,7 +124,7 @@ struct BcmEmmc(uintptr base) {
 
         if (times >= timeout) {
             //just doing a warn for this because sometimes it's ok.
-            io.writeln("EMMC_WARN: emmc_issue_command timed out");
+            println("EMMC_WARN: emmc_issue_command timed out");
             device.last_success = false;
             return false;
         }
@@ -185,14 +184,14 @@ struct BcmEmmc(uintptr base) {
     private static bool exec_command(uint command, uint arg, uint timeout) {
         if (command & 0x80000000) {
             // The app command flag is set, should use emmc_app_command instead.
-            io.writeln("EMMC_ERR: COMMAND ERROR NOT APP");
+            println("EMMC_ERR: COMMAND ERROR NOT APP");
             return false;
         }
 
         device.last_command = commands[command];
 
         if (device.last_command.data == EmmcCommand.invalid) {
-            io.writeln("EMMC_ERR: INVALID COMMAND!");
+            println("EMMC_ERR: INVALID COMMAND!");
             return false;
         }
 
@@ -210,14 +209,14 @@ struct BcmEmmc(uintptr base) {
             Timer.delay_ms(1);
         }
 
-        io.writeln("EMMC_ERR: Command line failed to reset properly: ", volatile_ld(&regs.control[1]));
+        println("EMMC_ERR: Command line failed to reset properly: ", volatile_ld(&regs.control[1]));
 
         return false;
     }
 
     static bool app_command(uint command, uint arg, uint timeout) {
         if (commands[command].index >= 60) {
-            io.writeln("EMMC_ERR: INVALID APP COMMAND");
+            println("EMMC_ERR: INVALID APP COMMAND");
             return false;
         }
 
@@ -244,7 +243,7 @@ struct BcmEmmc(uintptr base) {
         if (!exec_command(CT.send_if_cond, 0x1AA, 200)) {
             if (device.last_error == 0) {
                 // timeout
-                io.writeln("EMMC_ERR: SEND_IF_COND Timeout");
+                println("EMMC_ERR: SEND_IF_COND Timeout");
             } else if (device.last_error & (1 << 16)) {
                 // timeout command error
                 if (!reset_command()) {
@@ -252,14 +251,14 @@ struct BcmEmmc(uintptr base) {
                 }
 
                 volatile_st(&regs.int_flags, sd_error_mask(SdError.command_timeout));
-                io.writeln("EMMC_ERR: SEND_IF_COND CMD TIMEOUT");
+                println("EMMC_ERR: SEND_IF_COND CMD TIMEOUT");
             } else {
-                io.writeln("EMMC_ERR: Failure sending SEND_IF_COND");
+                println("EMMC_ERR: Failure sending SEND_IF_COND");
                 return false;
             }
         } else {
             if ((device.last_response[0] & 0xFFF) != 0x1AA) {
-                io.writeln("EMMC_ERR: Unusable SD Card: ", device.last_response[0]);
+                println("EMMC_ERR: Unusable SD Card: ", device.last_response[0]);
                 return false;
             }
 
@@ -273,7 +272,7 @@ struct BcmEmmc(uintptr base) {
         if (!exec_command(CT.io_set_op_cond, 0, 1000)) {
             if (device.last_error == 0) {
                 // timeout
-                io.writeln("EMMC_ERR: CT.io_set_op_cond Timeout");
+                println("EMMC_ERR: CT.io_set_op_cond Timeout");
             } else if (device.last_error & (1 << 16)) {
                 // timeout command error
                 // this is a normal expected error and calling the reset command will fix it
@@ -283,7 +282,7 @@ struct BcmEmmc(uintptr base) {
 
                 volatile_st(&regs.int_flags, sd_error_mask(SdError.command_timeout));
             } else {
-                io.writeln("EMMC_ERR: SDIO Card not supported");
+                println("EMMC_ERR: SDIO Card not supported");
                 return false;
             }
         }
@@ -302,7 +301,7 @@ struct BcmEmmc(uintptr base) {
             }
 
             if (!app_command(CT.ocr_check, 0x00FF8000 | v2flags, 2000)) {
-                io.writeln("EMMC_ERR: APP CMD 41 FAILED 2nd");
+                println("EMMC_ERR: APP CMD 41 FAILED 2nd");
                 return false;
             }
 
@@ -324,7 +323,7 @@ struct BcmEmmc(uintptr base) {
 
         for (int i = 0; i < 5; i++) {
             if (!app_command(CT.ocr_check, 0, 2000)) {
-                io.writeln("EMMC_WARN: APP CMD OCR CHECK TRY ", i + 1, " FAILED");
+                println("EMMC_WARN: APP CMD OCR CHECK TRY ", i + 1, " FAILED");
                 passed = false;
             } else {
                 passed = true;
@@ -338,7 +337,7 @@ struct BcmEmmc(uintptr base) {
         }
 
         if (!passed) {
-            io.writeln("EMMC_ERR: APP CMD 41 FAILED");
+            println("EMMC_ERR: APP CMD 41 FAILED");
             return false;
         }
 
@@ -351,7 +350,7 @@ struct BcmEmmc(uintptr base) {
 
     private static bool check_rca() {
         if (!exec_command(CT.send_cide, 0, 2000)) {
-            io.writeln("EMMC_ERR: Failed to send CID");
+            println("EMMC_ERR: Failed to send CID");
 
             return false;
         }
@@ -359,7 +358,7 @@ struct BcmEmmc(uintptr base) {
         /* if (EMMC_DEBUG) printf("EMMC_DEBUG: CARD ID: %X.%X.%X.%X\n", device.last_response[0], device.last_response[1], device.last_response[2], device.last_response[3]); */
 
         if (!exec_command(CT.send_relative_addr, 0, 2000)) {
-            io.writeln("EMMC_ERR: Failed to send Relative Addr");
+            println("EMMC_ERR: Failed to send Relative Addr");
 
             return false;
         }
@@ -377,7 +376,7 @@ struct BcmEmmc(uintptr base) {
         /* } */
 
         if (!((device.last_response[0] >> 8) & 1)) {
-            io.writeln("EMMC_ERR: Failed to read RCA");
+            println("EMMC_ERR: Failed to read RCA");
             return false;
         }
 
@@ -386,7 +385,7 @@ struct BcmEmmc(uintptr base) {
 
     private static bool select_card() {
         if (!exec_command(CT.select_card, device.rca << 16, 2000)) {
-            io.writeln("EMMC_ERR: Failed to select card");
+            println("EMMC_ERR: Failed to select card");
             return false;
         }
 
@@ -395,7 +394,7 @@ struct BcmEmmc(uintptr base) {
         uint status = (device.last_response[0] >> 9) & 0xF;
 
         if (status != 3 && status != 4) {
-            io.writeln("EMMC_ERR: Invalid Status: ", status);
+            println("EMMC_ERR: Invalid Status: ", status);
             return false;
         }
 
@@ -407,7 +406,7 @@ struct BcmEmmc(uintptr base) {
     private static bool set_scr() {
         if (!device.sdhc) {
             if (!exec_command(CT.set_block_len, 512, 2000)) {
-                io.writeln("EMMC_ERR: Failed to set block len");
+                println("EMMC_ERR: Failed to set block len");
                 return false;
             }
         }
@@ -422,7 +421,7 @@ struct BcmEmmc(uintptr base) {
         device.transfer_blocks = 1;
 
         if (!app_command(CT.send_scr, 0, 30000)) {
-            io.writeln("EMMC_ERR: Failed to send SCR");
+            println("EMMC_ERR: Failed to send SCR");
             return false;
         }
 
@@ -465,7 +464,7 @@ struct BcmEmmc(uintptr base) {
         /* if (EMMC_DEBUG) printf("EMMC_DEBUG: Card resetting...\n"); */
 
         if (!wait_reg_mask(&regs.control[1], Ctrl1.reset_all, false, 2000)) {
-            io.writeln("EMMC_ERR: Card reset timeout!");
+            println("EMMC_ERR: Card reset timeout!");
             return false;
         }
 
@@ -494,7 +493,7 @@ struct BcmEmmc(uintptr base) {
         device.block_size = 0;
 
         if (!exec_command(CT.go_idle, 0, 2000)) {
-            io.writeln("EMMC_ERR: NO GO_IDLE RESPONSE");
+            println("EMMC_ERR: NO GO_IDLE RESPONSE");
             return false;
         }
 
@@ -574,7 +573,7 @@ struct BcmEmmc(uintptr base) {
         volatile_st(&regs.control[1], n);
 
         if (!wait_reg_mask(&regs.control[1], Ctrl1.clk_stable, true, 2000)) {
-            io.writeln("EMMC_ERR: SD CLOCK NOT STABLE\n");
+            println("EMMC_ERR: SD CLOCK NOT STABLE\n");
             return false;
         }
 
@@ -594,14 +593,14 @@ struct BcmEmmc(uintptr base) {
         }
 
         if (bsize < device.block_size) {
-            io.writeln("EMMC_ERR: INVALID BLOCK SIZE: ", bsize, device.block_size);
+            println("EMMC_ERR: INVALID BLOCK SIZE: ", bsize, device.block_size);
             return false;
         }
 
         device.transfer_blocks = bsize / device.block_size;
 
         if (bsize % device.block_size) {
-            io.writeln("EMMC_ERR: BAD BLOCK SIZE");
+            println("EMMC_ERR: BAD BLOCK SIZE");
             return false;
         }
 
@@ -628,9 +627,9 @@ struct BcmEmmc(uintptr base) {
             }
 
             if (++retry_count < max_retries) {
-                io.writeln("EMMC_WARN: Retrying data command");
+                println("EMMC_WARN: Retrying data command");
             } else {
-                io.writeln("EMMC_ERR: Giving up data command");
+                println("EMMC_ERR: Giving up data command");
                 return false;
             }
         }
@@ -640,7 +639,7 @@ struct BcmEmmc(uintptr base) {
 
     static bool do_read(ubyte* b, uint bsize, uint block_no) {
         if (!do_data_command(false, b, bsize, block_no)) {
-            io.writeln("EMMC_ERR: do_data_command failed");
+            println("EMMC_ERR: do_data_command failed");
             return false;
         }
 
@@ -652,7 +651,7 @@ struct BcmEmmc(uintptr base) {
 
         bool r = do_read(buffer, size, sector);
         if (!r) {
-            io.writeln("EMMC_ERR: READ FAILED: ", r);
+            println("EMMC_ERR: READ FAILED: ", r);
             return false;
         }
 
@@ -692,7 +691,7 @@ struct BcmEmmc(uintptr base) {
             }
 
             Timer.delay_ms(100);
-            io.writeln("EMMC_WARN: Failed to reset card, trying again...");
+            println("EMMC_WARN: Failed to reset card, trying again...");
         }
 
         if (!success) {

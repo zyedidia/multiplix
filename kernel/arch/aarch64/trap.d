@@ -12,7 +12,6 @@ import kernel.syscall;
 
 import vm = kernel.vm;
 
-import io = ulib.io;
 import bits = ulib.bits;
 
 extern (C) extern void kernelvec();
@@ -88,7 +87,7 @@ extern (C) {
                 break;
             default:
                 import kernel.trap;
-                io.writeln("[unhandled user exception] esr: ", Hex(exc_class), " elr: ", cast(void*) SysReg.elr_el1);
+                println("[unhandled user exception] esr: ", Hex(exc_class), " elr: ", cast(void*) SysReg.elr_el1);
                 unhandled(p);
         }
 

@@ -8,7 +8,6 @@ import kernel.arch.riscv64.monitor.dbg;
 import sbi = kernel.arch.riscv64.sbi;
 
 import bits = ulib.bits;
-import io = ulib.io;
 
 extern (C) void monitortrap(Regs* regs) {
     auto mcause = Csr.mcause;
@@ -27,7 +26,7 @@ extern (C) void monitortrap(Regs* regs) {
             ExtDebug.handle_breakpoint(mepc, regs);
             break;
         default:
-            io.writeln("monitortrap: core: ", Csr.mhartid, ", cause: ", mcause, ", epc: ", cast(void*) mepc);
-            assert(0, "monitortrap: unhandled cause");
+            import core.exception;
+            panic("[unhandled cause] monitortrap: core: ", Csr.mhartid, ", cause: ", mcause, ", epc: ", cast(void*) mepc);
     }
 }

@@ -7,7 +7,6 @@ import ulib.vector;
 import ulib.option;
 
 import str = ulib.string;
-import io = ulib.io;
 import bits = ulib.bits;
 
 struct ChsAddr {
@@ -87,11 +86,11 @@ struct Fat32FS {
                     break;
                 }
 
-                io.writeln("Partition: ", i);
-                io.writeln("\tType: ", Hex(p.type));
-                io.writeln("\tNumSecs: ", cast(uint) p.num_sectors);
-                io.writeln("\tStatus: ", cast(uint) p.status);
-                io.writeln("\tStart: ", cast(uint) p.first_lba_sector);
+                println("Partition: ", i);
+                println("\tType: ", Hex(p.type));
+                println("\tNumSecs: ", cast(uint) p.num_sectors);
+                println("\tStatus: ", cast(uint) p.status);
+                println("\tStart: ", cast(uint) p.first_lba_sector);
 
                 assert(p.type == 0xC || p.type == 0xB, "partition must be fat32");
             }

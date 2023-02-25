@@ -4,8 +4,6 @@ import ulib.string : itoa;
 import ulib.math : min, max;
 import ulib.trait : isInt;
 
-import sys = ulib.sys;
-
 struct File {
 public:
     @disable this();
@@ -50,12 +48,4 @@ private:
         char[S.sizeof * 8] buf = void;
         write_elem(itoa(value, buf, base));
     }
-}
-
-void write(Args...)(Args args) {
-    sys.stdout.write(args);
-}
-
-void writeln(Args...)(Args args) {
-    sys.stdout.write(args, '\n');
 }

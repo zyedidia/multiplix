@@ -62,6 +62,14 @@ void assume(bool b) {
     }
 }
 
+import sys = ulib.sys;
+void print(Args...)(Args args) {
+    sys.stdout.write(args);
+}
+void println(Args...)(Args args) {
+    sys.stdout.write(args, '\n');
+}
+
 ref string _d_arrayappendT(return ref scope string x, scope string y) @trusted;
 
 extern (C) noreturn _halt();

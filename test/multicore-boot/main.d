@@ -10,8 +10,6 @@ import kernel.cpu;
 import arch = kernel.arch;
 import sys = kernel.sys;
 
-import io = ulib.io;
-
 shared Spinlock lock;
 shared int x;
 
@@ -28,7 +26,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         Timer.delay_ms(10);
         assert(x == System.ncores);
-        io.writeln("multicore-boot: PASS");
+        println("multicore-boot: PASS");
         Reboot.shutdown();
     }
 }

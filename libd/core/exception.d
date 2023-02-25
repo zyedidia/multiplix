@@ -1,11 +1,9 @@
 module core.exception;
 
-import io = ulib.io;
-
 noreturn panic(Args...)(Args msg) {
-    io.writeln("panic: ", msg);
     import kernel.irq;
     Irq.off();
+    println("panic: ", msg);
     _halt();
 }
 

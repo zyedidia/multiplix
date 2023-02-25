@@ -32,7 +32,7 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
             Syscall.usleep(p, cast(ulong) args[0]);
             break;
         default:
-            io.writeln("invalid syscall: ", sysno);
+            println("invalid syscall: ", sysno);
             return -1;
     }
 
@@ -141,7 +141,7 @@ struct Syscall {
     }
 
     static noreturn exit(Proc* p) {
-        io.writeln("process ", p.pid, " exited");
+        println(p.pid, ": exited");
         import kernel.schedule;
 
         if (p.parent && p.parent.state == Proc.State.blocked) {

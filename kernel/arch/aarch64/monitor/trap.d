@@ -10,7 +10,6 @@ import kernel.arch.aarch64.monitor.dbg;
 
 import kernel.cpu;
 
-import io = ulib.io;
 import bits = ulib.bits;
 
 extern (C) void monitor_exception(Regs* regs) {
@@ -27,11 +26,11 @@ extern (C) void monitor_exception(Regs* regs) {
             ExtDebug.handle_ss(SysReg.elr_el2, regs);
             break;
         default:
-            io.writeln("monitor_exception: core: ", cpuinfo.coreid, ", cause: ", exc_class, " elr: ", cast(void*) SysReg.elr_el2);
-            assert(0, "monitor_exception: unhandled exception class");
+            import core.exception;
+            panic("[unhandled exception] monitor_exception: core: ", cpuinfo.coreid, ", cause: ", exc_class, " elr: ", cast(void*) SysReg.elr_el2);
     }
 }
 
 extern (C) void monitor_interrupt(Regs* regs) {
-    io.writeln("monitor_interrupt, elr_el2: ", cast(void*) SysReg.elr_el2);
+    println("monitor_interrupt, elr_el2: ", cast(void*) SysReg.elr_el2);
 }

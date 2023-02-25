@@ -11,7 +11,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     import sys = kernel.sys;
     import kernel.cpu;
     import kernel.schedule;
-    import io = ulib.io;
 
     arch.ArchTrap.setup();
 
@@ -24,7 +23,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.setup();
 
     lock.lock();
-    io.writeln("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
+    println("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
     lock.unlock();
 
     if (!cpuinfo.primary) {
@@ -35,7 +34,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     Timer.delay_ms(100);
 
     if (!runq.start(hello_elf)) {
-        io.writeln("could not initialize hello.elf");
+        println("could not initialize hello.elf");
         return;
     }
 

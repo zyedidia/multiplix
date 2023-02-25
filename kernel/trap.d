@@ -11,11 +11,9 @@ enum Fault {
 }
 
 void pgflt_handler(Proc* p, void* addr, Fault fault) {
-    import io = ulib.io;
-
     noreturn kill() {
         import kernel.syscall;
-        io.writeln(p.pid, ": killed: attempted to access ", addr, " (pc=", cast(void*) p.trapframe.epc, ")");
+        println(p.pid, ": killed: attempted to access ", addr, " (pc=", cast(void*) p.trapframe.epc, ")");
         Syscall.exit(p);
     }
 
