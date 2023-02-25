@@ -8,4 +8,4 @@ require (
 	github.com/marcinbor85/gohex v0.0.0-20210308104911-55fb1c624d84
 )
 
-require golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+require golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
