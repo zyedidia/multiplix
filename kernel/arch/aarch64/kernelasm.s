@@ -19,7 +19,7 @@ _halt:
 
 // Save all registers so that the trap handler can inspect them on the stack.
 .macro PROLOGUE
-sub sp, sp, #240
+sub sp, sp, #256
 stp x0, x1,   [sp, #0+16*0]
 stp x2, x3,   [sp, #0+16*1]
 stp x4, x5,   [sp, #0+16*2]
@@ -52,7 +52,7 @@ ldp x14, x15, [sp, #0+16*7]
 ldp x16, x17, [sp, #0+16*8]
 ldr x18,      [sp, #0+16*9]
 ldp x29, x30, [sp, #0+16*14+8]
-add sp, sp, #240
+add sp, sp, #256
 eret
 .endm
 
