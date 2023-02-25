@@ -62,11 +62,12 @@ void assume(bool b) {
     }
 }
 
-import sys = ulib.sys;
 void print(Args...)(Args args) {
+    import sys = ulib.sys;
     sys.stdout.write(args);
 }
 void println(Args...)(Args args) {
+    import sys = ulib.sys;
     sys.stdout.write(args, '\n');
 }
 
