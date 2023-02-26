@@ -1,5 +1,8 @@
 # Multiplix kernel
 
+![Test Workflow](https://github.com/zyedidia/multiplix/actions/workflows/test.yaml/badge.svg)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/zyedidia/multiplix/blob/master/LICENSE)
+
 Multiplix is a small operating system serving as the foundation for some
 research projects in operating systems. It is currently designed as a
 monolithic kernel plus a special kernel monitor that runs at a higher
@@ -29,6 +32,12 @@ the Raspberry Pi family).
 
 # Building
 
+To build multiplix you must have a GNU bare-metal toolchain and either LDC or
+GDC. You can get everything you need (prebuilt) from
+[`multiplix-toolchain-linux-amd64.tar.gz`](https://github.com/zyedidia/build-gdc/releases/tag/multiplix-toolchain-2023-2-26).
+Note: for GDC, you must use the version provided in that archive for the new
+`-mtp` AArch64 option (not needed on RISC-V).
+
 Multiplix uses the [Knit](https://github.com/zyedidia/knit) build tool. The
 Knitfile has the following targets:
 
@@ -42,5 +51,7 @@ You can configure the build for a specific board by specifying setting the
 `board` variable to `raspi3`, `raspi4`, `visionfive`, or `visionfive2` (e.g.,
 `knit board=raspi3`).
 
+Specify the D compiler with `dc`. Supports `dc=ldc2` or `dc=gdc`.
+
 The `lto` option configures whether the kernel is build with link-time
-optimization (requires the LLVMgold linker plugin).
+optimization (requires the LLVMgold linker plugin for use with LDC).
