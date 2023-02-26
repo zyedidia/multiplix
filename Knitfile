@@ -4,7 +4,7 @@ local _, uconf = pcall(include, "build/conf.knit")
 
 conf = {
     board = choose(cli.board, uconf.board, "virt_riscv64"),
-    lto = choose(tobool(cli.lto), uconf.lto, true),
+    lto = choose(tobool(cli.lto), uconf.lto, false),
     release = choose(tobool(cli.release), uconf.release, false),
     unified = choose(tobool(cli.unified), uconf.unified, true),
     dc = choose(cli.dc, uconf.dc, "ldc2"),

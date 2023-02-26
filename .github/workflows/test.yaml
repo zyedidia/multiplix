@@ -1,11 +1,17 @@
 on: [push, pull_request]
-name: Test
+name: Build and Test
 jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+        compiler: [gdc, ldc2]
+        arch: [riscv64-unknown-elf, aarch64-none-elf]
+        include:
+          - arch: riscv64-unknown-elf
+            board: virt_riscv64
+          - arch: aarch64-none-elf
+            board: raspi3
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: dlang-community/setup-dlang@v1
@@ -16,21 +22,15 @@ jobs:
     - name: Install plboot
       run: cd tools/plboot && go install
 
-    - name: Install D-scanner
+    # set up gnu toolchain
+    - name: Install GNU toolchain
       run: |
-        wget -q https://www.scs.stanford.edu/~zyedidia/dscanner.tar.gz
-        mkdir dscanner && tar -xf dscanner.tar.gz -C dscanner
-        echo "$PWD/dscanner" >> $GITHUB_PATH
+        wget -q https://github.com/zyedidia/build-gdc/releases/download/multiplix-toolchain-2023-2-26/gnu-${{ matrix.arch }}-linux-amd64.tar.gz -O /opt/gnu.tar.gz
+        mkdir /opt/gnu-toolchain && tar -xf /opt/gnu.tar.gz -C /opt/gnu-toolchain --strip-components=1
+        echo "/opt/gnu-toolchain/bin" >> $GITHUB_PATH
 
-    # set up riscv64 gnu toolchain
-    - name: Install RISC-V toolchain
-      run: |
-        wget -q https://github.com/zyedidia/build-gdc/releases/download/multiplix-toolchain-5/gnu-riscv64-unknown-elf-linux-amd64.tar.gz -O /opt/riscv.tar.gz
-        mkdir /opt/riscv-toolchain && tar -xf /opt/riscv.tar.gz -C /opt/riscv-toolchain --strip-components=1
-        echo "/opt/riscv-toolchain/bin" >> $GITHUB_PATH
+    - name: Build (unified, no lto)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=false unified=true
 
-    - name: Lint
-      run: knit lint
-
-    - name: Build
-      run: knit kernel.boot.bin board=virt_riscv64 lto=false
+    - name: Build (not unified, no lto)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=false unified=false

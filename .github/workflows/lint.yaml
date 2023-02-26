@@ -1,0 +1,15 @@
+on: [push, pull_request]
+name: Lint
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: zyedidia/setup-knit@v1
+    - name: Install D-scanner
+      run: |
+        wget -q https://www.scs.stanford.edu/~zyedidia/dscanner.tar.gz
+        mkdir dscanner && tar -xf dscanner.tar.gz -C dscanner
+        echo "$PWD/dscanner" >> $GITHUB_PATH
+    - name: Lint
+      run: knit lint
