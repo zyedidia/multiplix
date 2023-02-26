@@ -52,8 +52,13 @@ struct Hex {
 }
 
 void unreachable() {
-    import ldc.llvmasm;
-    __ir!("unreachable", void, int)(0);
+    version (LDC) {
+        import ldc.llvmasm;
+        __ir!("unreachable", void, int)(0);
+    } else version (GNU) {
+        import gcc.builtins;
+        __builtin_unreachable();
+    }
 }
 
 void assume(bool b) {
@@ -76,3 +81,5 @@ ref string _d_arrayappendT(return ref scope string x, scope string y) @trusted;
 bool __equals(scope const string lhs, scope const string rhs);
 
 extern (C) noreturn _halt();
+
+public import core.exception : __switch_error;

@@ -75,7 +75,7 @@ function build.tools(machine)
         gdc := $prefix-gdc
         cc := $prefix-gcc
         as := $prefix-as
-        ld := $prefix-ld
+        ld := $prefix-gcc
         cpp := $prefix-cpp
         objcopy := $prefix-objcopy
         objdump := $prefix-objdump
@@ -140,7 +140,7 @@ function build.flags(machine, lto, release, monitor)
         dc := $(flags.dc) $flto
         cc := -Os $(flags.gnu)
         as := -Os $(flags.gnu) -xassembler-with-cpp
-        ld := $ltoflags --gc-sections
+        ld := -Wl,--gc-sections -nostdlib -nostartfiles -lgcc $(flags.gnu)
         qemu := $(machine.qemu) -nographic
     }
 end

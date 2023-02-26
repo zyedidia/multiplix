@@ -396,16 +396,16 @@ version (GNU) {
      */
     enum simd = attribute("simd");
 
-    // auto simd_clones(string mask)
-    // {
-    //     if (mask == "notinbranch" || mask == "inbranch")
-    //         return attribute("simd", mask);
-    //     else
-    //     {
-    //         assert(false, "unrecognized parameter `" ~ mask
-    //                ~ "` for `gcc.attribute.simd_clones`");
-    //     }
-    // }
+    auto simd_clones(string mask)
+    {
+        if (mask == "notinbranch" || mask == "inbranch")
+            return attribute("simd", mask);
+        else
+        {
+            assert(false, "unrecognized parameter `" ~ mask
+                   ~ "` for `gcc.attribute.simd_clones`");
+        }
+    }
 
     auto simd_clones(A...)(A arguments)
     {

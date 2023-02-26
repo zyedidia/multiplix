@@ -118,23 +118,94 @@ void compiler_fence() {
     }
 }
 
+version (GNU) {
+    enum MemoryOrder {
+        /**
+         * Not sequenced.
+         * Corresponds to $(LINK2 https://llvm.org/docs/Atomics.html#monotonic, LLVM AtomicOrdering.Monotonic)
+         * and C++11/C11 `memory_order_relaxed`.
+         */
+        raw = 0,
+        /**
+         * Hoist-load + hoist-store barrier.
+         * Corresponds to $(LINK2 https://llvm.org/docs/Atomics.html#acquire, LLVM AtomicOrdering.Acquire)
+         * and C++11/C11 `memory_order_acquire`.
+         */
+        acq = 2,
+        /**
+         * Sink-load + sink-store barrier.
+         * Corresponds to $(LINK2 https://llvm.org/docs/Atomics.html#release, LLVM AtomicOrdering.Release)
+         * and C++11/C11 `memory_order_release`.
+         */
+        rel = 3,
+        /**
+         * Acquire + release barrier.
+         * Corresponds to $(LINK2 https://llvm.org/docs/Atomics.html#acquirerelease, LLVM AtomicOrdering.AcquireRelease)
+         * and C++11/C11 `memory_order_acq_rel`.
+         */
+        acq_rel = 4,
+        /**
+         * Fully sequenced (acquire + release). Corresponds to
+         * $(LINK2 https://llvm.org/docs/Atomics.html#sequentiallyconsistent, LLVM AtomicOrdering.SequentiallyConsistent)
+         * and C++11/C11 `memory_order_seq_cst`.
+         */
+        seq = 5,
+    }
+
+
+    import gcc.builtins;
+    void memory_fence() {
+        __sync_synchronize();
+    }
+
+    void atomic_store(T)(T val, shared T* ptr, MemoryOrder order = MemoryOrder.seq) {
+        __atomic_store(T.sizeof, ptr, cast(void*) &val, order);
+    }
+
+    bool atomic_cmp_xchg(shared uint* ptr, uint cmp, uint val) {
+        return __atomic_compare_exchange_4(ptr, &cmp, val, false, MemoryOrder.seq, MemoryOrder.seq);
+    }
+
+    // uint lock_test_and_set(shared(uint*) lock, uint val) {
+    //     return __sync_lock_test_and_set_4(lock, val);
+    // }
+    //
+    // void lock_release(shared(uint*) lock) {
+    //     __sync_lock_release_4(lock);
+    // }
+
+    T atomic_rmw_add(T)(in shared T* ptr, T val, MemoryOrder order = MemoryOrder.seq) {
+        static if (is(T == ubyte) || is(T == byte)) {
+            return __atomic_add_fetch_1(cast(shared void*) ptr, cast(ubyte) val, order);
+        } else static if (is(T == ushort) || is(T == short)) {
+            return __atomic_add_fetch_2(cast(shared void*) ptr, cast(ushort) val, order);
+        } else static if (is(T == uint) || is(T == int)) {
+            return __atomic_add_fetch_4(cast(shared void*) ptr, cast(uint) val, order);
+        } else static if (is(T == ulong) || is(T == long)) {
+            return __atomic_add_fetch_8(cast(shared void*) ptr, cast(ulong) val, order);
+        } else {
+            static assert(0, "atomic_rmw_add input is not an integer");
+        }
+    }
+}
+
 version (LDC) {
     enum AtomicOrdering {
-      NotAtomic = 0,
-      Unordered = 1,
-      Monotonic = 2,
-      Consume = 3,
-      Acquire = 4,
-      Release = 5,
-      AcquireRelease = 6,
-      SequentiallyConsistent = 7
+        NotAtomic = 0,
+        Unordered = 1,
+        Monotonic = 2,
+        Consume = 3,
+        Acquire = 4,
+        Release = 5,
+        AcquireRelease = 6,
+        SequentiallyConsistent = 7
     }
     alias DefaultOrdering = AtomicOrdering.SequentiallyConsistent;
 
     enum SynchronizationScope {
-      SingleThread = 0,
-      CrossThread  = 1,
-      Default = CrossThread
+        SingleThread = 0,
+        CrossThread  = 1,
+        Default = CrossThread
     }
 
     enum AtomicRmwSizeLimit = size_t.sizeof;
@@ -158,11 +229,23 @@ version (LDC) {
     /// If they are equal, it stores val in memory at ptr.
     /// This is all performed as single atomic operation.
     pragma(LDC_atomic_cmp_xchg)
-        CmpXchgResult!T atomic_cmp_xchg(T)(
+        CmpXchgResult!T _atomic_cmp_xchg(T)(
             shared T* ptr, T cmp, T val,
             AtomicOrdering successOrdering = DefaultOrdering,
             AtomicOrdering failureOrdering = DefaultOrdering,
             bool weak = false);
+
+    bool atomic_cmp_xchg(T)(shared T* ptr, T cmp, T val) {
+        return _atomic_cmp_xchg(ptr, cmp, val).exchanged;
+    }
+
+    // uint lock_test_and_set(shared(uint*) lock, uint val) {
+    //     return atomic_cmp_xchg(lock, 0, 1).previousValue;
+    // }
+    //
+    // void lock_release(shared(uint*) lock) {
+    //     atomic_store(0, lock);
+    // }
 
     /// Atomically sets *ptr += val and returns the previous *ptr value.
     pragma(LDC_atomic_rmw, "add")

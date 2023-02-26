@@ -6,7 +6,8 @@ conf = {
     board = choose(cli.board, uconf.board, "virt_riscv64"),
     lto = choose(tobool(cli.lto), uconf.lto, true),
     release = choose(tobool(cli.release), uconf.release, false),
-    unified = choose(tobool(cli.unified), uconf.unified, true)
+    unified = choose(tobool(cli.unified), uconf.unified, true),
+    dc = choose(cli.dc, uconf.dc, "ldc2"),
 }
 
 build = include("build/build.knit")
@@ -123,14 +124,14 @@ local kernel
 if conf.unified then
     kernel = r{
         $ .kobj/kernel.o: $(src.kernel()) user/hello/hello.elf[I]
-            $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -of $output
+            $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -$of $output
         $ kernel.elf: .kobj/kernel.o $(obj.kasm()) $(link.kernel)[I]
-            $(tools.ld) $(flags.ld) -T$(link.kernel) $input -o $output
+            $(tools.ld) -T$(link.kernel) $input -o $output $(flags.ld)
     }
 else
     kernel = r{
         $ kernel.elf: $(obj.kernel()) $(link.kernel)[I]
-            $(tools.ld) $(flags.ld) -T$(link.kernel) $input -o $output
+            $(tools.ld) -T$(link.kernel) $input -o $output $(flags.ld)
         $ .kobj/kernel/main.o: user/hello/hello.elf
     }
 end

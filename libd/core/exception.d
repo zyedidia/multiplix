@@ -9,9 +9,11 @@ noreturn panic(Args...)(Args msg) {
 
 // Compiler lowers final switch default case to this (which is a runtime error).
 void __switch_errorT()(string file = __FILE__, size_t line = __LINE__) @trusted {
-    cast() file;
-    cast() line;
-    assert(0, "No appropriate switch clause found");
+    panic(file, ":", line, ": No appropriate switch clause found");
+}
+
+void __switch_error()(string file = __FILE__, size_t line = __LINE__) {
+    __switch_errorT(file, line);
 }
 
 // Called when an assert() fails.

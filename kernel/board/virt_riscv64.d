@@ -22,7 +22,7 @@ struct Machine {
         size_t sz;
     }
 
-    enum MemRange[] mem_ranges = [
+    enum MemRange[1] mem_ranges = [
         MemRange(0, sys.gb!(4)),
     ];
 

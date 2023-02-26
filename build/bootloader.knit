@@ -13,7 +13,7 @@ function bootloader.meta()
         $ .bootobj/%.o: %.s
             $(tools.cc) $(flags.as) $input -c -o $output
         $ .bootobj/%.o:D[.bootobj/deps/%.dep]: %.d
-            $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/$match.dep
+            $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output $(makedeps(f".bootobj/deps/$match.dep"))
     }
 end
 
@@ -34,18 +34,18 @@ function bootloader.rules(bootelf, payload, unified)
     if conf.unified then
         rules = b{
             $ .bootobj/bootloader/main-$version.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
-                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep $(dversion(vpayload))
+                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output $(makedeps(f".bootobj/deps/bootloader/main.dep $(dversion(vpayload))"))
             $ .bootobj/bootloader.o: $(src.libmonitor())
                 $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -of $output
             $ $bootelf: .bootobj/bootloader.o $(obj.masm()) $(objects) $(link)[I]
-                $(tools.ld) $(flags.ld) -T$(link) $input -o $output
+                $(tools.ld) -T$(link) $input -o $output $(flags.ld)
         }
     else
         rules = b{
             $ .bootobj/bootloader/main-$version.o:D[.bootobj/deps/bootloader/main.dep]: bootloader/main.d
-                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output -makedeps=.bootobj/deps/bootloader/main.dep $(dversion(vpayload))
+                $(tools.dc) $(flags.dc) -Ikernel -Ilibd $input -c -of $output $(makedeps(f".bootobj/deps/bootloader/main.dep $(dversion(vpayload))"))
             $ $bootelf: $(obj.libmonitor()) $(objects) $(link)[I]
-                $(tools.ld) $(flags.ld) -T$(link) $input -o $output
+                $(tools.ld) -T$(link) $input -o $output $(flags.ld)
         }
     end
 
