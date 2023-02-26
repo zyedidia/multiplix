@@ -34,3 +34,7 @@ jobs:
 
     - name: Build (not unified, no lto)
       run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=false unified=false
+
+    - name: Analyze
+      if: matrix.compiler == 'gdc'
+      run: knit analyze board=${{ matrix.board }} dc=gdc

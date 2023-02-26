@@ -141,6 +141,15 @@ local allsrc = knit.rglob(".", "*.d")
 
 local bootloader = dofile("build/bootloader.knit")
 
+local analyze
+if conf.dc == "gdc" then
+    analyze = $ analyze:VB: $(src.kernel()) user/hello/hello.elf[I]
+                  $(tools.dc) $(flags.dc) -fanalyzer -Wno-analyzer-infinite-recursion -I. -Ilibd $input -c -o /dev/null
+else
+    analyze = $ analyze:VB:
+                  echo "analyze requires gdc"
+end
+
 return b{
     $ all:V: kernel.elf
 
@@ -163,11 +172,13 @@ return b{
     $ prog:VB: kernel.elf
         plboot prog $input
 
-    $ lint:VBQ:
+    $ lint:VB:
         dscanner --styleCheck $allsrc --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 
-    $ lint-%:VBQ: %
+    $ lint-%:VB: %
         dscanner --styleCheck $input --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
+
+    analyze,
 
     include("user/hello/build.knit"),
 
