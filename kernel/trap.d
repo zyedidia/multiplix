@@ -50,8 +50,17 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
     }
     auto map = map_.get();
 
-    if (fault == FaultType.write && !map.write() && map.read()) {
+    if (fault == FaultType.write && map.cow() && map.read()) {
+        import kernel.page;
+        Page* pg = &pages[map.pa / sys.pagesize];
+        if (pg.refcount == 1) {
+            // we are the only one with a reference, so just take over the page
+            map.pte.perm = map.perm & ~Perm.cow | Perm.w;
+            return;
+        }
+
         // copy-on-write
+        pages[map.pa / sys.pagesize].refcount--;
         void* mem = null;
         while (!mem) {
             import kernel.schedule;
@@ -66,8 +75,8 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
         import ulib.memory;
         memcpy(mem, cast(void*) map.ka, sys.pagesize);
         import kernel.arch;
-        // must succeed because it doesn't allocate
-        assert(p.pt.map(map.va, ka2pa(cast(uintptr) mem), Pte.Pg.normal, map.perm | Perm.w, &sys.allocator));
+        map.pte.perm = map.perm & ~Perm.cow | Perm.w;
+        map.pte.pa = ka2pa(cast(uintptr) mem);
 
         if (map.exec()) {
             import core.sync;
@@ -83,5 +92,6 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
 
 noreturn unhandled(Proc* p) {
     import kernel.syscall;
+    println(p.pid, ": killed (unhandled)");
     Syscall.exit(p);
 }

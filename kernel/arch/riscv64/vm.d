@@ -30,7 +30,8 @@ struct Pte {
         "global",     1,
         "accessed",   1,
         "dirty",      1,
-        "rsw",        2,
+        "cow",        1,
+        "rsw",        1,
         "ppn0",       9,
         "ppn1",       9,
         "ppn2",       26,
@@ -63,14 +64,11 @@ struct Pte {
     }
 
     void perm(Perm perm) {
-        if ((perm & Perm.r) != 0)
-            read = 1;
-        if ((perm & Perm.w) != 0)
-            write = 1;
-        if ((perm & Perm.x) != 0)
-            exec = 1;
-        if ((perm & Perm.u) != 0)
-            user = 1;
+        read = (perm & Perm.r) != 0;
+        write = (perm & Perm.w) != 0;
+        exec = (perm & Perm.x) != 0;
+        user = (perm & Perm.u) != 0;
+        cow = (perm & Perm.cow) != 0;
     }
 
     Perm perm() {
@@ -83,6 +81,8 @@ struct Pte {
             p |= Perm.x;
         if (user)
             p |= Perm.u;
+        if (cow)
+            p |= Perm.cow;
         return p;
     }
 

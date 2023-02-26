@@ -79,7 +79,7 @@ struct Proc {
         }
         memset(ustack, 0, sys.pagesize);
         // map stack
-        if (!pt.map(stackva, ka2pa(cast(uintptr) ustack), Pte.Pg.normal, Perm.urw, &sys.allocator)) {
+        if (!pt.mappg(stackva, ka2pa(cast(uintptr) ustack), Perm.urw)) {
             free();
             return false;
         }
@@ -107,10 +107,11 @@ struct Proc {
 
     void free() {
         foreach (map; VmRange(pt)) {
-            // only free writable pages because those are the only pages that
-            // are owned by the process (copy-on-write).
-            if (map.va < sys.highmem_base && map.write()) {
-                kfree(cast(void*) pa2ka(map.pa));
+            if (!iska(map.va)) {
+                import kernel.page;
+                pages[map.pa / sys.pagesize].refcount--;
+                if (pages[map.pa / sys.pagesize].refcount == 0)
+                    kfree(cast(void*) map.ka);
             }
         }
 

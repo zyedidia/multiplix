@@ -112,6 +112,7 @@ struct BlockAllocator(A) {
             // allocator.
         }
 
+        // put this block back on the free list
         Free* fp = cast(Free*) val;
         fp.next = hdr.free_head;
         hdr.free_head = fp;

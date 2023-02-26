@@ -33,7 +33,8 @@ struct Pte {
         "_r2", 5,
         "pxn", 1, // privileged execute never
         "uxn", 1, // unprivileged execute never
-        "sw", 4, // reserved for software use
+        "cow", 1, // copy-on-write (software use)
+        "sw", 3, // reserved for software use
         "_r3", 5,
     ));
     // dfmt on
@@ -55,6 +56,7 @@ struct Pte {
 
     void perm(Perm perm) {
         valid = (perm & Perm.r) != 0;
+        cow = (perm & Perm.cow) != 0;
         pxn = (perm & Perm.x) == 0;
         uxn = (perm & Perm.x) == 0 || (perm & Perm.u) == 0;
         ubyte ap = 0;
@@ -76,6 +78,8 @@ struct Pte {
             p |= Perm.u;
         if ((ap & 0b10) == 0)
             p |= Perm.w;
+        if (cow)
+            p |= Perm.cow;
         return p;
     }
 

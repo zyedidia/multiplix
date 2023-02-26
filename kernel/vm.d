@@ -2,6 +2,11 @@ module kernel.vm;
 
 import sys = kernel.sys;
 
+// Returns true if va is a kernel address.
+bool iska(uintptr va) {
+    return va >= sys.highmem_base;
+}
+
 // Converts kernel address to physical address.
 uintptr ka2pa(uintptr ka) {
     return ka - sys.highmem_base;
@@ -39,6 +44,7 @@ enum Perm {
     w = 1 << 1, // write
     x = 1 << 2, // execute
     u = 1 << 3, // user-accessible
+    cow = 1 << 4, // copy-on-write
 
     rw  = r | w,
     rwx = rw | x,
@@ -49,18 +55,20 @@ enum Perm {
 
 struct VaMapping {
     uintptr va;
-    uintptr pa;
+    Pte* pte;
     size_t size;
-    Perm perm;
+    uintptr pa() { return pte.pa; }
+    Perm perm()  { return pte.perm; };
 
     uintptr ka() {
         return pa2ka(pa);
     }
 
-    bool read()  { return (perm & Perm.r) != 0; }
-    bool write() { return (perm & Perm.w) != 0; }
-    bool exec()  { return (perm & Perm.x) != 0; }
-    bool user()  { return (perm & Perm.u) != 0; }
+    bool read()  { return (pte.perm & Perm.r) != 0; }
+    bool write() { return (pte.perm & Perm.w) != 0; }
+    bool exec()  { return (pte.perm & Perm.x) != 0; }
+    bool user()  { return (pte.perm & Perm.u) != 0; }
+    bool cow()   { return (pte.perm & Perm.cow) != 0; }
 }
 
 import kernel.arch;
@@ -73,17 +81,27 @@ Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
         return Opt!(VaMapping).none;
     }
     size_t size = Pagetable.level2size(pgtype);
-    return Opt!(VaMapping)(VaMapping(va, pte.pa, size, pte.perm));
+    return Opt!(VaMapping)(VaMapping(va, pte, size));
 }
 
 import kernel.alloc;
+import kernel.page;
 
-void unmappg(Pagetable* pt, uintptr va, Pte.Pg pgtyp, bool free) {
-    Pte* pte = pt.walk!(void, false)(va, pgtyp, null);
+bool mappg(Pagetable* pt, uintptr va, uintptr pa, Perm perm) {
+    if (!pt.map(va, pa, Pte.Pg.normal, perm, &sys.allocator))
+        return false;
+    pages[pa / sys.pagesize].refcount++;
+    return true;
+}
+
+void unmappg(Pagetable* pt, uintptr va, bool free) {
+    auto level = Pte.Pg.normal;
+    Pte* pte = pt.walk!(void, false)(va, level, null);
     if (!pte) {
         return;
     }
-    if (free) {
+    pages[pte.pa / sys.pagesize].refcount--;
+    if (free && pages[pte.pa / sys.pagesize].refcount == 0) {
         kfree(cast(void*) pa2ka(pte.pa));
     }
     // TODO: need to invalidate this entry from TLB when we switch to this pagetable
@@ -107,7 +125,7 @@ uintptr alloc(Pagetable* pt, uintptr va_start, uintptr va_end, Perm perm) {
             return 0;
         }
         memset(mem, 0, sys.pagesize);
-        if (!pt.map(va, ka2pa(cast(uintptr) mem), Pte.Pg.normal, perm, &sys.allocator)) {
+        if (!pt.mappg(va, ka2pa(cast(uintptr) mem), perm)) {
             kfree(mem);
             cast() dealloc(pt, va_start, va);
             return 0;
@@ -135,7 +153,7 @@ uintptr dealloc(Pagetable* pt, uintptr va_start, uintptr va_end) {
 // Unmap `npages` pages starting at `va`. Pages are freed if `free`.
 void unmap(Pagetable* pt, uintptr va, size_t npages, bool free) {
     for (uintptr a = va; a < va + npages * sys.pagesize; va += sys.pagesize) {
-        pt.unmappg(a, Pte.Pg.normal, free);
+        pt.unmappg(a, free);
     }
 }
 
@@ -187,9 +205,8 @@ struct LevelRange(Pte.Pg level) {
         if (pte.leaf(level) && pte.valid()) {
             return Opt!(VaMapping)(VaMapping(
                 bits.sext!(long, ulong)(idx * Pagetable.level2size(level), 39),
-                pte.pa,
+                pte,
                 Pagetable.level2size(cast(Pte.Pg) level),
-                pte.perm,
             ));
         }
         static if (!lastlevel) {

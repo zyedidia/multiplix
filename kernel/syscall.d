@@ -79,20 +79,11 @@ struct Syscall {
             if (!map.user) {
                 continue;
             }
-            void* block = kalloc(map.size);
-            if (!block) {
+            // parent and child both get page read-only with copy-on-write
+            map.pte.perm = map.perm & ~Perm.w | Perm.cow;
+            if (!child.pt.mappg(map.va, map.pa, Perm.urx | Perm.cow)) {
                 child.free();
                 return -1;
-            }
-            memcpy(block, cast(void*) map.ka, map.size);
-            if (!child.pt.map(map.va, ka2pa(cast(uintptr) block), Pte.Pg.normal, Perm.urwx, &sys.allocator)) {
-                kfree(block);
-                child.free();
-                return -1;
-            }
-            if (map.exec) {
-                // Need to sync instruction/data caches for executable pages.
-                sync_idmem(cast(ubyte*) block, map.size);
             }
         }
 
@@ -161,7 +152,7 @@ struct Syscall {
             if (!pg) {
                 return -1;
             }
-            if (!p.pt.map(p.brk.initial, ka2pa(cast(uintptr) pg), Pte.Pg.normal, Perm.urwx, &sys.allocator)) {
+            if (!p.pt.mappg(p.brk.initial, ka2pa(cast(uintptr) pg), Perm.urwx)) {
                 kfree(pg);
                 return -1;
             }

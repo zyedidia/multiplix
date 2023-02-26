@@ -111,7 +111,7 @@ bool load(int W)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, out 
                 written += n;
             }
             memset(mem + written, 0, sys.pagesize - written);
-            if (!pt.map(va, ka2pa(cast(uintptr) mem), Pte.Pg.normal, Perm.urwx, &sys.allocator)) {
+            if (!pt.mappg(va, ka2pa(cast(uintptr) mem), Perm.urwx)) {
                 kfree(mem);
                 return false;
             }
