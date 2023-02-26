@@ -41,17 +41,23 @@ Note: for GDC, you must use the version provided in that archive for the new
 Multiplix uses the [Knit](https://github.com/zyedidia/knit) build tool. The
 Knitfile has the following targets:
 
-* `kernel.boot.bin`: build the kernel binary.
-* `qemu`: emulate the kernel using QEMU (requires `qemu-system-riscv` or
+* `kernel.bin`: build the kernel binary.
+* `kernel.boot.bin`: build the bootable kernel binary (kernel binary embedded
+  in the bootloader as a payload).
+* `qemu`: emulate the kernel using QEMU (requires `qemu-system-riscv64` or
   `qemu-system-aarch64`).
 * `bootloader.bin`: build the kernel bootloader.
-* `prog`: send the kernel binary over UART to the bootloader.
+* `prog`: send the kernel over UART to the bootloader.
 
 You can configure the build for a specific board by specifying setting the
-`board` variable to `raspi3`, `raspi4`, `visionfive`, or `visionfive2` (e.g.,
-`knit board=raspi3`).
+`board` variable to `raspi3`, `raspi4`, `visionfive`, `visionfive2`, or
+`virt_riscv64` (e.g., `knit board=raspi3`).
 
 Specify the D compiler with `dc`. Supports `dc=ldc2` or `dc=gdc`.
 
-The `lto` option configures whether the kernel is build with link-time
+The `lto` option configures whether the kernel is built with link-time
 optimization (requires the LLVMgold linker plugin for use with LDC).
+
+The `unified` option controls whether the build is done as a single compilation
+unit (one invocation of the D compiler), or in parallel with multiple
+compilation units.
