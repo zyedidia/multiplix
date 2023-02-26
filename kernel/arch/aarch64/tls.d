@@ -13,7 +13,4 @@ void set_tls_base(uintptr base) {
     } else {
         SysReg.tpidr_el1 = cast(uintptr) base;
     }
-
-    import core.sync;
-    compiler_fence();
 }

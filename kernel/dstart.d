@@ -20,6 +20,8 @@ extern (C) {
 
         uintptr tls_start, stack_start;
         ubyte* heap = init_tls(coreid, tls_start, stack_start);
+        import core.sync;
+        compiler_fence();
         cpuinfo.coreid = coreid;
         cpuinfo.tls = tls_start;
         cpuinfo.stack = stack_start;

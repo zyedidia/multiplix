@@ -24,5 +24,5 @@ void setup() {
     import bits = ulib.bits;
     // Enable cycle counter.
     SysReg.pmcr_el0 = 1;
-    SysReg.pmcntenset_el0 = 1 << 31;bits.set(0, 31);
+    SysReg.pmcntenset_el0 = 1 << 31;
 }
