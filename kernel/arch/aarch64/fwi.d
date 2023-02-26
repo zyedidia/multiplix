@@ -1,36 +1,35 @@
 module kernel.arch.aarch64.fwi;
 
-import ldc.llvmasm;
-
 // dfmt off
 
-private uint hvc(uint ext, uint fid, uintptr a0, uintptr a1, uintptr a2) {
-    return __asm!(uint) (
-        "hvc 0",
-        "={x0},{x7},{x6},{x0},{x1},{x2},~{memory},~{x1}",
-        ext, fid, a0, a1, a2
-    );
-}
-private uint hvc(uint ext, uint fid, uintptr a0, uintptr a1) {
-    return __asm!(uint) (
-        "hvc 0",
-        "={x0},{x7},{x6},{x0},{x1},~{memory},~{x1}",
-        ext, fid, a0, a1
-    );
-}
-private uint hvc(uint ext, uint fid, uintptr a0) {
-    return __asm!(uint) (
-        "hvc 0",
-        "={x0},{x7},{x6},{x0},~{memory},~{x1}",
-        ext, fid, a0
-    );
-}
-private uint hvc(uint ext, uint fid) {
-    return __asm!(uint) (
-        "hvc 0",
-        "={x0},{x7},{x6},~{memory},~{x1}",
-        ext, fid
-    );
+private uint hvc(uint ext, uint fid, uintptr arg0 = 0, uintptr arg1 = 0, uintptr arg2 = 0) {
+    version (LDC) {
+        import ldc.llvmasm;
+        return __asm!(uint) (
+            "hvc 0",
+            "={x0},{x7},{x6},{x0},{x1},{x2},~{memory},~{x1}",
+            ext, fid, arg0, arg1, arg2
+        );
+    }
+    version (GNU) {
+        import gcc.attributes;
+        @register("x7") x7 = ext;
+        @register("x6") x6 = fid;
+        @register("x0") x0 = arg0;
+        @register("x1") x1 = arg1;
+        @register("x2") x2 = arg2;
+        // cast to avoid unused variable linter warnings (linter doesn't see
+        // the inline asm usage)
+        cast(void) x7;
+        cast(void) x6;
+        cast(void) x0;
+        cast(void) x1;
+        cast(void) x2;
+        asm {
+            "hvc 0" : "+r"(x0), "+r"(x1) : "r"(x7), "r"(x6), "r"(x2) : "memory";
+        }
+        return cast(uint) x0;
+    }
 }
 
 // dfmt on

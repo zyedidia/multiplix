@@ -10,6 +10,8 @@ conf = {
     dc = choose(cli.dc, uconf.dc, "ldc2"),
 }
 
+of = sel(conf.dc == "gdc", "o", "of")
+
 build = include("build/build.knit")
 
 function dversion(s)
@@ -31,8 +33,6 @@ end
 
 local tools = build.tools(machine)
 local flags = build.flags(machine, conf.lto, conf.release, monitor)
-
-local of = sel(conf.dc == "gdc", "o", "of")
 
 local meta = r{
     $ .kobj/%.o: %.s

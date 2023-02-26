@@ -64,6 +64,18 @@ version (GNU) {
     size_t msb(ulong x) {
         return x ? x.sizeof * 8 - __builtin_clzll(x) : 0;
     }
+
+    T bswap(T)(T val) {
+        static if (is(T == ushort) || is(T == short)) {
+            return cast(T) __builtin_bswap16(cast(ushort) val);
+        } else static if (is(T == uint) || is(T == int)) {
+            return cast(T) __builtin_bswap32(cast(uint) val);
+        } else static if (is(T == ulong) || is(T == long)) {
+            return cast(T) __builtin_bswap64(cast(ulong) val);
+        } else {
+            static assert(0, "invalid bswap type");
+        }
+    }
 }
 
 version (LDC) {

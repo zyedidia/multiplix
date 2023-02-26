@@ -2,8 +2,6 @@ module kernel.arch.riscv64.sbi;
 
 import ulib.option;
 
-// import ldc.llvmasm;
-
 // This library defines an interface to a RISC-V SBI firmware implementation.
 // Environment calls to the firmware are made with the "ecall" instruction. See
 // the RISC-V Supervisor Binary Interface Specification for details.
@@ -16,61 +14,39 @@ private struct SbiRet {
 // dfmt off
 
 // ecall with 3 args
-private SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1, uintptr a2) {
+private SbiRet ecall(uint ext, uint fid, uintptr arg0 = 0, uintptr arg1 = 0, uintptr arg2 = 0) {
     SbiRet ret;
 
-    // auto result = __asmtuple!(uint, uint) (
-    //     "ecall",
-    //     "={a0},={a1},{a7},{a6},{a0},{a1},{a2},~{memory}",
-    //     ext, fid, a0, a1, a2
-    // );
-    // ret.error = result.v[0];
-    // ret.value = result.v[1];
-
-    return ret;
-}
-
-// ecall with 2 args
-private SbiRet ecall(uint ext, uint fid, uintptr a0, uintptr a1) {
-    SbiRet ret;
-
-    // auto result = __asmtuple!(uint, uint) (
-    //     "ecall",
-    //     "={a0},={a1},{a7},{a6},{a0},{a1},~{memory}",
-    //     ext, fid, a0, a1
-    // );
-    // ret.error = result.v[0];
-    // ret.value = result.v[1];
-
-    return ret;
-}
-
-// ecall with 1 arg
-private SbiRet ecall(uint ext, uint fid, uintptr a0) {
-    SbiRet ret;
-
-    // auto result = __asmtuple!(uint, uint) (
-    //     "ecall",
-    //     "={a0},={a1},{a7},{a6},{a0},~{memory}",
-    //     ext, fid, a0,
-    // );
-    // ret.error = result.v[0];
-    // ret.value = result.v[1];
-
-    return ret;
-}
-
-// ecall with no args
-private SbiRet ecall(uint ext, uint fid) {
-    SbiRet ret;
-
-    // auto result = __asmtuple!(uint, uint) (
-    //     "ecall",
-    //     "={a0},={a1},{a7},{a6},~{memory}",
-    //     ext, fid
-    // );
-    // ret.error = result.v[0];
-    // ret.value = result.v[1];
+    version (LDC) {
+        import ldc.llvmasm;
+        auto result = __asmtuple!(uint, uint) (
+            "ecall",
+            "={a0},={a1},{a7},{a6},{a0},{a1},{a2},~{memory}",
+            ext, fid, arg0, arg1, arg2
+        );
+        ret.error = result.v[0];
+        ret.value = result.v[1];
+    }
+    version (GNU) {
+        import gcc.attributes;
+        @register("a7") a7 = ext;
+        @register("a6") a6 = fid;
+        @register("a0") a0 = arg0;
+        @register("a1") a1 = arg1;
+        @register("a2") a2 = arg2;
+        // cast to avoid unused variable linter warnings (linter doesn't see
+        // the inline asm usage)
+        cast(void) a7;
+        cast(void) a6;
+        cast(void) a0;
+        cast(void) a1;
+        cast(void) a2;
+        asm {
+            "ecall" : "+r"(a0), "+r"(a1) : "r"(a7), "r"(a6), "r"(a2) : "memory";
+        }
+        ret.error = cast(uint) a0;
+        ret.value = cast(uint) a1;
+    }
 
     return ret;
 }

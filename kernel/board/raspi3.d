@@ -28,7 +28,7 @@ struct Machine {
         MemType type;
     }
 
-    enum MemRange[] mem_ranges = [
+    enum MemRange[2] mem_ranges = [
         MemRange(0, sys.mb!(512), MemType.normal),
         MemRange(device_base, sys.mb!(18), MemType.device),
     ];

@@ -158,8 +158,8 @@ version (GNU) {
         __sync_synchronize();
     }
 
-    void atomic_store(T)(T val, shared T* ptr, MemoryOrder order = MemoryOrder.seq) {
-        __atomic_store(T.sizeof, ptr, cast(void*) &val, order);
+    void atomic_store(uint val, shared uint* ptr, MemoryOrder order = MemoryOrder.seq) {
+        __atomic_store_4(ptr, val, order);
     }
 
     bool atomic_cmp_xchg(shared uint* ptr, uint cmp, uint val) {
@@ -176,13 +176,13 @@ version (GNU) {
 
     T atomic_rmw_add(T)(in shared T* ptr, T val, MemoryOrder order = MemoryOrder.seq) {
         static if (is(T == ubyte) || is(T == byte)) {
-            return __atomic_add_fetch_1(cast(shared void*) ptr, cast(ubyte) val, order);
+            return cast(T) __atomic_add_fetch_1(cast(shared void*) ptr, cast(ubyte) val, order);
         } else static if (is(T == ushort) || is(T == short)) {
-            return __atomic_add_fetch_2(cast(shared void*) ptr, cast(ushort) val, order);
+            return cast(T) __atomic_add_fetch_2(cast(shared void*) ptr, cast(ushort) val, order);
         } else static if (is(T == uint) || is(T == int)) {
-            return __atomic_add_fetch_4(cast(shared void*) ptr, cast(uint) val, order);
+            return cast(T) __atomic_add_fetch_4(cast(shared void*) ptr, cast(uint) val, order);
         } else static if (is(T == ulong) || is(T == long)) {
-            return __atomic_add_fetch_8(cast(shared void*) ptr, cast(ulong) val, order);
+            return cast(T) __atomic_add_fetch_8(cast(shared void*) ptr, cast(ulong) val, order);
         } else {
             static assert(0, "atomic_rmw_add input is not an integer");
         }
