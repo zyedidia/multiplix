@@ -19,8 +19,8 @@ function dversion(s)
     return f"$vflag=$s"
 end
 
-function makedeps(s)
-    return sel(conf.dc == "gdc", f"-MD -MF $s", f"-makedeps=$s")
+function makedeps(s, output)
+    return sel(conf.dc == "gdc", f"-M -MF $s -MT $output", f"-makedeps=$s")
 end
 
 build = include("build/build.knit")
@@ -38,7 +38,7 @@ local meta = r{
     $ .kobj/%.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
     $ .kobj/%.o:D[.kobj/deps/%.dep]: %.d
-        $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -$of $output $(makedeps(f".kobj/deps/$match.dep"))
+        $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -$of $output $(makedeps(f".kobj/deps/$match.dep", output))
     $ %.bin: %.elf
         $(tools.objcopy) $input -O binary $output
     $ %.bin.out: %.bin
