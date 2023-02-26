@@ -67,7 +67,6 @@ private:
     uintptr getbuddy(uintptr pn) {
         PhysPage p = pages[pn];
         if (p.order < min_order || p.order > max_order || !valid(pn, p.order)) {
-            assert(false);
             return -1;
         }
 

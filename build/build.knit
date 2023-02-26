@@ -34,6 +34,7 @@ function build.machine(board, monitor)
             mabi = "lp64",
             march = "rv64imac_zicsr_zifencei",
             mattr = "+m,+a,+c,+relax",
+            mflags = "",
             arch = "riscv64",
             mcmodel = "medany",
             qemu = "-M visionfive -bios none -smp 2 -m 2G", -- doesn't exist
@@ -43,6 +44,7 @@ function build.machine(board, monitor)
             mabi = "lp64",
             march = "rv64imac_zicsr_zifencei",
             mattr = "+m,+a,+c,+relax",
+            mflags = "",
             arch = "riscv64",
             mcmodel = "medany",
             qemu = "-M visionfive2 -bios none -smp 4 -m 2G", -- doesn't exist
@@ -52,6 +54,7 @@ function build.machine(board, monitor)
             mabi = "lp64",
             march = "rv64imac_zicsr_zifencei",
             mattr = "+m,+a,+c,+relax",
+            mflags = "",
             arch = "riscv64",
             mcmodel = "medany",
             qemu = "-M virt -bios none -smp 4 -m 2G",
@@ -114,7 +117,7 @@ function build.flags_dc(dc, monitor, machine)
     }
 
     local compiler = {
-        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -Os -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns
+        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -Os -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall
         ldc2 := $(flags.llvm) -betterC -Oz -function-sections -data-sections -fthread-model=local-exec -fno-plt -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J.
     }
     return compiler[dc]

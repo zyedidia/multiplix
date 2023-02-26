@@ -16,7 +16,6 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
             break;
         case Syscall.Num.exit:
             Syscall.exit(p);
-            break;
         case Syscall.Num.fork:
             ret = Syscall.fork(p);
             break;
