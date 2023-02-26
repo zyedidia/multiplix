@@ -58,7 +58,7 @@ struct VaMapping {
     Pte* pte;
     size_t size;
     uintptr pa() { return pte.pa; }
-    Perm perm()  { return pte.perm; };
+    Perm perm()  { return pte.perm; }
 
     uintptr ka() {
         return pa2ka(pa);
