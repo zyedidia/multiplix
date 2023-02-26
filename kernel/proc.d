@@ -53,7 +53,7 @@ struct Proc {
     import kernel.vm;
     import kernel.alloc;
 
-    bool initialize(immutable ubyte[] bin) {
+    bool initialize(ubyte[] bin) {
         import elf = kernel.elf;
         import ulib.math;
         import ulib.memory;

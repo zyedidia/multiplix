@@ -39,3 +39,8 @@ bool equals(string a, string b) {
     }
     return true;
 }
+
+string tostr(const char* s) {
+    import ulib.memory;
+    return cast(string) s[0 .. strlen(s)];
+}

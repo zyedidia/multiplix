@@ -104,7 +104,6 @@ void unmappg(Pagetable* pt, uintptr va, bool free) {
     if (free && pages[pte.pa / sys.pagesize].refcount == 0) {
         kfree(cast(void*) pa2ka(pte.pa));
     }
-    // TODO: need to invalidate this entry from TLB when we switch to this pagetable
     pte.data = 0;
 }
 

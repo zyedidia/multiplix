@@ -33,7 +33,14 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     import kernel.timer;
     Timer.delay_ms(100);
 
-    if (!runq.start(hello_elf)) {
+    // reallocate the hello ELF to make sure it is aligned properly
+    import kernel.alloc;
+    ubyte* hello = cast(ubyte*) kalloc(hello_elf.length);
+    assert(hello);
+    import ulib.memory;
+    memcpy(hello, hello_elf.ptr, hello_elf.length);
+
+    if (!runq.start(hello[0 .. hello_elf.length])) {
         println("could not initialize hello.elf");
         return;
     }

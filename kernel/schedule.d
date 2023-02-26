@@ -37,7 +37,7 @@ struct RunQ {
     }
 
     import kernel.alloc;
-    bool start(immutable ubyte[] binary) {
+    bool start(ubyte[] binary) {
         Proc* p = next();
         if (!p) {
             return false;

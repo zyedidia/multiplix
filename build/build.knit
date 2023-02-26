@@ -93,6 +93,7 @@ end
 function build.flags_llvm(machine)
     local prefix = build.prefix(machine.arch)
 
+    -- TODO: when we upgrade from LDC 1.30, pass -mabi to LDC
     local flags = {
         aarch64 := -mtriple=$prefix -mcpu=$(machine.mcpu) -mattr=$(machine.mattr)
         riscv64 := -mtriple=$prefix -mattr=$(machine.mattr) -code-model=$(machine.cmodel)
@@ -116,8 +117,17 @@ function build.flags_dc(dc, monitor, machine)
         llvm = build.flags_llvm(machine),
     }
 
+    local san = ""
+    if conf.sanitize then
+        if dc ~= "gdc" then
+            print("warning: sanitizer is only supported with gdc")
+        end
+
+        san = "-fsanitize=undefined"
+    end
+
     local compiler = {
-        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -Os -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror
+        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -Os -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror $san
         ldc2 := $(flags.llvm) -betterC -Oz -function-sections -data-sections -fthread-model=local-exec -fno-plt -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J.
     }
     return compiler[dc]

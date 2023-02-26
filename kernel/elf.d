@@ -73,7 +73,7 @@ import sys = kernel.sys;
 import ulib.memory;
 
 // Should be called with a Checkpoint allocator to ensure segments can be freed.
-bool load(int W)(Pagetable* pt, immutable ubyte* elfdat, out uintptr entry, out uintptr brk) {
+bool load(int W)(Pagetable* pt, ubyte* elfdat, out uintptr entry, out uintptr brk) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
     if (elf.magic != magic)

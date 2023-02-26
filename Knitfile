@@ -8,6 +8,7 @@ conf = {
     release = choose(tobool(cli.release), uconf.release, false),
     unified = choose(tobool(cli.unified), uconf.unified, true),
     dc = choose(cli.dc, uconf.dc, "ldc2"),
+    sanitize = choose(tobool(cli.san), tobool(cli.sanitize), uconf.sanitize, false),
 }
 
 of = sel(conf.dc == "gdc", "o", "of")

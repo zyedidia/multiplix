@@ -111,12 +111,12 @@ version (uart) {
         return BootData(cast(ubyte*) entry, base[0 .. nbytes]);
     }
 } else {
-    extern (C) extern __gshared ubyte payload;
+    extern (C) extern __gshared ulong payload;
     extern (C) extern __gshared int payload_size;
 
     BootData unpack() {
         ubyte* entry = (cast(ubyte**) &payload)[0];
-        return BootData(entry, (&payload)[8 .. payload_size]);
+        return BootData(entry, (cast(ubyte*) &payload)[8 .. payload_size]);
     }
 }
 
