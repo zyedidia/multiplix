@@ -9,13 +9,14 @@ function build.prefix(arch)
 end
 
 function build.machine(board, monitor)
-    local tpidr = sel(monitor, "tpidr-el2", "tpidr-el1")
+    local tpidr = sel(conf.dc == "gdc", sel(monitor, "el2", "el1"), sel(monitor, "tpidr-el2", "tpidr-el1"))
     local machines = {
         raspi3 = {
             board = "raspi3",
             march = "armv8-a+crc",
             mcpu = "cortex-a53",
             mattr = f"+strict-align,+$tpidr,-sve,-fp-armv8",
+            mflags = f"-mtp=$tpidr -mgeneral-regs-only",
             arch = "aarch64",
             qemu = "-M raspi3ap -serial null -serial mon:stdio",
         },
@@ -24,6 +25,7 @@ function build.machine(board, monitor)
             march = "armv8-a+crc",
             mcpu = "cortex-a72",
             mattr = f"+strict-align,+$tpidr,-sve,-fp-armv8",
+            mflags = f"-mtp=$tpidr -mgeneral-regs-only",
             arch = "aarch64",
             qemu = "-M raspi4b -serial null -serial mon:stdio" -- doesn't exist
         },
@@ -119,11 +121,23 @@ function build.flags_dc(dc, monitor, machine)
 end
 
 function build.flags(machine, lto, release, monitor)
+    -- LTO currently disabled due to difficulties setting up a flow that can handle
+    -- both GDC and LDC
+    if lto then
+        print("warning: lto is currently required to be disabled")
+    end
+    lto = false
+    -- if conf.dc == "gdc" and lto then
+        -- print("warning: gdc and lto cannot currently be used together")
+    -- end
+
     local prefix = build.prefix(machine.arch)
     local knit = require("knit")
     local version = sel(monitor, "-d-version=monitor", "-d-version=kernel")
     local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
     local flto = sel(lto, "-flto=full", "")
+    -- problem: if we use gcc as the linker then we have to pass -Wl,-plugin-opt=-mattr=+x,+y,+z
+    -- and gcc disallows commas in a -Wl command
     local ltoflags := -plugin=$ltoplugin -plugin-opt=O2 -plugin-opt=-mattr=$(machine.mattr)
     if machine.arch == "riscv64" then
         ltoflags = ltoflags .. f" -plugin-opt=-code-model=$(machine.cmodel)"

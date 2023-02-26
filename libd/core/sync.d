@@ -166,13 +166,13 @@ version (GNU) {
         return __atomic_compare_exchange_4(ptr, &cmp, val, false, MemoryOrder.seq, MemoryOrder.seq);
     }
 
-    // uint lock_test_and_set(shared(uint*) lock, uint val) {
-    //     return __sync_lock_test_and_set_4(lock, val);
-    // }
-    //
-    // void lock_release(shared(uint*) lock) {
-    //     __sync_lock_release_4(lock);
-    // }
+    uint lock_test_and_set(shared(uint*) lock, uint val) {
+        return __sync_lock_test_and_set_4(lock, val);
+    }
+
+    void lock_release(shared(uint*) lock) {
+        __sync_lock_release_4(lock);
+    }
 
     T atomic_rmw_add(T)(in shared T* ptr, T val, MemoryOrder order = MemoryOrder.seq) {
         static if (is(T == ubyte) || is(T == byte)) {
@@ -239,13 +239,13 @@ version (LDC) {
         return _atomic_cmp_xchg(ptr, cmp, val).exchanged;
     }
 
-    // uint lock_test_and_set(shared(uint*) lock, uint val) {
-    //     return atomic_cmp_xchg(lock, 0, 1).previousValue;
-    // }
-    //
-    // void lock_release(shared(uint*) lock) {
-    //     atomic_store(0, lock);
-    // }
+    uint lock_test_and_set(shared(uint*) lock, uint val) {
+        return _atomic_cmp_xchg(lock, 0, 1).previousValue;
+    }
+
+    void lock_release(shared(uint*) lock) {
+        atomic_store(0, lock);
+    }
 
     /// Atomically sets *ptr += val and returns the previous *ptr value.
     pragma(LDC_atomic_rmw, "add")

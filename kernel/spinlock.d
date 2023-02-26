@@ -12,7 +12,7 @@ struct Spinlock {
     shared void lock() {
         Irq.push_off(); // disable interrupts to avoid deadlock
 
-        while (!atomic_cmp_xchg(&locked, 0, 1)) {
+        while (lock_test_and_set(&locked, 1) != 0) {
         }
         memory_fence();
     }
@@ -20,7 +20,7 @@ struct Spinlock {
     // Release the lock.
     shared void unlock() {
         memory_fence();
-        atomic_store(0, &locked);
+        lock_release(&locked);
 
         Irq.pop_off();
     }
