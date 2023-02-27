@@ -84,8 +84,7 @@ extern (C) void printf(scope const char* fmt, ...) {
     sys.stdout.vwritef(fmt, ap);
     va_end(ap);
 }
-import core.stdc.stdarg;
-pragma(printf)
+
 extern (C) void vprintf(scope const char* fmt, va_list ap) {
     import sys = ulib.sys;
     sys.stdout.vwritef(fmt, ap);

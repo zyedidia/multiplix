@@ -23,12 +23,14 @@ struct ExtCpu {
                 asm { "sev"; }
                 break;
             case fwi.Cpu.Fid.enable_vm:
-                auto fence = () {
+                void fence() {
+                    pragma(inline, true);
                     asm {
                         "dsb sy";
                         "isb";
                     }
-                };
+                }
+                SysReg.mair_el2 = (Mair.device_ngnrne << Mair.device_idx * 8) | (Mair.normal_cacheable << Mair.normal_idx * 8);
                 SysReg.tcr_el2 = Tcr.t0sz!(25) | Tcr.t1sz!(25) | Tcr.tg0_4kb | Tcr.tg1_4kb | Tcr.ips_36 | Tcr.irgn | Tcr.orgn | Tcr.sh;
                 SysReg.ttbr0_el2 = regs.x0;
                 fence();
