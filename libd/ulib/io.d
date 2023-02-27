@@ -35,15 +35,36 @@ public:
             if (c == 0)
                 break;
             switch (c) {
+                case 'l':
+                    c = fmt[++i];
+                    if (c == 0)
+                        break;
+                    switch (c) {
+                        case 'd':
+                            write_elem(va_arg!(long)(ap), 10);
+                            break;
+                        case 'u':
+                            write_elem(va_arg!(ulong)(ap), 10);
+                            break;
+                        case 'x':
+                            write_elem("0x");
+                            write_elem(va_arg!(ulong)(ap), 16);
+                            break;
+                        default:
+                            write_elem("%l");
+                            putc(c);
+                            break;
+                    }
+                    break;
                 case 'd':
-                    write_elem(va_arg!(long)(ap), 10);
+                    write_elem(va_arg!(int)(ap), 10);
                     break;
                 case 'u':
-                    write_elem(va_arg!(ulong)(ap), 10);
+                    write_elem(va_arg!(uint)(ap), 10);
                     break;
                 case 'x':
                     write_elem("0x");
-                    write_elem(va_arg!(ulong)(ap), 16);
+                    write_elem(va_arg!(uint)(ap), 16);
                     break;
                 case 'p':
                     write_elem("0x");
