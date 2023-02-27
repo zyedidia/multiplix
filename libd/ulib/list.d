@@ -37,7 +37,7 @@ struct List(T) {
         length++;
     }
 
-    private Node* push(alias fn)(T val) {
+    private Node* push(alias fn)(ref T val) {
         Node* n = knew!(Node)();
         if (!n) {
             return null;
@@ -47,11 +47,11 @@ struct List(T) {
         return n;
     }
 
-    Node* push_back(T val) {
+    Node* push_back(ref T val) {
         return push!(push_back)(val);
     }
 
-    Node* push_front(T val) {
+    Node* push_front(ref T val) {
         return push!(push_front)(val);
     }
 

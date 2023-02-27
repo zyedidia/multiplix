@@ -103,4 +103,14 @@ extern (C) {
         string sfile = cast(string) file[0 .. strlen(file)];
         _assert_msg(smsg, sfile, line);
     }
+
+    // stack protection (GDC-only feature)
+
+    version (GNU) {
+        immutable ulong __stack_chk_guard = 0xdeadc0de;
+
+        void __stack_chk_fail() {
+            panic("stack corruption detected");
+        }
+    }
 }

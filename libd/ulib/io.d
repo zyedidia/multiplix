@@ -22,50 +22,47 @@ public:
 
     import core.stdc.stdarg;
     void vwritef(scope const char* fmt, va_list ap) {
-        // TODO: fix va_arg in LDC
-        version (GNU) {
-            assert(fmt, "null format");
+        assert(fmt, "null format");
 
-            char c;
+        char c;
 
-            for (int i = 0; (c = fmt[i]) != 0; i++) {
-                if (c != '%') {
-                    putc(c);
-                    continue;
-                }
-                c = fmt[++i];
-                if (c == 0)
+        for (int i = 0; (c = fmt[i]) != 0; i++) {
+            if (c != '%') {
+                putc(c);
+                continue;
+            }
+            c = fmt[++i];
+            if (c == 0)
+                break;
+            switch (c) {
+                case 'd':
+                    write_elem(va_arg!(long)(ap), 10);
                     break;
-                switch (c) {
-                    case 'd':
-                        write_elem(va_arg!(long)(ap), 10);
-                        break;
-                    case 'u':
-                        write_elem(va_arg!(ulong)(ap), 10);
-                        break;
-                    case 'x':
-                        write_elem("0x");
-                        write_elem(va_arg!(ulong)(ap), 16);
-                        break;
-                    case 'p':
-                        write_elem("0x");
-                        write_elem(va_arg!(ulong)(ap), 16);
-                        break;
-                    case 's':
-                        immutable(char)* s = va_arg!(immutable(char)*)(ap);
-                        if (!s)
-                            s = "(null)".ptr;
-                        for (; *s; s++)
-                            putc(*s);
-                        break;
-                    case '%':
-                        putc('%');
-                        break;
-                    default:
-                        putc('%');
-                        putc(c);
-                        break;
-                }
+                case 'u':
+                    write_elem(va_arg!(ulong)(ap), 10);
+                    break;
+                case 'x':
+                    write_elem("0x");
+                    write_elem(va_arg!(ulong)(ap), 16);
+                    break;
+                case 'p':
+                    write_elem("0x");
+                    write_elem(va_arg!(ulong)(ap), 16);
+                    break;
+                case 's':
+                    immutable(char)* s = va_arg!(immutable(char)*)(ap);
+                    if (!s)
+                        s = "(null)".ptr;
+                    for (; *s; s++)
+                        putc(*s);
+                    break;
+                case '%':
+                    putc('%');
+                    break;
+                default:
+                    putc('%');
+                    putc(c);
+                    break;
             }
         }
     }
