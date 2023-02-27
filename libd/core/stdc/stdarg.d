@@ -25,10 +25,10 @@ version (GNU) {
 
     // Here va_arg implementations for riscv and aarch64 (from druntime). Fall
     // back to LLVM va_arg intrinsic (which is quite broken and unused).
-    version (RISCV_Any) {
+    version (RISCV64) {
         alias va_list = void*;
 
-        T var_arg(T)(ref va_list ap) {
+        T va_arg(T)(ref va_list ap) {
             static if (T.sizeof > (size_t.sizeof << 1))
                 auto p = *cast(T**) ap;
             else {
