@@ -127,7 +127,7 @@ function build.flags_dc(dc, monitor, machine)
 
     local compiler = {
         gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -Os -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror $san
-        ldc2 := $(flags.llvm) -betterC -Oz -function-sections -data-sections -fthread-model=local-exec -fno-plt -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J.
+        ldc2 := $(flags.llvm) -betterC -Oz -function-sections -data-sections -fthread-model=local-exec -fno-plt -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls
     }
     return compiler[dc]
 end

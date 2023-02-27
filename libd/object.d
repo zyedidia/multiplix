@@ -75,9 +75,9 @@ void println(Args...)(Args args) {
     import sys = ulib.sys;
     sys.stdout.write(args, '\n');
 }
+import core.stdc.stdarg;
 pragma(printf)
 extern (C) void printf(scope const char* fmt, ...) {
-    import core.stdc.stdarg;
     import sys = ulib.sys;
     va_list ap;
     va_start(ap, fmt);

@@ -52,7 +52,11 @@ public:
                         write_elem(va_arg!(ulong)(ap), 16);
                         break;
                     case 's':
-                        // write_elem(va_arg!(char*)(ap));
+                        immutable(char)* s = va_arg!(immutable(char)*)(ap);
+                        if (!s)
+                            s = "(null)".ptr;
+                        for (; *s; s++)
+                            putc(*s);
                         break;
                     case '%':
                         putc('%');

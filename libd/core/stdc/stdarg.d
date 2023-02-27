@@ -14,6 +14,7 @@ version (GNU) {
     void va_arg(T)(ref va_list ap, ref T parmn);
 } else version (LDC) {
     alias va_list = void*;
+    alias __va_list = va_list;
 
     pragma(LDC_va_start)
     void va_start(T)(out va_list ap, ref T parmn);
