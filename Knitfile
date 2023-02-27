@@ -9,6 +9,7 @@ conf = {
     unified = choose(tobool(cli.unified), uconf.unified, true),
     dc = choose(cli.dc, uconf.dc, "ldc2"),
     sanitize = choose(tobool(cli.san), tobool(cli.sanitize), uconf.sanitize, false),
+    stackprot = choose(tobool(cli.stackprot), uconf.stackprot, false),
 }
 
 of = sel(conf.dc == "gdc", "o", "of")

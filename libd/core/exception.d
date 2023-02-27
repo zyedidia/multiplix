@@ -7,6 +7,18 @@ noreturn panic(Args...)(Args msg) {
     _halt();
 }
 
+import core.stdc.stdarg;
+pragma(printf)
+extern (C) noreturn panicf(scope const char* fmt, ...) {
+    import kernel.irq;
+    Irq.off();
+    va_list ap;
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+    _halt();
+}
+
 // Compiler lowers final switch default case to this (which is a runtime error).
 void __switch_errorT()(string file = __FILE__, size_t line = __LINE__) @trusted {
     panic(file, ":", line, ": No appropriate switch clause found");
