@@ -20,46 +20,50 @@ public:
         }
     }
 
-    void writef(scope string format, ...) {
-        va_list ap;
+    import core.stdc.stdarg;
+    void vwritef(scope const char* fmt, va_list ap) {
+        // TODO: fix va_arg in LDC
+        version (GNU) {
+            assert(fmt, "null format");
 
-        assert(format, "null format");
+            char c;
 
-        int c;
-
-        va_start(ap, fmt);
-        for (int i = 0; (c = fmt[i] & 0xff) != 0; i++) {
-            if (c != '%') {
-                putc(c);
-                continue;
-            }
-            c = fmt[++i] & 0xff;
-            if (c == 0)
-                break;
-            switch (c) {
-                case 'd':
-                    write_elem(va_arg!(long)(ap), 10);
-                    break;
-                case 'u':
-                    write_elem(va_arg!(ulong)(ap), 10);
-                    break;
-                case 'x':
-                    write_elem("0x");
-                    write_elem(va_arg!(ulong)(ap), 16);
-                case 'p':
-                    write_elem(va_arg!(void*)(ap));
-                case 's':
-                    write_elem(va_arg!(string)(ap));
-                case '%':
-                    putc('%');
-                    break;
-                default:
-                    putc('%');
+            for (int i = 0; (c = fmt[i]) != 0; i++) {
+                if (c != '%') {
                     putc(c);
+                    continue;
+                }
+                c = fmt[++i];
+                if (c == 0)
                     break;
+                switch (c) {
+                    case 'd':
+                        write_elem(va_arg!(long)(ap), 10);
+                        break;
+                    case 'u':
+                        write_elem(va_arg!(ulong)(ap), 10);
+                        break;
+                    case 'x':
+                        write_elem("0x");
+                        write_elem(va_arg!(ulong)(ap), 16);
+                        break;
+                    case 'p':
+                        write_elem("0x");
+                        write_elem(va_arg!(ulong)(ap), 16);
+                        break;
+                    case 's':
+                        // write_elem(va_arg!(char*)(ap));
+                        break;
+                    case '%':
+                        putc('%');
+                        break;
+                    default:
+                        putc('%');
+                        putc(c);
+                        break;
+                }
             }
         }
-        va_end(ap);
     }
 
 private:

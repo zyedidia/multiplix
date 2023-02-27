@@ -75,6 +75,15 @@ void println(Args...)(Args args) {
     import sys = ulib.sys;
     sys.stdout.write(args, '\n');
 }
+pragma(printf)
+extern (C) void printf(scope const char* fmt, ...) {
+    import core.stdc.stdarg;
+    import sys = ulib.sys;
+    va_list ap;
+    va_start(ap, fmt);
+    sys.stdout.vwritef(fmt, ap);
+    va_end(ap);
+}
 
 ref string _d_arrayappendT(return ref scope string x, scope string y) @trusted;
 

@@ -93,10 +93,9 @@ end
 function build.flags_llvm(machine)
     local prefix = build.prefix(machine.arch)
 
-    -- TODO: when we upgrade from LDC 1.30, pass -mabi to LDC
     local flags = {
         aarch64 := -mtriple=$prefix -mcpu=$(machine.mcpu) -mattr=$(machine.mattr)
-        riscv64 := -mtriple=$prefix -mattr=$(machine.mattr) -code-model=$(machine.cmodel)
+        riscv64 := -mtriple=$prefix -mattr=$(machine.mattr) -code-model=$(machine.cmodel) -mabi=$(machine.mabi)
     }
     return flags[machine.arch]
 end

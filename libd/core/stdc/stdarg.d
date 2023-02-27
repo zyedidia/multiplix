@@ -1,4 +1,7 @@
-module core.arg;
+module core.stdc.stdarg;
+
+// It would be nice to put this in core.arg instead, but we have to put it in
+// core.stdc.stdarg so that GDC will replace the builtins properly.
 
 version (GNU) {
     import gcc.builtins;
@@ -10,11 +13,7 @@ version (GNU) {
     T va_arg(T)(ref va_list ap);
     void va_arg(T)(ref va_list ap, ref T parmn);
 } else version (LDC) {
-    version (RISCV_Any) {
-        alias va_list = void*;
-    } else {
-        alias va_list = char*;
-    }
+    alias va_list = void*;
 
     pragma(LDC_va_start)
     void va_start(T)(out va_list ap, ref T parmn);
@@ -25,5 +24,6 @@ version (GNU) {
     pragma(LDC_va_copy)
     void va_copy(out va_list dest, va_list src);
 
-    // TODO: implementations for va_arg
+    pragma(LDC_va_arg)
+    T va_arg(T)(ref va_list ap);
 }
