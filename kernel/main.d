@@ -17,7 +17,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpuinfo.primary) {
         sys.allocator.construct(cast(uintptr) heap);
 
-        arch.Cpu.start_all_cores();
+        // arch.Cpu.start_all_cores();
     }
 
     arch.setup();

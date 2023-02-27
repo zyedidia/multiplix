@@ -30,7 +30,9 @@ struct Pte {
         "af", 1, // access fault
         "_r", 1, // reserved
         "addr", 36,
-        "_r2", 5,
+        "_r2", 4,
+        "dbm", 1,
+        "contiguous", 1,
         "pxn", 1, // privileged execute never
         "uxn", 1, // unprivileged execute never
         "cow", 1, // copy-on-write (software use)
