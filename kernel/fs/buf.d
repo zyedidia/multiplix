@@ -1,6 +1,6 @@
 module kernel.fs.buf;
 
-import kernel.sleeplock;
+import kernel.spinlock;
 
 struct Buf {
     enum size = 1024;
@@ -9,7 +9,7 @@ struct Buf {
     bool disk;
     uint dev;
     uint blockno;
-    shared Sleeplock lock;
+    shared Spinlock lock;
     uint refcnt;
     Buf* next;
     Buf* prev;
