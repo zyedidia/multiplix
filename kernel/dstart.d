@@ -30,16 +30,16 @@ extern (C) {
         // that primary not be stored in the BSS (since it is used before BSS
         // initialization). Otherwise the compiler will actually invert primary
         // so that it can be stored in the BSS.
-        if (volatile_ld(&primary)) {
+        if (vld(&primary)) {
             uint* bss = &_kbss_start;
             uint* bss_end = &_kbss_end;
             while (bss < bss_end) {
-                volatile_st(bss++, 0);
+                vst(bss++, 0);
             }
 
             import kernel.board;
             Uart.setup(115200);
-            volatile_st(&primary, 0);
+            vst(&primary, 0);
             cpuinfo.primary = true;
         } else {
             cpuinfo.primary = false;
@@ -72,11 +72,11 @@ extern (C) {
         size_t tbss_size = &_tbss_end - &_tbss_start;
         // copy tdata into the tls region
         for (size_t i = 0; i < tdata_size; i++) {
-            volatile_st(cast(ubyte*) tls_start + arch.tcb_size + i, volatile_ld(&_tdata_start + i));
+            vst(cast(ubyte*) tls_start + arch.tcb_size + i, vld(&_tdata_start + i));
         }
         // zero out the tbss
         for (size_t i = 0; i < tbss_size; i++) {
-            volatile_st(cast(ubyte*) tls_start + arch.tcb_size + tdata_size + i, 0);
+            vst(cast(ubyte*) tls_start + arch.tcb_size + tdata_size + i, 0);
         }
 
         arch.set_tls_base(tls_start);

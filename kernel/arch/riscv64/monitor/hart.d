@@ -14,7 +14,7 @@ struct ExtHart {
             case sbi.Hart.Fid.start:
                 break;
             case sbi.Hart.Fid.start_all_cores:
-                volatile_st(&wakeup, 1);
+                vst(&wakeup, 1);
                 break;
             default:
                 return false;

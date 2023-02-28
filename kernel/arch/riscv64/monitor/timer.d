@@ -17,7 +17,7 @@ struct ExtTimer {
             case sbi.Timer.Fid.set_timer:
                 ulong stime_value = regs.a0;
                 ulong id = Csr.mhartid;
-                volatile_st(Clint.mtimecmp(id), stime_value);
+                vst(Clint.mtimecmp(id), stime_value);
                 Csr.mip = bits.clear(Csr.mip, Mip.stip);
                 Csr.mie = bits.set(Csr.mie, Mie.mtie);
                 break;

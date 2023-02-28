@@ -12,7 +12,7 @@ import bits = ulib.bits;
 
 bool wait_reg_mask(uint* reg, uint mask, bool set, uint timeout) {
     for (uint ms = 0; ms <= timeout * 10; ms++) {
-        if ((volatile_ld(reg) & mask) ? set : !set) {
+        if ((vld(reg) & mask) ? set : !set) {
             return true;
         }
 
@@ -71,8 +71,8 @@ struct BcmEmmc(uintptr base) {
 
         for (int block = 0; block < device.transfer_blocks; block++) {
             assert(wait_reg_mask(&regs.int_flags, wrIrpt | 0x8000, true, 2000));
-            uint intr_val = volatile_ld(&regs.int_flags);
-            volatile_st(&regs.int_flags, wrIrpt | 0x8000);
+            uint intr_val = vld(&regs.int_flags);
+            vst(&regs.int_flags, wrIrpt | 0x8000);
 
             if ((intr_val & (0xffff0000 | wrIrpt)) != wrIrpt) {
                 set_last_error(intr_val);
@@ -84,11 +84,11 @@ struct BcmEmmc(uintptr base) {
 
             if (write) {
                 for (; length > 0; length -= 4) {
-                    volatile_st(&regs.data, *data++);
+                    vst(&regs.data, *data++);
                 }
             } else {
                 for (; length > 0; length -= 4) {
-                    *data++ = volatile_ld(&regs.data);
+                    *data++ = vld(&regs.data);
                 }
             }
         }
@@ -105,14 +105,14 @@ struct BcmEmmc(uintptr base) {
             return false;
         }
 
-        volatile_st(&regs.block_size_count, device.block_size | (device.transfer_blocks << 16));
-        volatile_st(&regs.arg1, arg);
-        volatile_st(&regs.cmd_xfer_mode, command_reg);
+        vst(&regs.block_size_count, device.block_size | (device.transfer_blocks << 16));
+        vst(&regs.arg1, arg);
+        vst(&regs.cmd_xfer_mode, command_reg);
 
         int times = 0;
 
         while(times < timeout) {
-            uint reg = volatile_ld(&regs.int_flags);
+            uint reg = vld(&regs.int_flags);
 
             if (reg & 0x8001) {
                 break;
@@ -129,16 +129,16 @@ struct BcmEmmc(uintptr base) {
             return false;
         }
 
-        uint intr_val = volatile_ld(&regs.int_flags);
+        uint intr_val = vld(&regs.int_flags);
 
-        volatile_st(&regs.int_flags, 0xFFFF0001);
+        vst(&regs.int_flags, 0xFFFF0001);
 
         if ((intr_val & 0xFFFF0001) != 1) {
             /* if (EMMC_DEBUG) printf("EMMC_DEBUG: Error waiting for command interrupt complete: %d\n", cmd.index); */
 
             set_last_error(intr_val);
 
-            /* if (EMMC_DEBUG) printf("EMMC_DEBUG: IRQFLAGS: %X - %X - %X\n", volatile_ld(&regs.int_flags), volatile_ld(&regs.status), intr_val); */
+            /* if (EMMC_DEBUG) printf("EMMC_DEBUG: IRQFLAGS: %X - %X - %X\n", vld(&regs.int_flags), vld(&regs.status), intr_val); */
 
             device.last_success = false;
             return false;
@@ -146,13 +146,13 @@ struct BcmEmmc(uintptr base) {
 
         final switch(cmd.response_type) {
             case RT.r48, RT.r48busy:
-                device.last_response[0] = volatile_ld(&regs.response[0]);
+                device.last_response[0] = vld(&regs.response[0]);
                 break;
             case RT.r136:
-                device.last_response[0] = volatile_ld(&regs.response[0]);
-                device.last_response[1] = volatile_ld(&regs.response[1]);
-                device.last_response[2] = volatile_ld(&regs.response[2]);
-                device.last_response[3] = volatile_ld(&regs.response[3]);
+                device.last_response[0] = vld(&regs.response[0]);
+                device.last_response[1] = vld(&regs.response[1]);
+                device.last_response[2] = vld(&regs.response[2]);
+                device.last_response[3] = vld(&regs.response[3]);
                 break;
             case RT.none:
                 break;
@@ -164,16 +164,16 @@ struct BcmEmmc(uintptr base) {
 
         if (cmd.response_type == RT.r48busy || cmd.is_data) {
             assert(wait_reg_mask(&regs.int_flags, 0x8002, true, 2000));
-            intr_val = volatile_ld(&regs.int_flags);
+            intr_val = vld(&regs.int_flags);
 
-            volatile_st(&regs.int_flags, 0xFFFF0002);
+            vst(&regs.int_flags, 0xFFFF0002);
 
             if ((intr_val & 0xFFFF0002) != 2 && (intr_val & 0xFFFF0002) != 0x100002) {
                 set_last_error(intr_val);
                 return false;
             }
 
-            volatile_st(&regs.int_flags, 0xFFFF0002);
+            vst(&regs.int_flags, 0xFFFF0002);
         }
 
         device.last_success = true;
@@ -199,17 +199,17 @@ struct BcmEmmc(uintptr base) {
     }
 
     private static bool reset_command() {
-        volatile_st(&regs.control[1], volatile_ld(&regs.control[1]) | Ctrl1.reset_cmd);
+        vst(&regs.control[1], vld(&regs.control[1]) | Ctrl1.reset_cmd);
 
         for (int i = 0; i < 10000; i++) {
-            if (!(volatile_ld(&regs.control[1]) & Ctrl1.reset_cmd)) {
+            if (!(vld(&regs.control[1]) & Ctrl1.reset_cmd)) {
                 return true;
             }
 
             Timer.delay_ms(1);
         }
 
-        println("EMMC_ERR: Command line failed to reset properly: ", volatile_ld(&regs.control[1]));
+        println("EMMC_ERR: Command line failed to reset properly: ", vld(&regs.control[1]));
 
         return false;
     }
@@ -250,7 +250,7 @@ struct BcmEmmc(uintptr base) {
                     return false;
                 }
 
-                volatile_st(&regs.int_flags, sd_error_mask(SdError.command_timeout));
+                vst(&regs.int_flags, sd_error_mask(SdError.command_timeout));
                 println("EMMC_ERR: SEND_IF_COND CMD TIMEOUT");
             } else {
                 println("EMMC_ERR: Failure sending SEND_IF_COND");
@@ -280,7 +280,7 @@ struct BcmEmmc(uintptr base) {
                     return false;
                 }
 
-                volatile_st(&regs.int_flags, sd_error_mask(SdError.command_timeout));
+                vst(&regs.int_flags, sd_error_mask(SdError.command_timeout));
             } else {
                 println("EMMC_ERR: SDIO Card not supported");
                 return false;
@@ -411,10 +411,10 @@ struct BcmEmmc(uintptr base) {
             }
         }
 
-        uint bsc = volatile_ld(&regs.block_size_count);
+        uint bsc = vld(&regs.block_size_count);
         bsc &= ~0xFFF; //mask off bottom bits
         bsc |= 0x200; //set bottom bits to 512
-        volatile_st(&regs.block_size_count, bsc);
+        vst(&regs.block_size_count, bsc);
 
         device.buffer = &device.scr.scr[0];
         device.block_size = 8;
@@ -459,7 +459,7 @@ struct BcmEmmc(uintptr base) {
     }
 
     private static bool card_reset() {
-        volatile_st(&regs.control[1], Ctrl1.reset_host);
+        vst(&regs.control[1], Ctrl1.reset_host);
 
         /* if (EMMC_DEBUG) printf("EMMC_DEBUG: Card resetting...\n"); */
 
@@ -470,9 +470,9 @@ struct BcmEmmc(uintptr base) {
 
         version (raspi4) {
             // This enabled VDD1 bus power for SD card, needed for RPI 4.
-            uint c0 = volatile_ld(&regs.control[0]);
+            uint c0 = vld(&regs.control[0]);
             c0 |= 0x0F << 8;
-            volatile_st(&regs.control[0], c0);
+            vst(&regs.control[0], c0);
             Timer.delay_ms(3);
         }
 
@@ -481,9 +481,9 @@ struct BcmEmmc(uintptr base) {
         }
 
         // All interrupts go to interrupt register.
-        volatile_st(&regs.int_enable, 0);
-        volatile_st(&regs.int_flags, 0xFFFFFFFF);
-        volatile_st(&regs.int_mask, 0xFFFFFFFF);
+        vst(&regs.int_enable, 0);
+        vst(&regs.int_flags, 0xFFFFFFFF);
+        vst(&regs.int_mask, 0xFFFFFFFF);
 
         Timer.delay_ms(203);
 
@@ -528,7 +528,7 @@ struct BcmEmmc(uintptr base) {
         }
 
         // enable all interrupts
-        volatile_st(&regs.int_flags, 0xFFFFFFFF);
+        vst(&regs.int_flags, 0xFFFFFFFF);
 
         /* if (EMMC_DEBUG) printf("EMMC_DEBUG: Card reset!\n"); */
 
@@ -538,21 +538,21 @@ struct BcmEmmc(uintptr base) {
     private static bool switch_clock_rate(uint base_clock, uint target_rate) {
         uint divider = get_clock_divider(base_clock, target_rate);
 
-        while ((volatile_ld(&regs.status) & (Status.cmd_inhibit | Status.dat_inhibit))) {
+        while ((vld(&regs.status) & (Status.cmd_inhibit | Status.dat_inhibit))) {
             Timer.delay_ms(1);
         }
 
-        uint c1 = volatile_ld(&regs.control[1]) & ~Ctrl1.clk_enable;
+        uint c1 = vld(&regs.control[1]) & ~Ctrl1.clk_enable;
 
-        volatile_st(&regs.control[1], c1);
-
-        Timer.delay_ms(3);
-
-        volatile_st(&regs.control[1], (c1 | divider) & ~0xFFE0);
+        vst(&regs.control[1], c1);
 
         Timer.delay_ms(3);
 
-        volatile_st(&regs.control[1], c1 | Ctrl1.clk_enable);
+        vst(&regs.control[1], (c1 | divider) & ~0xFFE0);
+
+        Timer.delay_ms(3);
+
+        vst(&regs.control[1], c1 | Ctrl1.clk_enable);
 
         Timer.delay_ms(3);
 
@@ -560,17 +560,17 @@ struct BcmEmmc(uintptr base) {
     }
 
     private static bool setup_clock() {
-        volatile_st(&regs.control2, 0);
+        vst(&regs.control2, 0);
 
         uint rate = Mailbox.get_clock_rate(Mailbox.ClockType.emmc);
 
-        uint n = volatile_ld(&regs.control[1]);
+        uint n = vld(&regs.control[1]);
         n |= Ctrl1.clk_int_en;
         n |= get_clock_divider(rate, Sd.clock_normal);
         n &= ~(0xf << 16);
         n |= (11 << 16);
 
-        volatile_st(&regs.control[1], n);
+        vst(&regs.control[1], n);
 
         if (!wait_reg_mask(&regs.control[1], Ctrl1.clk_stable, true, 2000)) {
             println("EMMC_ERR: SD CLOCK NOT STABLE\n");
@@ -580,7 +580,7 @@ struct BcmEmmc(uintptr base) {
         Timer.delay_ms(30);
 
         // enabling the clock
-        volatile_st(&regs.control[1], volatile_ld(&regs.control[1]) | 4);
+        vst(&regs.control[1], vld(&regs.control[1]) | 4);
 
         Timer.delay_ms(30);
 

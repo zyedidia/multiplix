@@ -10,7 +10,7 @@ struct Ns16550(uintptr base) {
     // Currently this device is only used via Qemu, so we don't have to
     // initialize it.
     static void tx(ubyte b) {
-        volatile_st(cast(uint*) base, b);
+        vst(cast(uint*) base, b);
     }
 
     static bool rx_empty() {

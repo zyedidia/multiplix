@@ -18,7 +18,7 @@ struct ExtCpu {
                 // Caches must not yet be enabled so that the store to
                 // wakeup goes directly to memory. Alternatively we could
                 // flush the cache after writing.
-                volatile_st(&wakeup, 1);
+                vst(&wakeup, 1);
                 device_fence();
                 asm { "sev"; }
                 break;

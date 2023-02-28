@@ -17,12 +17,12 @@ struct Jh7110Gpio(uintptr base) {
         uint offset = pin / 4;
         uint shift = 8 * (pin % 4);
 
-        uint dout = volatile_ld(&dout_reg[offset]);
-        uint doen = volatile_ld(&doen_reg[offset]);
+        uint dout = vld(&dout_reg[offset]);
+        uint doen = vld(&doen_reg[offset]);
 
-        volatile_st(&dout_reg[offset], dout & ~(dout_mask << shift) | (1 << shift));
+        vst(&dout_reg[offset], dout & ~(dout_mask << shift) | (1 << shift));
         // enable is active low
-        volatile_st(&doen_reg[offset], doen & ~(doen_mask << shift));
+        vst(&doen_reg[offset], doen & ~(doen_mask << shift));
     }
 
     static void clear(uint pin) {
@@ -33,8 +33,8 @@ struct Jh7110Gpio(uintptr base) {
         uint offset = pin / 4;
         uint shift = 8 * (pin % 4);
 
-        uint dout = volatile_ld(&dout_reg[offset]);
-        volatile_st(&dout_reg[offset], dout & ~(dout_mask << shift));
+        uint dout = vld(&dout_reg[offset]);
+        vst(&dout_reg[offset], dout & ~(dout_mask << shift));
     }
 
     static void write(uint pin, bool value) {

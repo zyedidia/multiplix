@@ -30,10 +30,10 @@ struct BcmGpio(uintptr base) {
         uint off = (pin % 10) * 3;
         uint idx = pin / 10;
 
-        uint v = volatile_ld(&fsel[idx]);
+        uint v = vld(&fsel[idx]);
         v &= ~(0b111 << off);
         v |= fn << off;
-        volatile_st(&fsel[idx], v);
+        vst(&fsel[idx], v);
     }
 
     static void set_output(uint pin) {
@@ -45,14 +45,14 @@ struct BcmGpio(uintptr base) {
     }
 
     static void set_on(uint pin) {
-        volatile_st(set, 1 << pin);
+        vst(set, 1 << pin);
     }
 
     static void set_off(uint pin) {
-        volatile_st(clr, 1 << pin);
+        vst(clr, 1 << pin);
     }
 
     static bool read(uint pin) {
-        return (volatile_ld(lev) >> pin) & 1;
+        return (vld(lev) >> pin) & 1;
     }
 }

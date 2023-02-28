@@ -182,13 +182,13 @@ struct BcmMailbox(uintptr base) {
         enum Regs* regs = cast(Regs*) base;
 
         static uint read() {
-            return volatile_ld(&regs._read);
+            return vld(&regs._read);
         }
         static uint status() {
-            return volatile_ld(&regs._status);
+            return vld(&regs._status);
         }
         static void write(uint val) {
-            volatile_st(&regs._write, val);
+            vst(&regs._write, val);
         }
     }
 

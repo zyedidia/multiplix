@@ -15,9 +15,9 @@ struct Jh7100Gpio(uintptr base) {
             return;
         }
 
-        volatile_st(&gpo[pin].val, 1);
+        vst(&gpo[pin].val, 1);
         // enable is active low
-        volatile_st(&gpo[pin].en, 0);
+        vst(&gpo[pin].en, 0);
     }
 
     static void clear(uint pin) {
@@ -25,7 +25,7 @@ struct Jh7100Gpio(uintptr base) {
             return;
         }
 
-        volatile_st(&gpo[pin].val, 0);
+        vst(&gpo[pin].val, 0);
     }
 
     static void write(uint pin, uint value) {

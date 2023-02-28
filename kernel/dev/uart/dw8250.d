@@ -12,59 +12,59 @@ struct Dw8250(uintptr base) {
     // Receive buffer register
     static uint rbr() {
         enum off = base + 0x0;
-        return volatile_ld(cast(uint*) off);
+        return vld(cast(uint*) off);
     }
     // Divisor latch low
     static uint dll() {
         enum off = base + 0x0;
-        return volatile_ld(cast(uint*) off);
+        return vld(cast(uint*) off);
     }
     // Divisor latch high
     static uint dlh() {
         enum off = base + 0x4;
-        return volatile_ld(cast(uint*) off);
+        return vld(cast(uint*) off);
     }
     // Line control register
     static uint lcr() {
         enum off = base + 0xc;
-        return volatile_ld(cast(uint*) off);
+        return vld(cast(uint*) off);
     }
     // Line status register
     static uint lsr() {
         enum off = base + 0x14;
-        return volatile_ld(cast(uint*) off);
+        return vld(cast(uint*) off);
     }
     // UART status register
     static uint usr() {
         enum off = base + 0x14;
-        return volatile_ld(cast(uint*) off);
+        return vld(cast(uint*) off);
     }
 
     // Write registers
     // Transmit holding register
     static void thr(uint b) {
         enum off = base + 0x0;
-        volatile_st(cast(uint*) off, b);
+        vst(cast(uint*) off, b);
     }
     // Divisor latch low
     static void dll(uint b) {
         enum off = base + 0x0;
-        volatile_st(cast(uint*) off, b);
+        vst(cast(uint*) off, b);
     }
     // Divisor latch high
     static void dlh(uint b) {
         enum off = base + 0x4;
-        volatile_st(cast(uint*) off, b);
+        vst(cast(uint*) off, b);
     }
     // Line control register
     static void lcr(uint b) {
         enum off = base + 0xc;
-        volatile_st(cast(uint*) off, b);
+        vst(cast(uint*) off, b);
     }
     // Fifo control register
     static void fcr(uint b) {
         enum off = base + 0x8;
-        volatile_st(cast(uint*) off, b);
+        vst(cast(uint*) off, b);
     }
 
     enum Lcr {
