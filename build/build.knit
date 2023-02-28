@@ -37,7 +37,7 @@ function build.machine(board, monitor)
             mattr = f"$align_attr,-sve,-fp-armv8",
             mflags = f"-mgeneral-regs-only $malign",
             arch = "aarch64",
-            qemu = "-M virt -smp 4 -m 2G -cpu cortex-a72 -machine virtualization=true"
+            qemu = "-smp 4 -m 2G -cpu cortex-a72 -machine virt,secure=on,virtualization=on"
         },
         visionfive = {
             board = "visionfive",

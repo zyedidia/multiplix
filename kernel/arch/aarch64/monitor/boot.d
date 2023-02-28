@@ -13,16 +13,13 @@ void enter_el2() {
     // Enable SIMD/FP.
     SysReg.cptr_el2 = bits.clear(SysReg.cptr_el2, 10);
 
-    // virt_aarch64 starts in EL2, so we don't need this code
-    version (virt_aarch64) {} else {
-        SysReg.cptr_el3 = bits.clear(SysReg.cptr_el3, 10);
-        // Set spsr to return to EL2h.
-        SysReg.spsr_el3 = Spsr.a | Spsr.i | Spsr.f | Spsr.el2h;
-        // Configure EL2 to run in aarch64 non-secure mode.
-        SysReg.scr_el3 = Scr.reserved | Scr.rw_aarch64 | Scr.ns | Scr.hce | Scr.smd;
+    SysReg.cptr_el3 = bits.clear(SysReg.cptr_el3, 10);
+    // Set spsr to return to EL2h.
+    SysReg.spsr_el3 = Spsr.a | Spsr.i | Spsr.f | Spsr.el2h;
+    // Configure EL2 to run in aarch64 non-secure mode.
+    SysReg.scr_el3 = Scr.reserved | Scr.rw_aarch64 | Scr.ns | Scr.hce | Scr.smd;
 
-        _enter_el2();
-    }
+    _enter_el2();
 }
 
 void enter_el1() {
