@@ -10,6 +10,7 @@ conf = {
     dc = choose(cli.dc, uconf.dc, "ldc2"),
     sanitize = choose(tobool(cli.san), tobool(cli.sanitize), uconf.sanitize, false),
     stackprot = choose(tobool(cli.stackprot), uconf.stackprot, false),
+    analyzer = choose(tobool(cli.analyzer), uconf.analyzer, false),
 }
 
 of = sel(conf.dc == "gdc", "o", "of")
@@ -142,15 +143,6 @@ local allsrc = knit.rglob(".", "*.d")
 
 local bootloader = dofile("build/bootloader.knit")
 
-local analyze
-if conf.dc == "gdc" then
-    analyze = $ analyze:VB: $(src.kernel()) user/hello/hello.elf[I]
-                  $(tools.dc) $(flags.dc) -fanalyzer -Wno-analyzer-infinite-recursion -I. -Ilibd $input -c -o /dev/null
-else
-    analyze = $ analyze:VB:
-                  echo "analyze requires gdc"
-end
-
 return b{
     $ all:V: kernel.elf
 
@@ -178,8 +170,6 @@ return b{
 
     $ lint-%:VB: %
         dscanner --styleCheck $input --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
-
-    analyze,
 
     include("user/hello/build.knit"),
 

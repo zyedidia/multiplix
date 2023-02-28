@@ -11,6 +11,8 @@ jobs:
             board: virt_riscv64
           - arch: aarch64-none-elf
             board: raspi3
+          - compiler: gdc
+            analyzer: analyzer=1
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -30,11 +32,7 @@ jobs:
         echo "/opt/gnu-toolchain/bin" >> $GITHUB_PATH
 
     - name: Build (unified, no lto)
-      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=false unified=true
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} ${{ matrix.analyzer }} lto=false unified=true
 
     - name: Build (not unified, no lto)
-      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=false unified=false
-
-    - name: Analyze
-      if: matrix.compiler == 'gdc'
-      run: knit analyze board=${{ matrix.board }} dc=gdc
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} ${{ matrix.analyzer }} lto=false unified=false
