@@ -4,6 +4,8 @@ version (raspi3) {
     public import kernel.board.raspi3;
 } else version (raspi4) {
     public import kernel.board.raspi4;
+} else version (virt_aarch64) {
+    public import kernel.board.virt_aarch64;
 } else version (visionfive) {
     public import kernel.board.visionfive;
 } else version (visionfive2) {

@@ -15,7 +15,7 @@ import sys = kernel.sys;
 
 shared Pagetable tbl;
 
-align(4096) __gshared ubyte[4096 * 4] ptheap;
+align(4096) __gshared ubyte[4096 * 8] ptheap;
 
 // Map the kernel into the high region of the address space. Called during initialization.
 void kernel_procmap(Pagetable* pt) {
