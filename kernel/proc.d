@@ -109,9 +109,12 @@ struct Proc {
         foreach (map; VmRange(pt)) {
             if (!iska(map.va)) {
                 import kernel.page;
-                pages[map.pa / sys.pagesize].refcount--;
-                if (pages[map.pa / sys.pagesize].refcount == 0)
+                auto pg = &pages[map.pa / sys.pagesize];
+                pg.lock();
+                (cast(Page*)pg).refcount--;
+                if ((cast()pg).refcount == 0)
                     kfree(cast(void*) map.ka);
+                pg.unlock();
             }
         }
 
@@ -127,10 +130,6 @@ struct Proc {
 
         bool irqen = Irq.irqen;
         kswitch(&context, &runq.context);
-
-        asm {
-            "" ::: "tp";
-        }
 
         // NOTE: we may resume on a different core if a migration has occurred.
         // This means if we access thread-local storage (which we do), we have

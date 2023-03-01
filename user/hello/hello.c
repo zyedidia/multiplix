@@ -10,7 +10,7 @@
 int main() {
     int child = fork();
     if (child != 0) {
-        wait(NULL);
+        /* wait(NULL); */
     }
 
     int pid = getpid();

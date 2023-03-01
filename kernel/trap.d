@@ -52,7 +52,9 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
 
     if (fault == FaultType.write && map.cow() && map.read()) {
         import kernel.page;
-        Page* pg = &pages[map.pa / sys.pagesize];
+        auto pg = &pages[map.pa / sys.pagesize];
+        pg.lock();
+        scope(exit) pg.unlock();
         if (pg.refcount == 1) {
             // we are the only one with a reference, so just take over the page
             map.pte.perm = map.perm & ~Perm.cow | Perm.w;
@@ -60,7 +62,7 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
         }
 
         // copy-on-write
-        pages[map.pa / sys.pagesize].refcount--;
+        (cast(Page*)pg).refcount--;
         void* mem = null;
         while (!mem) {
             import kernel.schedule;
