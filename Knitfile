@@ -105,6 +105,7 @@ end
 function obj.masm()
     return knit.prefix({
         f"kernel/arch/$(machine.arch)/monitor/monitorasm.o",
+        "libd/libc.o",
     }, ".bootobj/")
 end
 
