@@ -54,6 +54,6 @@ struct WaitQueue {
     private void wake(Proc* p) {
         import kernel.schedule;
         (cast()procs).remove(p.node);
-        runq.enqueue(p);
+        next_runq.enqueue(p);
     }
 }

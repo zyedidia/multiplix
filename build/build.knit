@@ -142,7 +142,7 @@ function build.flags_dc(dc, monitor, machine)
     local analyzer = get_gdc(conf.analyzer, "analyzer", "-fanalyzer -Wno-analyzer-infinite-recursion")
 
     local compiler = {
-        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -Os -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror $san -Wframe-larger-than=1024 $stackprot $analyzer
+        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror $san -Wframe-larger-than=1024 $stackprot $analyzer
         ldc2 := $(flags.llvm) -betterC -Oz -function-sections -data-sections -fthread-model=local-exec -fno-plt -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls
     }
     return compiler[dc]

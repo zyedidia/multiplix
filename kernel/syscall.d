@@ -194,6 +194,7 @@ struct Syscall {
             if (Timer.us_since(start_time) >= us) {
                 break;
             }
+            import kernel.cpu;
             p.block();
         }
         ticksq.remove_(p);
