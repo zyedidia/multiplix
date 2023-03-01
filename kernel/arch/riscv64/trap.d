@@ -43,7 +43,7 @@ extern (C) void kerneltrap() {
         irq_handler(IrqType.timer);
     } else {
         import core.exception;
-        panic("[unhandled kernel trap] epc: ", cast(void*) sepc, " cause: ", Hex(scause));
+        panic("[unhandled kernel trap] core: ", cpu.coreid, " epc: ", cast(void*) sepc, " cause: ", scause);
     }
 }
 
@@ -95,7 +95,7 @@ noreturn usertrapret(Proc* p) {
     Csr.stvec = cast(uintptr) &uservec;
 
     // set up trapframe
-    p.trapframe.ktp = cpuinfo.tls;
+    p.trapframe.ktp = cpu.coreid;
     p.trapframe.ksp = p.kstackp();
     p.trapframe.kgp = rd_gp();
     Csr.sscratch = cast(uintptr) p;

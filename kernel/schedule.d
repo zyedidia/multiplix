@@ -73,12 +73,14 @@ __gshared RunQ[Machine.ncores] global_runqs;
 
 import kernel.cpu;
 ref RunQ runq() {
-    return global_runqs[cpuinfo.coreid];
+    return global_runqs[cpu.coreid];
 }
 
 ref RunQ next_runq() {
     import ulib.rand;
-    return global_runqs[rand() % Machine.ncores];
+    int core = rand() % Machine.ncores;
+    println("next core ", core);
+    return global_runqs[core];
     // return global_runqs[1];
 }
 
@@ -97,6 +99,7 @@ noreturn scheduler() {
             // wait in low power state if there are no processes
             if (!p)
                 wfi();
+            println(cpu.coreid, " ", p);
         }
         Irq.off();
         assert(p.state == Proc.State.runnable);

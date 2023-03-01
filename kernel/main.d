@@ -14,7 +14,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     arch.ArchTrap.setup();
 
-    if (cpuinfo.primary) {
+    if (cpu.primary) {
         sys.allocator.construct(cast(uintptr) heap);
 
         // reallocate the hello ELF to make sure it is aligned properly
@@ -35,7 +35,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.setup();
 
     lock.lock();
-    println("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
+    println("entered kmain at: ", &kmain, " core: ", &_cpu[coreid], " ", _cpu[coreid].coreid);
     lock.unlock();
 
     import kernel.arch;

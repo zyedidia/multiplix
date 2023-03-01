@@ -14,7 +14,7 @@ shared Spinlock lock;
 shared int x;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
-    if (cpuinfo.primary) {
+    if (cpu.primary) {
         // boot up the other cores
         arch.Cpu.start_all_cores();
     }
@@ -23,7 +23,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     (cast() x)++;
     lock.unlock();
 
-    if (cpuinfo.primary) {
+    if (cpu.primary) {
         Timer.delay_ms(10);
         assert(x == System.ncores);
         println("multicore-boot: PASS");

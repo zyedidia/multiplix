@@ -3,22 +3,20 @@ module kernel.irq;
 import kernel.arch;
 
 struct Irq {
-    static int noff;   // depth of push_off
-    static bool irqen; // were irqs enabled before push_off
-
+    import kernel.cpu;
     static void push_off() {
         bool old = ArchTrap.is_on();
         off();
-        if (noff == 0)
-            irqen = old;
-        noff++;
+        if (cpu.noff == 0)
+            cpu.irqen = old;
+        cpu.noff++;
     }
 
     static void pop_off() {
         assert(!ArchTrap.is_on());
-        assert(noff >= 1);
-        noff--;
-        if (noff == 0 && irqen)
+        assert(cpu.noff >= 1);
+        cpu.noff--;
+        if (cpu.noff == 0 && cpu.irqen)
             on();
     }
 

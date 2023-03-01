@@ -12,6 +12,7 @@ struct Spinlock {
     shared void lock() {
         Irq.push_off(); // disable interrupts to avoid deadlock
 
+        import kernel.board;
         while (lock_test_and_set(&locked, 1) != 0) {
         }
         memory_fence();

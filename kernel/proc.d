@@ -128,17 +128,11 @@ struct Proc {
         assert(!Irq.is_on());
         assert(canary == Proc.magic);
 
-        bool irqen = Irq.irqen;
+        import kernel.cpu;
+        bool irqen = cpu.irqen;
         kswitch(&context, &runq.context);
-
-        // NOTE: we may resume on a different core if a migration has occurred.
-        // This means if we access thread-local storage (which we do), we have
-        // to be careful. On certain architectures (aarch64) the thread-pointer
-        // is a system register, which the compiler does not assume to be
-        // clobbered by a function call (in fact, I don't think it is possible
-        // to directly express that the thread pointer has been clobbered).
-        // Thus we have to clobber the entire register file.
-        Irq.irqen = irqen;
+        .brk();
+        cpu.irqen = irqen;
     }
 
     import kernel.wait;

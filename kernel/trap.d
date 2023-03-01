@@ -6,13 +6,12 @@ enum IrqType {
     timer,
 }
 
-import kernel.wait;
-WaitQueue ticksq;
+import kernel.cpu;
 
 // Irq handler for kernel interrupts.
 void irq_handler(IrqType irq) {
     if (irq == IrqType.timer) {
-        ticksq.wake_all_();
+        cpu.ticksq.wake_all_();
         import kernel.timer;
         Timer.intr();
     }
@@ -71,7 +70,7 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
             mem = kalloc(sys.pagesize);
             if (!mem) {
                 // XXX: could have a memq for processes blocked waiting for memory
-                ticksq.enqueue_(p);
+                cpu.ticksq.enqueue_(p);
                 p.block();
             }
         }

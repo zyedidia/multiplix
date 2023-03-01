@@ -27,7 +27,7 @@ extern (C) void monitor_exception(Regs* regs) {
             break;
         default:
             import core.exception;
-            panic("[unhandled exception] monitor_exception: core: ", cpuinfo.coreid, ", cause: ", exc_class, " elr: ", cast(void*) SysReg.elr_el2);
+            panic("[unhandled exception] monitor_exception: core: ", cpu.coreid, ", cause: ", exc_class, " elr: ", cast(void*) SysReg.elr_el2);
     }
 }
 

@@ -47,7 +47,7 @@ struct Machine {
     static void setup() {
         version (kernel) {
             import kernel.cpu;
-            if (cpuinfo.primary) {
+            if (cpu.primary) {
                 // raise clock speed to max
                 uint max_clock = Mailbox.get_max_clock_rate(Mailbox.ClockType.arm);
                 Mailbox.set_clock_rate(Mailbox.ClockType.arm, max_clock, false);
