@@ -1,7 +1,5 @@
 module ulib.memory;
 
-extern (C):
-
 void* memcpy(void* dst, const(void)* src, size_t n) {
     char* s = cast(char*) src;
     for (char* d = cast(char*) dst; n > 0; --n, ++s, ++d) {

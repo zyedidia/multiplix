@@ -143,34 +143,30 @@ function build.flags_dc(dc, monitor, machine)
 
     local compiler = {
         gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror $san -Wframe-larger-than=1024 $stackprot $analyzer -ftransition=tls
-        ldc2 := $(flags.llvm) -betterC -Oz -function-sections -data-sections -fthread-model=global-dynamic -fno-plt -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls
+        ldc2 := $(flags.llvm) -betterC -Oz -function-sections -data-sections -fthread-model=global-dynamic -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls
     }
     return compiler[dc]
 end
 
 function build.flags(machine, lto, release, monitor)
-    -- LTO currently disabled due to difficulties setting up a flow that can handle
-    -- both GDC and LDC
-    if lto then
-        print("warning: lto is currently required to be disabled")
-    end
-    lto = false
-    -- if conf.dc == "gdc" and lto then
-        -- print("warning: gdc and lto cannot currently be used together")
-    -- end
-
     local prefix = build.prefix(machine.arch)
     local knit = require("knit")
-    local version = sel(monitor, "-d-version=monitor", "-d-version=kernel")
-    local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
-    local flto = sel(lto, "-flto=full", "")
-    -- problem: if we use gcc as the linker then we have to pass -Wl,-plugin-opt=-mattr=+x,+y,+z
-    -- and gcc disallows commas in a -Wl command
-    local ltoflags := -plugin=$ltoplugin -plugin-opt=O2 -plugin-opt=-mattr=$(machine.mattr)
-    if machine.arch == "riscv64" then
-        ltoflags = ltoflags .. f" -plugin-opt=-code-model=$(machine.cmodel)"
+
+    local ldlto = ""
+    local dclto = ""
+    if lto then
+        if conf.dc == "gdc" and lto then
+            dclto := -flto
+            ldlto := -flto
+        else
+            local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
+            dclto := -flto=full
+            ldlto := -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=O2 -Xlinker -plugin-opt=-mattr=$(machine.mattr)
+            if machine.arch == "riscv64" then
+                ldlto = ldlto .. f" -Wl,-plugin-opt=-code-model=$(machine.cmodel)"
+            end
+        end
     end
-    ltoflags = sel(lto, ltoflags, "")
 
     local flags = {
         llvm = build.flags_llvm(machine),
@@ -179,10 +175,10 @@ function build.flags(machine, lto, release, monitor)
     }
 
     return {
-        dc := $(flags.dc) $flto
+        dc := $(flags.dc) $dclto
         cc := -Os $(flags.gnu)
         as := -Os $(flags.gnu) -xassembler-with-cpp
-        ld := -Wl,--gc-sections -nostdlib -nostartfiles -lgcc $(flags.gnu)
+        ld := $ldlto -Wl,--gc-sections -nostdlib -nostartfiles -lgcc $(flags.gnu) -lc
         qemu := $(machine.qemu) -nographic
     }
 end
