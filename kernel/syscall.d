@@ -190,13 +190,13 @@ struct Syscall {
 
         import kernel.trap;
         while (1) {
-            ticksq.enqueue(p);
+            ticksq.enqueue_(p);
             if (Timer.us_since(start_time) >= us) {
                 break;
             }
             p.block();
         }
-        ticksq.remove(p);
+        ticksq.remove_(p);
     }
 
     static int open(Proc* p, char* path, int flags) {

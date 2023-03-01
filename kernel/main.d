@@ -34,10 +34,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     println("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
 
-    if (!cpuinfo.primary) {
-        return;
-    }
-
     import kernel.arch;
     // start generating timer interrupts
     ArchTimer.intr();

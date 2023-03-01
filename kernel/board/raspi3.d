@@ -48,14 +48,14 @@ struct Machine {
         version (kernel) {
             import kernel.cpu;
             if (cpuinfo.primary) {
-                CoreTimer.enable_irq();
-
                 // raise clock speed to max
                 uint max_clock = Mailbox.get_max_clock_rate(Mailbox.ClockType.arm);
                 Mailbox.set_clock_rate(Mailbox.ClockType.arm, max_clock, false);
                 println("arm clock: ", Mailbox.get_clock_rate(Mailbox.ClockType.arm), " Hz");
                 println("temp: ", Mailbox.get_temp());
             }
+
+            CoreTimer.enable_irq();
         }
     }
 }
