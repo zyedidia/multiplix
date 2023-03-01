@@ -141,6 +141,9 @@ struct Syscall {
         p.state = Proc.State.exited;
         exited.enqueue(p);
 
+        // TODO: reset pagetable to kernel pagetable
+
+        // TODO: add a process lock to protect the state
         if (p.parent && p.parent.state == Proc.State.blocked) {
             waiters.wake_one(p.parent);
         }
