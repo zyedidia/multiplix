@@ -99,33 +99,41 @@ struct Syscall {
         child.pid = atomic_rmw_add(&nextpid, 1);
 
         // mark the child as runnable.
-        runq.ready(child.node);
+        runq.enqueue(child);
 
         return child.pid;
     }
+
+    import kernel.wait;
+    static shared WaitQueue waiters;
 
     static int wait(Proc* waiter) {
         if (waiter.children == 0)
             return -1;
 
         while (true) {
-            foreach (ref zombie; runq.exited) {
+            exited.lock.lock();
+            foreach (ref zombie; (cast()exited).procs) {
                 if (zombie.val.parent == waiter) {
-                    // child already exited
+                    // child has exited
                     int pid = zombie.val.pid;
-                    runq.exited.remove(zombie);
+                    (cast()exited).procs.remove(zombie);
                     zombie.val.free();
                     kfree(zombie);
                     waiter.children--;
+                    exited.lock.unlock();
                     return pid;
                 }
             }
+            exited.lock.unlock();
             // block and wait for something to exit
-            runq.block(waiter.node);
-            waiter.yield();
+            waiters.enqueue(waiter);
+            waiter.block();
             // we have woken up, so check the zombies again for a child
         }
     }
+
+    static shared WaitQueue exited;
 
     static noreturn exit(Proc* p) {
         println(p.pid, ": exited");
@@ -134,11 +142,11 @@ struct Syscall {
         if (p.parent && p.parent.state == Proc.State.blocked) {
             p.parent.trapframe.regs.retval = p.pid;
             p.parent.children--;
-            runq.unblock(p.parent.node);
+            waiters.wake_one(p.parent);
         }
 
-        runq.exit(p.node);
-        p.yield();
+        exited.enqueue(p);
+        p.block();
 
         import core.exception;
         panic("exited process resumed");
@@ -180,14 +188,15 @@ struct Syscall {
 
         ulong start_time = Timer.time();
 
-        while (true) {
-            runq.block(p.node);
-            p.yield();
-
+        import kernel.trap;
+        while (1) {
+            ticksq.enqueue(p);
             if (Timer.us_since(start_time) >= us) {
-                return;
+                break;
             }
+            p.block();
         }
+        ticksq.remove(p);
     }
 
     static int open(Proc* p, char* path, int flags) {

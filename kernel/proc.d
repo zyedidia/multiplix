@@ -118,6 +118,7 @@ struct Proc {
         pt.free();
     }
 
+    // Switch to another kernel thread.
     void yield() {
         import kernel.schedule;
         import kernel.irq;
@@ -129,8 +130,17 @@ struct Proc {
         Irq.irqen = irqen;
     }
 
+    import kernel.wait;
+    import kernel.schedule;
+
+    // Removes this proc from the runnable queue, yields, and places it
+    // back.
+    void block() {
+        state = Proc.State.blocked;
+        yield();
+    }
+
     static void forkret() {
-        import kernel.schedule;
         usertrapret(runq.curproc);
     }
 }

@@ -8,8 +8,6 @@ import ulib.list;
 struct RunQ {
     Proc* curproc;
     List!(Proc) runnable;
-    List!(Proc) blocked;
-    List!(Proc) exited;
 
     shared Spinlock lock;
 
@@ -46,38 +44,15 @@ struct RunQ {
             kfree(p.node);
             return false;
         }
-        ready(p.node);
+        enqueue(p);
         return true;
     }
 
     // Puts n in the runnable queue.
-    void ready(Node* n) {
-        n.val.state = Proc.State.runnable;
+    void enqueue(Proc* p) {
+        p.state = Proc.State.runnable;
         lock.lock();
-        runnable.push_back(n);
-        lock.unlock();
-    }
-
-    void block(Node* n) {
-        n.val.state = Proc.State.blocked;
-        move!(blocked, runnable)(n);
-    }
-
-    void unblock(Node* n) {
-        n.val.state = Proc.State.runnable;
-        move!(runnable, blocked)(n);
-    }
-
-    void exit(Node* n) {
-        n.val.state = Proc.State.exited;
-        move!(exited, runnable)(n);
-    }
-
-    // Moves the process from one queue to another.
-    private void move(alias List!(Proc) to, alias List!(Proc) from)(Node* n) {
-        lock.lock();
-        from.remove(n);
-        to.push_back(n);
+        runnable.push_back(p.node);
         lock.unlock();
     }
 
@@ -89,7 +64,6 @@ struct RunQ {
             return null;
         }
         Node* n = runnable.pop_front();
-        runnable.push_back(n);
         return &n.val;
     }
 }
@@ -119,5 +93,8 @@ noreturn scheduler() {
 
         // process is done running for now
         runq.curproc = null;
+        if (p.state == Proc.State.runnable) {
+            runq.enqueue(p);
+        }
     }
 }
