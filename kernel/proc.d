@@ -128,7 +128,6 @@ struct Proc {
         bool irqen = Irq.irqen;
         kswitch(&context, &runq.context);
 
-        .brk();
         asm {
             "" ::: "tp";
         }

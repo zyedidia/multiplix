@@ -78,8 +78,8 @@ ref RunQ runq() {
 
 ref RunQ next_runq() {
     import ulib.rand;
-    // return global_runqs[rand() % Machine.ncores];
-    return global_runqs[1];
+    return global_runqs[rand() % Machine.ncores];
+    // return global_runqs[1];
 }
 
 extern (C) void kswitch(Context* oldp, Context* newp);

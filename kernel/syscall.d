@@ -105,6 +105,7 @@ struct Syscall {
     }
 
     import kernel.wait;
+    static shared WaitQueue exited;
     static shared WaitQueue waiters;
 
     static int wait(Proc* waiter) {
@@ -133,19 +134,16 @@ struct Syscall {
         }
     }
 
-    static shared WaitQueue exited;
-
     static noreturn exit(Proc* p) {
         println(p.pid, ": exited");
         import kernel.schedule;
 
+        p.state = Proc.State.exited;
+        exited.enqueue(p);
+
         if (p.parent && p.parent.state == Proc.State.blocked) {
-            p.parent.trapframe.regs.retval = p.pid;
-            p.parent.children--;
             waiters.wake_one(p.parent);
         }
-
-        exited.enqueue(p);
         p.block();
 
         import core.exception;
