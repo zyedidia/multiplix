@@ -4,6 +4,8 @@ import kernel.spinlock;
 
 immutable ubyte[] hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
 
+shared Spinlock lock;
+
 extern (C) void kmain(int coreid, ubyte* heap) {
     import arch = kernel.arch;
     import sys = kernel.sys;
@@ -32,7 +34,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     arch.setup();
 
+    lock.lock();
     println("entered kmain at: ", &kmain, " core: ", cpuinfo.coreid);
+    lock.unlock();
 
     import kernel.arch;
     // start generating timer interrupts

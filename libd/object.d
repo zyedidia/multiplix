@@ -67,38 +67,27 @@ void assume(bool b) {
     }
 }
 
-import kernel.spinlock;
-private shared Spinlock print_lock;
-
 void print(Args...)(Args args) {
-    print_lock.lock();
     import sys = ulib.sys;
     sys.stdout.write(args);
-    print_lock.unlock();
 }
 void println(Args...)(Args args) {
-    print_lock.lock();
     import sys = ulib.sys;
     sys.stdout.write(args, '\n');
-    print_lock.unlock();
 }
 import core.stdc.stdarg;
 pragma(printf)
 extern (C) void printf(scope const char* fmt, ...) {
-    print_lock.lock();
     import sys = ulib.sys;
     va_list ap;
     va_start(ap, fmt);
     sys.stdout.vwritef(fmt, ap);
     va_end(ap);
-    print_lock.unlock();
 }
 
 extern (C) void vprintf(scope const char* fmt, va_list ap) {
-    print_lock.lock();
     import sys = ulib.sys;
     sys.stdout.vwritef(fmt, ap);
-    print_lock.unlock();
 }
 
 ref string _d_arrayappendT(return ref scope string x, scope string y) @trusted;
