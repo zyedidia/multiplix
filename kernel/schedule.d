@@ -68,7 +68,13 @@ struct RunQ {
     }
 }
 
-RunQ runq;
+import kernel.board;
+RunQ[Machine.ncores] global_runqs;
+
+import kernel.cpu;
+ref RunQ runq() {
+    return global_runqs[cpuinfo.coreid];
+}
 
 extern (C) void kswitch(Context* oldp, Context* newp);
 
