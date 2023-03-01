@@ -41,7 +41,7 @@ struct Syscall {
     import kernel.vm;
     import kernel.arch;
     import kernel.alloc;
-    import ulib.memory;
+    import libc;
     import core.sync;
     import sys = kernel.sys;
 

@@ -64,7 +64,7 @@ extern (C) {
     }
 
     void _d_assertp(immutable(char*) file, uint line) {
-        import ulib.memory : strlen;
+        import libc : strlen;
 
         _assert(file[0 .. strlen(file)], line);
     }
@@ -74,7 +74,7 @@ extern (C) {
     }
 
     void _d_arrayboundsp(immutable(char*) file, uint line) {
-        import ulib.memory : strlen;
+        import libc : strlen;
 
         _arraybounds(file[0 .. strlen(file)], line);
     }
@@ -85,7 +85,7 @@ extern (C) {
 
     void _d_arraybounds_slicep(immutable(char*) file, uint line, size_t lower,
             size_t upper, size_t length) {
-        import ulib.memory : strlen;
+        import libc : strlen;
 
         _arraybounds_slice(file[0 .. strlen(file)], line, lower, upper, length);
     }
@@ -95,7 +95,7 @@ extern (C) {
     }
 
     void _d_arraybounds_indexp(immutable(char*) file, uint line, size_t index, size_t length) {
-        import ulib.memory : strlen;
+        import libc : strlen;
 
         _arraybounds_index(file[0 .. strlen(file)], line, index, length);
     }
@@ -109,7 +109,7 @@ extern (C) {
     }
 
     void __assert(const(char)* msg, const(char)* file, int line) {
-        import ulib.memory : strlen;
+        import libc : strlen;
 
         string smsg = cast(string) msg[0 .. strlen(msg)];
         string sfile = cast(string) file[0 .. strlen(file)];

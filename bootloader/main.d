@@ -10,7 +10,7 @@ import arch = kernel.arch;
 
 import crc = ulib.crc32;
 
-import ulib.memory;
+import libc;
 
 __gshared bool primary = true;
 

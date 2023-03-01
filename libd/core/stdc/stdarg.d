@@ -51,7 +51,7 @@ version (GNU) {
         alias va_list = __va_list;
 
         T va_arg(T)(ref va_list ap) {
-            import ulib.memory;
+            import libc;
             static if (is(T ArgTypes == __argTypes)) {
                 T onStack() {
                     void* arg = ap.__stack;

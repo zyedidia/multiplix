@@ -145,7 +145,7 @@ struct Fat32FS {
 
             assert(Emmc.read_sector(cluster_lba + (cluster - 2) * sec_per_cluster, sec_data.ptr, sec_data.sizeof));
             import ulib.math;
-            import ulib.memory;
+            import libc;
             memcpy(&data[datalen], sec_data.ptr, min(sec_data.sizeof, size - datalen));
             datalen += sec_data.sizeof;
             sector++;
@@ -290,7 +290,7 @@ struct FileRange {
     File front() {
         ubyte[] name = knew_array!(ubyte)(cur_lfn.length);
         assert(name);
-        import ulib.memory;
+        import libc;
         memcpy(name.ptr, cur_lfn.ptr, cur_lfn.length);
         return File(ents[ent], cast(string) name);
     }

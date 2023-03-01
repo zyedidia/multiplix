@@ -56,7 +56,7 @@ struct Proc {
     bool initialize(ubyte[] bin) {
         import elf = kernel.elf;
         import ulib.math;
-        import ulib.memory;
+        import libc;
 
         pt = knew!(Pagetable)();
         if (!pt) {

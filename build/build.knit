@@ -176,9 +176,10 @@ function build.flags(machine, lto, release, monitor)
 
     return {
         dc := $(flags.dc) $dclto
+        dc_libc := $(flags.dc) $(sel(conf.dc ~= "gdc", dclto, ""))
         cc := -Os $(flags.gnu)
         as := -Os $(flags.gnu) -xassembler-with-cpp
-        ld := $ldlto -Wl,--gc-sections -nostdlib -nostartfiles -lgcc $(flags.gnu) -lc
+        ld := $ldlto -Wl,--gc-sections -nostdlib -nostartfiles -lgcc $(flags.gnu)
         qemu := $(machine.qemu) -nographic
     }
 end

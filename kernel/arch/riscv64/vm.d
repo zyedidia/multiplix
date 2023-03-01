@@ -1,6 +1,6 @@
 module kernel.arch.riscv64.vm;
 
-import ulib.memory;
+import libc;
 import ulib.option;
 import bits = ulib.bits;
 

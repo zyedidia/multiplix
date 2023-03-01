@@ -38,6 +38,8 @@ local tools = build.tools(machine)
 local flags = build.flags(machine, conf.lto, conf.release, monitor)
 
 local meta = r{
+    $ .kobj/libd/libc.o:D[.kobj/deps/libd/libc.o]: libd/libc.d
+        $(tools.dc) $(flags.dc_libc) -Ilibd $input -c -$of $output $(makedeps(f".kobj/libd/libc.dep", output))
     $ .kobj/%.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
     $ .kobj/%.o:D[.kobj/deps/%.dep]: %.d
@@ -58,7 +60,7 @@ local src = {}
 local obj = {}
 
 function src.libd()
-    return knit.rglob("libd", "*.d")
+    return knit.filterout(knit.rglob("libd", "*.d"), {"libd/libc.d"})
 end
 
 function src.libkern()
@@ -96,6 +98,7 @@ function obj.kasm()
     return knit.prefix({
         f"kernel/arch/$(machine.arch)/kernelasm.o",
         f"kernel/arch/$(machine.arch)/userasm.o",
+        "libd/libc.o",
     }, ".kobj/")
 end
 

@@ -1,4 +1,6 @@
-module ulib.memory;
+module libc;
+
+extern (C):
 
 void* memcpy(void* dst, const(void)* src, size_t n) {
     char* s = cast(char*) src;

@@ -2,7 +2,7 @@ module kernel.dstart;
 
 import core.volatile;
 
-import ulib.memory;
+import libc;
 
 __gshared uint primary = 1;
 

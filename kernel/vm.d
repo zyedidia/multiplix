@@ -112,7 +112,7 @@ void unmappg(Pagetable* pt, uintptr va, bool free) {
 }
 
 import ulib.math : align_off;
-import ulib.memory;
+import libc;
 
 // Utility functions for managing memory that is mapped in a pagetable.
 

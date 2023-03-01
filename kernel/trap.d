@@ -74,7 +74,7 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
                 p.block();
             }
         }
-        import ulib.memory;
+        import libc;
         memcpy(mem, cast(void*) map.ka, sys.pagesize);
         import kernel.arch;
         map.pte.perm = map.perm & ~Perm.cow | Perm.w;

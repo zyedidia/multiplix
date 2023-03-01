@@ -3,7 +3,7 @@ module kernel.dev.mailbox.bcmmailbox;
 import core.volatile;
 import kernel.vm;
 import kernel.timer;
-import ulib.memory;
+import libc;
 
 import core.sync;
 

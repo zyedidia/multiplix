@@ -36,3 +36,9 @@ jobs:
 
     - name: Build (not unified, no lto)
       run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} ${{ matrix.analyzer }} lto=false unified=false
+
+    - name: Build (unified, with lto)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=true unified=true
+
+    - name: Build (not unified, with lto)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=true unified=false

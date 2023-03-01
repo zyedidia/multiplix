@@ -3,7 +3,7 @@ module ulib.vector;
 import kernel.alloc;
 
 import ulib.sys;
-import ulib.memory;
+import libc;
 
 struct Vector(T) {
     T[] data;

@@ -35,12 +35,12 @@ version (LDC) {
     extern (C) void _d_array_slice_copy(void* dst, size_t dstlen, void* src,
             size_t srclen, size_t elemsz) {
         cast(void) srclen;
-        import ulib.memory : memcpy;
+        import libc : memcpy;
         memcpy(dst, src, dstlen * elemsz);
     }
 } else {
     extern (C) void[] _d_arraycopy(size_t size, void[] from, void[] to) {
-        import ulib.memory : memcpy;
+        import libc : memcpy;
         memcpy(to.ptr, from.ptr, to.length * size);
         return to;
     }

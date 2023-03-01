@@ -129,7 +129,7 @@ struct Pagetable {
                         endlevel = level;
                         return null;
                     }
-                    import ulib.memory;
+                    import libc;
                     memset(pt, 0, Pagetable.sizeof);
                     pte.pa = kpa2pa(cast(uintptr) pt);
                     pte.valid = 1;

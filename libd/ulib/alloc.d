@@ -1,6 +1,6 @@
 module ulib.alloc;
 
-import ulib.memory;
+import libc;
 import ulib.bits;
 
 enum HasCtor(T) = __traits(hasMember, T, "__ctor");

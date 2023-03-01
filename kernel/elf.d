@@ -70,7 +70,7 @@ import kernel.alloc;
 import kernel.arch;
 import kernel.vm;
 import sys = kernel.sys;
-import ulib.memory;
+import libc;
 
 // Should be called with a Checkpoint allocator to ensure segments can be freed.
 bool load(int W)(Pagetable* pt, ubyte* elfdat, out uintptr entry, out uintptr brk) {
