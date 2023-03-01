@@ -3,9 +3,21 @@ module kernel.cpu;
 struct Cpu {
     int coreid;
     bool primary;
-    uintptr tls;
     uintptr stack;
+
+    // for push_off and pop_off
+    int noff;
+    bool irqen;
+
+    // for timer interrupt wait queue
+    import kernel.wait;
+    WaitQueue ticksq;
 }
 
-// Core-local CPU info.
-Cpu cpuinfo = Cpu(-1, false);
+import kernel.board;
+
+__gshared Cpu[Machine.ncores] _cpu;
+ref Cpu cpu() {
+    import kernel.arch : rd_coreid;
+    return (cast(Cpu*)_cpu)[rd_coreid()];
+}

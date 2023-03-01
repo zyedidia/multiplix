@@ -14,6 +14,7 @@ struct List(T) {
     size_t length;
 
     void push_back(Node* n) {
+        assert(n);
         n.next = null;
         n.prev = back;
         if (back != null) {
@@ -26,6 +27,7 @@ struct List(T) {
     }
 
     void push_front(Node* n) {
+        assert(n);
         n.next = front;
         n.prev = null;
         if (front != null) {
@@ -57,12 +59,14 @@ struct List(T) {
 
     Node* pop_front() {
         Node* f = front;
+        assert(f);
         remove(f);
         return f;
     }
 
     Node* pop_back() {
         Node* b = back;
+        assert(b);
         remove(b);
         return b;
     }

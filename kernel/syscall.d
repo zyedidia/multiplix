@@ -105,6 +105,7 @@ struct Syscall {
     }
 
     import kernel.wait;
+    static shared WaitQueue exited;
     static shared WaitQueue waiters;
 
     static int wait(Proc* waiter) {
@@ -133,20 +134,17 @@ struct Syscall {
         }
     }
 
-    static shared WaitQueue exited;
-
     static noreturn exit(Proc* p) {
         println(p.pid, ": exited");
         import kernel.schedule;
 
+        p.state = Proc.State.exited;
+        exited.enqueue(p);
+
         if (p.parent && p.parent.state == Proc.State.blocked) {
-            p.parent.trapframe.regs.retval = p.pid;
-            p.parent.children--;
             waiters.wake_one(p.parent);
         }
-
-        exited.enqueue(p);
-        p.block();
+        p.yield();
 
         import core.exception;
         panic("exited process resumed");
@@ -189,14 +187,16 @@ struct Syscall {
         ulong start_time = Timer.time();
 
         import kernel.trap;
+        import kernel.cpu;
         while (1) {
-            ticksq.enqueue_(p);
+            cpu.ticksq.enqueue_(p);
             if (Timer.us_since(start_time) >= us) {
                 break;
             }
+            import kernel.cpu;
             p.block();
         }
-        ticksq.remove_(p);
+        cpu.ticksq.remove_(p);
     }
 
     static int open(Proc* p, char* path, int flags) {

@@ -48,7 +48,7 @@ struct Machine {
     static void setup() {
         version (kernel) {
             import kernel.cpu;
-            if (cpuinfo.primary) {
+            if (cpu.primary) {
                 CoreTimer.enable_irq();
 
                 // raise clock speed to max

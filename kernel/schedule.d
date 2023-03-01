@@ -69,11 +69,18 @@ struct RunQ {
 }
 
 import kernel.board;
-RunQ[Machine.ncores] global_runqs;
+__gshared RunQ[Machine.ncores] global_runqs;
 
 import kernel.cpu;
 ref RunQ runq() {
-    return global_runqs[cpuinfo.coreid];
+    return global_runqs[cpu.coreid];
+}
+
+ref RunQ next_runq() {
+    import ulib.rand;
+    int core = rand() % Machine.ncores;
+    return global_runqs[core];
+    // return global_runqs[1];
 }
 
 extern (C) void kswitch(Context* oldp, Context* newp);

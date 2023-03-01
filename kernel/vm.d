@@ -90,7 +90,9 @@ import kernel.page;
 bool mappg(Pagetable* pt, uintptr va, uintptr pa, Perm perm) {
     if (!pt.map(va, pa, Pte.Pg.normal, perm, &sys.allocator))
         return false;
-    pages[pa / sys.pagesize].refcount++;
+    pages[pa / sys.pagesize].lock();
+    (cast() pages[pa / sys.pagesize]).refcount++;
+    pages[pa / sys.pagesize].unlock();
     return true;
 }
 
@@ -100,10 +102,12 @@ void unmappg(Pagetable* pt, uintptr va, bool free) {
     if (!pte) {
         return;
     }
-    pages[pte.pa / sys.pagesize].refcount--;
+    pages[pte.pa / sys.pagesize].lock();
+    (cast() pages[pte.pa / sys.pagesize]).refcount--;
     if (free && pages[pte.pa / sys.pagesize].refcount == 0) {
         kfree(cast(void*) pa2ka(pte.pa));
     }
+    pages[pte.pa / sys.pagesize].unlock();
     pte.data = 0;
 }
 

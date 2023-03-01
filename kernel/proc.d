@@ -109,9 +109,12 @@ struct Proc {
         foreach (map; VmRange(pt)) {
             if (!iska(map.va)) {
                 import kernel.page;
-                pages[map.pa / sys.pagesize].refcount--;
-                if (pages[map.pa / sys.pagesize].refcount == 0)
+                auto pg = &pages[map.pa / sys.pagesize];
+                pg.lock();
+                (cast(Page*)pg).refcount--;
+                if ((cast()pg).refcount == 0)
                     kfree(cast(void*) map.ka);
+                pg.unlock();
             }
         }
 
@@ -125,9 +128,11 @@ struct Proc {
         assert(!Irq.is_on());
         assert(canary == Proc.magic);
 
-        bool irqen = Irq.irqen;
+        import kernel.cpu;
+        bool irqen = cpu.irqen;
         kswitch(&context, &runq.context);
-        Irq.irqen = irqen;
+        .brk();
+        cpu.irqen = irqen;
     }
 
     import kernel.wait;

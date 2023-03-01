@@ -6,13 +6,12 @@ enum IrqType {
     timer,
 }
 
-import kernel.wait;
-WaitQueue ticksq;
+import kernel.cpu;
 
 // Irq handler for kernel interrupts.
 void irq_handler(IrqType irq) {
     if (irq == IrqType.timer) {
-        ticksq.wake_all_();
+        cpu.ticksq.wake_all_();
         import kernel.timer;
         Timer.intr();
     }
@@ -52,7 +51,9 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
 
     if (fault == FaultType.write && map.cow() && map.read()) {
         import kernel.page;
-        Page* pg = &pages[map.pa / sys.pagesize];
+        auto pg = &pages[map.pa / sys.pagesize];
+        pg.lock();
+        scope(exit) pg.unlock();
         if (pg.refcount == 1) {
             // we are the only one with a reference, so just take over the page
             map.pte.perm = map.perm & ~Perm.cow | Perm.w;
@@ -60,7 +61,7 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
         }
 
         // copy-on-write
-        pages[map.pa / sys.pagesize].refcount--;
+        (cast(Page*)pg).refcount--;
         void* mem = null;
         while (!mem) {
             import kernel.schedule;
@@ -69,7 +70,7 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
             mem = kalloc(sys.pagesize);
             if (!mem) {
                 // XXX: could have a memq for processes blocked waiting for memory
-                ticksq.enqueue_(p);
+                cpu.ticksq.enqueue_(p);
                 p.block();
             }
         }

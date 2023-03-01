@@ -14,17 +14,18 @@ extern (C) {
 
     void kmain(int coreid, ubyte* heap);
 
+    import kernel.spinlock;
+    shared Spinlock lock;
+
+
     void dstart(int coreid) {
         import kernel.cpu;
         import kernel.board;
 
-        uintptr tls_start, stack_start;
-        ubyte* heap = init_tls(coreid, tls_start, stack_start);
+        uintptr stack_start;
+        ubyte* heap = init_tls(coreid, stack_start);
         import core.sync;
         compiler_fence();
-        cpuinfo.coreid = coreid;
-        cpuinfo.tls = tls_start;
-        cpuinfo.stack = stack_start;
 
         // We use volatile for loading/storing primary because it is essential
         // that primary not be stored in the BSS (since it is used before BSS
@@ -40,47 +41,29 @@ extern (C) {
             import kernel.board;
             Uart.setup(115200);
             vst(&primary, 0);
-            cpuinfo.primary = true;
+            cpu.primary = true;
         } else {
-            cpuinfo.primary = false;
+            cpu.primary = false;
         }
+
+        _cpu[coreid].coreid = coreid;
+        _cpu[coreid].stack = stack_start;
 
         Machine.setup();
 
         kmain(coreid, heap);
     }
 
-    // returns a pointer to the region after all TLS blocks
-    ubyte* init_tls(int coreid, out uintptr tls_start, out uintptr stack_start) {
-        // Note: this function should not be inlined to ensure that the thread
-        // pointer is set before any subsequent operations that involve the
-        // thread pointer.
+    ubyte* init_tls(int coreid, out uintptr stack_start) {
         pragma(inline, false);
-
         import arch = kernel.arch;
         import kernel.board;
 
-        // set up thread-local storage (tls)
         uintptr stack_base = cast(uintptr) &_kheap_start;
         stack_start = stack_base + (coreid + 1) * 4096;
-        uintptr tls_base = stack_base + Machine.ncores * 4096;
 
-        size_t tls_size = (&_tbss_end - &_tdata_start) + arch.tcb_size;
-        // calculate the start of the tls region for this cpu
-        tls_start = tls_base + tls_size * coreid;
-        size_t tdata_size = &_tdata_end - &_tdata_start;
-        size_t tbss_size = &_tbss_end - &_tbss_start;
-        // copy tdata into the tls region
-        for (size_t i = 0; i < tdata_size; i++) {
-            vst(cast(ubyte*) tls_start + arch.tcb_size + i, vld(&_tdata_start + i));
-        }
-        // zero out the tbss
-        for (size_t i = 0; i < tbss_size; i++) {
-            vst(cast(ubyte*) tls_start + arch.tcb_size + tdata_size + i, 0);
-        }
+        arch.wr_coreid(coreid);
 
-        arch.set_tls_base(tls_start);
-
-        return cast(ubyte*) (tls_base + tls_size * Machine.ncores);
+        return cast(ubyte*) (stack_base + Machine.ncores * 4096);
     }
 }

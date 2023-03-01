@@ -2,10 +2,16 @@ module kernel.arch.riscv64.tls;
 
 import core.sync;
 
-enum tcb_size = 0;
-
-void set_tls_base(uintptr base) {
+int rd_coreid() {
+    int coreid;
     asm {
-        "mv tp, %0" : : "r"(base) : "memory";
+        "mv %0, tp" : "=r"(coreid);
+    }
+    return coreid;
+}
+
+void wr_coreid(int coreid) {
+    asm {
+        "mv tp, %0" : : "r"(coreid) : "memory";
     }
 }
