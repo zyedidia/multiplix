@@ -204,3 +204,8 @@ struct Pagetable {
         }
     }
 }
+
+void kernel_ptswitch(Pagetable* pt) {
+    // don't need to do anything on aarch64 because TTBR1_EL1 is separate from
+    // TTBR0_EL1
+}

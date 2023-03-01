@@ -6,8 +6,11 @@ immutable ubyte[] hello_elf = cast(immutable ubyte[]) import("user/hello/hello.e
 
 shared Spinlock lock;
 
+import arch = kernel.arch;
+
+__gshared arch.Pagetable kernel_pagetable;
+
 extern (C) void kmain(int coreid, ubyte* heap) {
-    import arch = kernel.arch;
     import sys = kernel.sys;
     import kernel.cpu;
     import kernel.schedule;
@@ -29,8 +32,12 @@ extern (C) void kmain(int coreid, ubyte* heap) {
             return;
         }
 
+        arch.kernel_procmap(&kernel_pagetable);
+
         arch.Cpu.start_all_cores();
     }
+
+    arch.kernel_ptswitch(&kernel_pagetable);
 
     arch.setup();
 

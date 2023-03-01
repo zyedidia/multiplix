@@ -56,8 +56,15 @@ struct Context {
     ulong s10;
     ulong s11;
 
+    ulong satp;
+
     void retaddr(uintptr addr) {
         ra = addr;
+    }
+
+    import kernel.arch.riscv64.vm;
+    void set_pt(Pagetable* pt) {
+        satp = pt.satp(0);
     }
 }
 

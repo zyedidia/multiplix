@@ -92,6 +92,7 @@ struct Syscall {
         child.trapframe.epc = p.trapframe.epc;
         child.context.sp = child.kstackp();
         child.context.retaddr = cast(uintptr) &Proc.forkret;
+        child.context.set_pt(child.pt);
         child.parent = p;
         p.children++;
         child.brk = p.brk;
@@ -140,8 +141,6 @@ struct Syscall {
 
         p.state = Proc.State.exited;
         exited.enqueue(p);
-
-        // TODO: reset pagetable to kernel pagetable
 
         // TODO: add a process lock to protect the state
         if (p.parent && p.parent.state == Proc.State.blocked) {

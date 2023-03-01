@@ -116,6 +116,8 @@ kswitch:
 	sd s9, 88(a0)
 	sd s10, 96(a0)
 	sd s11, 104(a0)
+	csrr t0, satp
+	sd t0, 112(a0)
 
 	ld ra, 0(a1)
 	ld sp, 8(a1)
@@ -131,5 +133,8 @@ kswitch:
 	ld s9, 88(a1)
 	ld s10, 96(a1)
 	ld s11, 104(a1)
+	ld t0, 112(a1)
+	csrw satp, t0
+	// TODO: do we need a fence here?
 
 	ret

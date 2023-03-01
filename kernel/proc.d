@@ -96,6 +96,7 @@ struct Proc {
 
         // initialize kernel context
         context.sp = kstackp();
+        context.set_pt(pt);
         context.retaddr = cast(uintptr) &forkret;
 
         return true;
@@ -131,7 +132,6 @@ struct Proc {
         import kernel.cpu;
         bool irqen = cpu.irqen;
         kswitch(&context, &runq.context);
-        .brk();
         cpu.irqen = irqen;
     }
 

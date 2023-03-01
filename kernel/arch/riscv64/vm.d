@@ -202,3 +202,10 @@ struct Pagetable {
         }
     }
 }
+
+void kernel_ptswitch(Pagetable* pt) {
+    import kernel.arch.riscv64.csr;
+    import core.sync;
+    Csr.satp = pt.satp(0);
+    vm_fence();
+}

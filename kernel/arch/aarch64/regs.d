@@ -60,4 +60,8 @@ struct Context {
     void retaddr(uintptr addr) {
         lr = addr;
     }
+
+    // empty because kernel context doesn't need to change pt on aarch64
+    import kernel.arch.aarch64.vm;
+    void set_pt(Pagetable* pt) {}
 }
