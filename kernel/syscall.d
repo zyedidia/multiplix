@@ -2,6 +2,8 @@ module kernel.syscall;
 
 import kernel.proc;
 
+import ulib.print;
+
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     uintptr ret = 0;
     switch (sysno) {
@@ -232,11 +234,8 @@ struct Syscall {
             return -1;
         }
 
-        ubyte[] buf = (cast(ubyte*) addr)[0 .. sz];
-        import kernel.board;
-        foreach (c; buf) {
-            Uart.tx(c);
-        }
+        string buf = cast(string) (cast(ubyte*) addr)[0 .. sz];
+        print(buf);
 
         return sz;
     }

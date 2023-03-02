@@ -1,14 +1,14 @@
 module kernel.main;
 
-import kernel.spinlock;
+import ulib.print;
 
 immutable ubyte[] hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
-
-shared Spinlock lock;
 
 import arch = kernel.arch;
 
 __gshared arch.Pagetable kernel_pagetable;
+
+int x;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
     import sys = kernel.sys;
@@ -41,9 +41,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     arch.setup();
 
-    lock.lock();
     println("entered kmain at: ", &kmain, " core: ", cpu.coreid);
-    lock.unlock();
 
     import kernel.arch;
     // start generating timer interrupts

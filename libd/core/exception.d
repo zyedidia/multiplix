@@ -1,6 +1,7 @@
 module core.exception;
 
 noreturn panic(Args...)(Args msg) {
+    import ulib.print;
     import kernel.irq;
     Irq.off();
     println("panic: ", msg);
@@ -10,6 +11,7 @@ noreturn panic(Args...)(Args msg) {
 import core.stdc.stdarg;
 pragma(printf)
 extern (C) noreturn panicf(scope const char* fmt, ...) {
+    import ulib.print;
     import kernel.irq;
     Irq.off();
     va_list ap;

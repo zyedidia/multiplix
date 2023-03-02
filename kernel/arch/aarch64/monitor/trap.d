@@ -11,6 +11,7 @@ import kernel.arch.aarch64.monitor.dbg;
 import kernel.cpu;
 
 import bits = ulib.bits;
+import ulib.print;
 
 extern (C) void monitor_exception(Regs* regs) {
     const auto exc_class = bits.get(SysReg.esr_el2, 31, 26);

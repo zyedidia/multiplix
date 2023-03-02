@@ -14,6 +14,8 @@ import vm = kernel.vm;
 
 import bits = ulib.bits;
 
+import ulib.print;
+
 extern (C) extern void kernelvec();
 
 struct ArchTrap {

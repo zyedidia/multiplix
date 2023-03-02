@@ -11,6 +11,7 @@ import kernel.cpu;
 import kernel.syscall;
 
 import bits = ulib.bits;
+import ulib.print;
 
 extern (C) extern void kernelvec();
 

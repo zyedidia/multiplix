@@ -8,6 +8,8 @@ enum IrqType {
 
 import kernel.cpu;
 
+import ulib.print;
+
 // Irq handler for kernel interrupts.
 void irq_handler(IrqType irq) {
     if (irq == IrqType.timer) {

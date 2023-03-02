@@ -9,6 +9,7 @@ import kernel.board;
 import kernel.timer;
 
 import bits = ulib.bits;
+import ulib.print;
 
 bool wait_reg_mask(uint* reg, uint mask, bool set, uint timeout) {
     for (uint ms = 0; ms <= timeout * 10; ms++) {

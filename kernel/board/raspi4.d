@@ -54,6 +54,7 @@ struct Machine {
                 // raise clock speed to max
                 uint max_clock = Mailbox.get_max_clock_rate(Mailbox.ClockType.arm);
                 Mailbox.set_clock_rate(Mailbox.ClockType.arm, max_clock, false);
+                import ulib.print;
                 println("arm clock: ", Mailbox.get_clock_rate(Mailbox.ClockType.arm), " Hz");
                 println("temp: ", Mailbox.get_temp());
             }

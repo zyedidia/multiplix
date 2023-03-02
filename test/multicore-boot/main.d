@@ -26,6 +26,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     if (cpu.primary) {
         Timer.delay_ms(10);
         assert(x == System.ncores);
+        import ulib.print;
         println("multicore-boot: PASS");
         Reboot.shutdown();
     }
