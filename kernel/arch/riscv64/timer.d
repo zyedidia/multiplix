@@ -20,7 +20,7 @@ struct ArchTimer {
         return vld(Clint.mtime);
     }
 
-    enum interval = 100000;
+    enum interval = 10000;
 
     static void intr() {
         intr(interval);

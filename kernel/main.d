@@ -46,6 +46,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     println("entered kmain at: ", &kmain, " core: ", cpu.coreid);
     lock.unlock();
 
+    import kernel.timer;
+    Timer.delay_ms(50);
+
     import kernel.arch;
     // start generating timer interrupts
     ArchTimer.intr();
