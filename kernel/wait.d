@@ -54,12 +54,11 @@ struct WaitQueue {
         lock.unlock();
     }
 
-    private void wake(Proc* p) in (p.lock.holding()) {
+    private void wake(Proc* p) in (p.lock.holding())
+                               in (p.state == Proc.State.blocked)
+                               in (p.wq == &this) {
         import kernel.schedule;
-        assert(p.state == Proc.State.blocked);
-        assert(p.wq == &this);
         remove_(p);
-        import kernel.cpu;
         next_runq.enqueue(p);
     }
 }

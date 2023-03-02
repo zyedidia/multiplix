@@ -5,7 +5,7 @@ import kernel.arch;
 import sys = kernel.sys;
 import ulib.list;
 
-shared int nextpid = 0;
+shared int nextpid = 1;
 
 struct Proc {
     // Must be the first field in Proc.

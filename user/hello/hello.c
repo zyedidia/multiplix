@@ -8,16 +8,17 @@
 #include "syslib.h"
 
 int main() {
-    int child = fork();
     fork();
+    int child = fork();
+    int pid = getpid();
     if (child != 0) {
-        wait(NULL);
+        printf("%d: waiting\n", pid);
+        int x = wait(NULL);
+        printf("%d: done waiting for %d\n", pid, x);
     }
 
-    int pid = getpid();
     for (int i = 0; i < 5; i++) {
         printf("%d: loop %d\n", pid, i);
-        usleep(10 * 1000);
+        usleep(100 * 1000);
     }
-    exit(0);
 }

@@ -1,5 +1,6 @@
 module kernel.sanitizer;
 
+version (sanitizer):
 version (GNU):
 
 struct SrcLoc {
@@ -50,12 +51,15 @@ alias VlaBound = TypeData;
 
 import core.exception;
 import ulib.string;
+import gcc.attributes;
 
 void handle_overflow(Overflow* data, ulong lhs, ulong rhs, char op) {
     panic(tostr(data.loc.file), ":", data.loc.line, ": integer overflow '", op, "'");
 }
 
 extern (C) {
+    // otherwise these are removed by LTO before instrumentation happens
+    @used:
     void __ubsan_handle_add_overflow(Overflow* data, ulong a, ulong b) {
         handle_overflow(data, a, b, '+');
     }

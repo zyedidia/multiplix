@@ -129,8 +129,7 @@ function build.flags_dc(dc, monitor, machine)
     function get_gdc(opt, name, val)
         if opt then
             if dc ~= "gdc" then
-                print("warning: " .. name " is only supported with gdc")
-                return ""
+                error("error: " .. name .. " is only supported with gdc")
             else
                 return val
             end
@@ -138,13 +137,13 @@ function build.flags_dc(dc, monitor, machine)
         return ""
     end
 
-    local san = get_gdc(conf.sanitize, "sanitizer", "-fsanitize=undefined -fno-wrapv")
+    local san = get_gdc(conf.sanitize, "sanitizer", "-fsanitize=undefined -fno-wrapv -fversion=sanitizer")
     local stackprot = get_gdc(conf.stackprot, "stack protector", "-fstack-protector-all")
     local analyzer = get_gdc(conf.analyzer, "analyzer", "-fanalyzer -Wno-analyzer-infinite-recursion")
 
     local compiler = {
         gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror $san -Wframe-larger-than=1024 $stackprot $analyzer -ftransition=tls
-        ldc2 := $(flags.llvm) -betterC -Oz -g -function-sections -data-sections -fthread-model=global-dynamic -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls
+        ldc2 := $(flags.llvm) -betterC -O3 -g -function-sections -data-sections -fthread-model=global-dynamic -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls
     }
     return compiler[dc]
 end
