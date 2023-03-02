@@ -9,14 +9,15 @@ function build.prefix(arch)
 end
 
 function build.machine(board, monitor)
-    local tpidr = sel(conf.dc == "gdc", sel(monitor, "el2", "el1"), sel(monitor, "tpidr-el2", "tpidr-el1"))
+    local align_attr = sel(monitor, "+strict-align", "")
+    local malign = sel(monitor, "-mstrict-align", "")
     local machines = {
         raspi3 = {
             board = "raspi3",
             march = "armv8-a+crc",
             mcpu = "cortex-a53",
-            mattr = f"+strict-align,+$tpidr,-sve,-fp-armv8",
-            mflags = f"-mtp=$tpidr -mgeneral-regs-only",
+            mattr = f"$align_attr,-sve,-fp-armv8",
+            mflags = f"-mgeneral-regs-only $malign",
             arch = "aarch64",
             qemu = "-M raspi3ap -serial null -serial mon:stdio",
         },
@@ -24,8 +25,8 @@ function build.machine(board, monitor)
             board = "raspi4",
             march = "armv8-a+crc",
             mcpu = "cortex-a72",
-            mattr = f"+strict-align,+$tpidr,-sve,-fp-armv8",
-            mflags = f"-mtp=$tpidr -mgeneral-regs-only",
+            mattr = f"$align_attr,-sve,-fp-armv8",
+            mflags = f"-mgeneral-regs-only $malign",
             arch = "aarch64",
             qemu = "-M raspi4b -serial null -serial mon:stdio" -- doesn't exist
         },
@@ -33,8 +34,8 @@ function build.machine(board, monitor)
             board = "virt_aarch64",
             march = "armv8-a+crc",
             mcpu = "cortex-a72",
-            mattr = f"+strict-align,+$tpidr,-sve,-fp-armv8",
-            mflags = f"-mtp=$tpidr -mgeneral-regs-only",
+            mattr = f"$align_attr,-sve,-fp-armv8",
+            mflags = f"-mgeneral-regs-only $malign",
             arch = "aarch64",
             qemu = "-M virt -smp 4 -m 2G -cpu cortex-a72 -machine virtualization=true"
         },

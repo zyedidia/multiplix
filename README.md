@@ -35,8 +35,6 @@ the Raspberry Pi family).
 To build multiplix you must have a GNU bare-metal toolchain and either LDC or
 GDC. You can get everything you need (prebuilt) from
 [`multiplix-toolchain-linux-amd64.tar.gz`](https://github.com/zyedidia/build-gdc/releases/tag/multiplix-toolchain-2023-2-26).
-Note: for GDC, you must use the version provided in that archive for the new
-`-mtp` AArch64 option (not needed on RISC-V).
 
 Multiplix uses the [Knit](https://github.com/zyedidia/knit) build tool. The
 Knitfile has the following targets:
