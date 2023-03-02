@@ -67,7 +67,7 @@ struct List(T) {
         return b;
     }
 
-    void remove(Node* n) in (n != null) {
+    void remove(Node* n) in (n != null && length > 0) {
         if (n.next != null) {
             n.next.prev = n.prev;
         } else {

@@ -24,11 +24,9 @@ void check(bool b) {
     }
 }
 
-extern (C) void brk() {
+extern (C) void _mark() {
     pragma(inline, false);
-    asm {
-        "nop";
-    }
+    asm { "nop"; }
 }
 
 version (LDC) {

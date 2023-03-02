@@ -102,7 +102,9 @@ struct Syscall {
         child.pid = atomic_rmw_add(&nextpid, 1);
 
         // mark the child as runnable.
+        child.lock.lock();
         runq.enqueue(child);
+        child.lock.unlock();
 
         return child.pid;
     }
@@ -131,8 +133,9 @@ struct Syscall {
             }
             exited.lock.unlock();
             // block and wait for something to exit
+            waiter.lock.lock();
             waiters.enqueue(waiter);
-            waiter.block();
+            waiter.block(cast(void*) &waiters);
             // we have woken up, so check the zombies again for a child
         }
     }
@@ -141,12 +144,20 @@ struct Syscall {
         println(p.pid, ": exited");
         import kernel.schedule;
 
-        p.state = Proc.State.exited;
-        exited.enqueue(p);
+        {
+            p.lock.lock();
+            p.state = Proc.State.exited;
+            exited.enqueue(p);
 
-        // TODO: add a process lock to protect the state
-        if (p.parent && p.parent.state == Proc.State.blocked) {
-            waiters.wake_one(p.parent);
+            if (p.parent) {
+                p.parent.lock.lock();
+
+                if (p.parent && p.parent.state == Proc.State.blocked && p.parent.wq == &waiters) {
+                    waiters.wake_one(p.parent);
+                }
+                p.parent.lock.unlock();
+            }
+            p.lock.unlock();
         }
         p.yield();
 
@@ -192,15 +203,18 @@ struct Syscall {
 
         import kernel.trap;
         import kernel.cpu;
+        p.lock.lock();
         while (1) {
             cpu.ticksq.enqueue_(p);
             if (Timer.us_since(start_time) >= us) {
                 break;
             }
             import kernel.cpu;
-            p.block();
+            p.block(&cpu.ticksq);
+            p.lock.lock();
         }
         cpu.ticksq.remove_(p);
+        p.lock.unlock();
     }
 
     static int open(Proc* p, char* path, int flags) {

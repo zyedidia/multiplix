@@ -41,6 +41,9 @@ struct Proc {
     }
 
     State state;
+    // blocked on a wait queue (the address of the queue is used as a unique
+    // identifier of the queue)
+    void* wq;
 
     enum magic = 0xdeadbeef;
     uint canary = magic;
@@ -140,8 +143,10 @@ struct Proc {
 
     // Removes this proc from the runnable queue, yields, and places it
     // back.
-    void block() {
+    void block(void* wq) in (lock.holding()) {
         state = Proc.State.blocked;
+        this.wq = wq;
+        lock.unlock();
         yield();
     }
 

@@ -5,6 +5,7 @@ noreturn panic(Args...)(Args msg) {
     import kernel.irq;
     Irq.off();
     println("panic: ", msg);
+    _panic();
     _halt();
 }
 
@@ -18,7 +19,14 @@ extern (C) noreturn panicf(scope const char* fmt, ...) {
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
+    _panic();
     _halt();
+}
+
+// panic marker for debugging
+extern (C) void _panic() {
+    pragma(inline, false);
+    asm { "nop"; "nop"; }
 }
 
 // Compiler lowers final switch default case to this (which is a runtime error).

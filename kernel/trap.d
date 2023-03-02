@@ -65,6 +65,7 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
         // copy-on-write
         (cast(Page*)pg).refcount--;
         void* mem = null;
+        p.lock.lock();
         while (!mem) {
             import kernel.schedule;
             import kernel.alloc;
@@ -73,9 +74,11 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
             if (!mem) {
                 // XXX: could have a memq for processes blocked waiting for memory
                 cpu.ticksq.enqueue_(p);
-                p.block();
+                p.block(&cpu.ticksq);
+                p.lock.lock();
             }
         }
+        p.lock.unlock();
         import libc;
         memcpy(mem, cast(void*) map.ka, sys.pagesize);
         import kernel.arch;

@@ -40,20 +40,25 @@ struct WaitQueue {
 
     void wake_all_() {
         while (procs.length > 0) {
-            this.wake(&procs.front.val);
+            Proc* p = &procs.front.val;
+            p.lock.lock();
+            this.wake(p);
+            p.lock.unlock();
         }
     }
 
     // Remove a process from the wait queue and call wake on it.
-    void wake_one(Proc* p) shared {
+    void wake_one(Proc* p) shared in (p.lock.holding()) {
         lock.lock();
         (cast()this).wake(p);
         lock.unlock();
     }
 
-    private void wake(Proc* p) {
+    private void wake(Proc* p) in (p.lock.holding()) {
         import kernel.schedule;
-        (cast()procs).remove(p.node);
+        assert(p.state == Proc.State.blocked);
+        assert(p.wq == &this);
+        remove_(p);
         import kernel.cpu;
         next_runq.enqueue(p);
     }

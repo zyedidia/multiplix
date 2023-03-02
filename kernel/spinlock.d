@@ -24,8 +24,7 @@ struct Spinlock {
     }
 
     // Release the lock.
-    shared void unlock() {
-        assert(holding());
+    shared void unlock() in (holding()) {
         (cast() this).mycpu = null;
         memory_fence();
         lock_release(&locked);

@@ -7,7 +7,7 @@ import ulib.list;
 
 struct RunQ {
     Proc* curproc;
-    List!(Proc) runnable;
+    private List!(Proc) runnable;
 
     shared Spinlock lock;
 
@@ -44,12 +44,15 @@ struct RunQ {
             kfree(p.node);
             return false;
         }
+        p.lock.lock();
         enqueue(p);
+        p.lock.unlock();
         return true;
     }
 
     // Puts n in the runnable queue.
-    void enqueue(Proc* p) {
+    void enqueue(Proc* p) in (p.lock.holding())
+                          in (p.state != Proc.State.exited) {
         p.state = Proc.State.runnable;
         lock.lock();
         runnable.push_back(p.node);
@@ -101,14 +104,18 @@ noreturn scheduler() {
                 wfi();
         }
         Irq.off();
+        p.lock.lock();
         assert(p.state == Proc.State.runnable);
+        p.lock.unlock();
         runq.curproc = p;
         kswitch(&runq.context, &p.context);
 
         // process is done running for now
         runq.curproc = null;
+        p.lock.lock();
         if (p.state == Proc.State.runnable) {
             runq.enqueue(p);
         }
+        p.lock.unlock();
     }
 }
