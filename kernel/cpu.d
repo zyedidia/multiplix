@@ -18,6 +18,6 @@ import kernel.board;
 
 __gshared Cpu[Machine.ncores] _cpu;
 ref Cpu cpu() {
-    import kernel.arch : rd_coreid;
-    return (cast(Cpu*)_cpu)[rd_coreid()];
+    import kernel.arch : rd_cpu;
+    return *rd_cpu();
 }

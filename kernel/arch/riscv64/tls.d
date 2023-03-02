@@ -1,17 +1,17 @@
 module kernel.arch.riscv64.tls;
 
-import core.sync;
+import kernel.cpu;
 
-int rd_coreid() {
-    int coreid;
+Cpu* rd_cpu() {
+    Cpu* cpu;
     asm {
-        "mv %0, tp" : "=r"(coreid);
+        "mv %0, tp" : "=r"(cpu);
     }
-    return coreid;
+    return cpu;
 }
 
-void wr_coreid(int coreid) {
+void wr_cpu(Cpu* cpu) {
     asm {
-        "mv tp, %0" : : "r"(coreid) : "memory";
+        "mv tp, %0" : : "r"(cpu);
     }
 }

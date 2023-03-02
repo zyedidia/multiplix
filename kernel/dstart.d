@@ -2,6 +2,8 @@ module kernel.dstart;
 
 import core.volatile;
 
+import kernel.cpu;
+
 import libc;
 
 __gshared uint primary = 1;
@@ -19,7 +21,6 @@ extern (C) {
 
 
     void dstart(int coreid) {
-        import kernel.cpu;
         import kernel.board;
 
         uintptr stack_start;
@@ -41,10 +42,11 @@ extern (C) {
             import kernel.board;
             Uart.setup(115200);
             vst(&primary, 0);
-            cpu.primary = true;
+            _cpu[coreid].primary = true;
         } else {
-            cpu.primary = false;
+            _cpu[coreid].primary = false;
         }
+        memory_fence();
 
         _cpu[coreid].coreid = coreid;
         _cpu[coreid].stack = stack_start;
@@ -62,7 +64,7 @@ extern (C) {
         uintptr stack_base = cast(uintptr) &_kheap_start;
         stack_start = stack_base + (coreid + 1) * 4096;
 
-        arch.wr_coreid(coreid);
+        arch.wr_cpu(&_cpu[coreid]);
 
         return cast(ubyte*) (stack_base + Machine.ncores * 4096);
     }

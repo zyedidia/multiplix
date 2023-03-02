@@ -81,6 +81,7 @@ ref RunQ next_runq() {
     int core = rand() % Machine.ncores;
     return global_runqs[core];
     // return global_runqs[1];
+    // return runq();
 }
 
 extern (C) void kswitch(Context* oldp, Context* newp);
