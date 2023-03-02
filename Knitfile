@@ -148,7 +148,7 @@ local allsrc = knit.rglob(".", "*.d")
 local bootloader = dofile("build/bootloader.knit")
 
 return b{
-    $ all:V: kernel.elf
+    $ all:V: kernel.boot.elf
 
     $ comp:V: kernel.boot.bin $(knit.prefix(allsrc, "lint-"))
 

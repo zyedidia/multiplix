@@ -58,7 +58,7 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
         scope(exit) pg.unlock();
         if (pg.refcount == 1) {
             // we are the only one with a reference, so just take over the page
-            map.pte.perm = map.perm & ~Perm.cow | Perm.w;
+            map.pte.perm = (map.perm & ~Perm.cow) | Perm.w;
             return;
         }
 
@@ -84,6 +84,10 @@ void pgflt_handler(Proc* p, void* addr, FaultType fault) {
         import kernel.arch;
         map.pte.perm = map.perm & ~Perm.cow | Perm.w;
         map.pte.pa = ka2pa(cast(uintptr) mem);
+
+        pages[map.pte.pa / sys.pagesize].lock();
+        (cast(Page) pages[map.pte.pa / sys.pagesize]).refcount++;
+        pages[map.pte.pa / sys.pagesize].unlock();
 
         if (map.exec()) {
             import core.sync;

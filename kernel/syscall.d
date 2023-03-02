@@ -81,7 +81,7 @@ struct Syscall {
                 continue;
             }
             // parent and child both get page read-only with copy-on-write
-            map.pte.perm = map.perm & ~Perm.w | Perm.cow;
+            map.pte.perm = (map.perm & ~Perm.w) | Perm.cow;
             if (!child.pt.mappg(map.va, map.pa, Perm.urx | Perm.cow)) {
                 child.free();
                 return -1;

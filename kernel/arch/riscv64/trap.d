@@ -82,7 +82,7 @@ extern (C) {
                 pgflt_handler(p, cast(void*) Csr.stval, FaultType.write);
                 break;
             default:
-                println("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", Hex(scause));
+                println("[unhandled user trap] epc: ", cast(void*) Csr.sepc, " cause: ", scause);
                 unhandled(p);
         }
 
