@@ -72,7 +72,6 @@ import kernel.vm;
 import sys = kernel.sys;
 import libc;
 
-// Should be called with a Checkpoint allocator to ensure segments can be freed.
 bool load(int W)(Pagetable* pt, ubyte* elfdat, out uintptr entry, out uintptr brk) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
