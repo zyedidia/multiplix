@@ -129,6 +129,9 @@ extern (C) {
     // stack protection (GDC-only feature)
 
     version (GNU) {
+        import gcc.attributes;
+
+        @used:
         immutable ulong __stack_chk_guard = 0xdeadc0de;
 
         void __stack_chk_fail() {

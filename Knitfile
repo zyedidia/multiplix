@@ -40,6 +40,8 @@ local flags = build.flags(machine, conf.lto, conf.release, monitor)
 local meta = r{
     $ .kobj/libd/libc.o:D[.kobj/deps/libd/libc.dep]: libd/libc.d
         $(tools.dc) $(flags.dc_libc) -Ilibd $input -c -$of $output $(makedeps(f".kobj/deps/libd/libc.dep", output))
+    $ .bootobj/libd/libc.o:D[.bootobj/deps/libd/libc.dep]: libd/libc.d
+        $(tools.dc) $(flags.dc_libc) -Ilibd $input -c -$of $output $(makedeps(f".bootobj/deps/libd/libc.dep", output))
     $ .kobj/%.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
     $ .kobj/%.o:D[.kobj/deps/%.dep]: %.d

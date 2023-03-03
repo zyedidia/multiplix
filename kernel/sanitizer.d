@@ -108,7 +108,7 @@ extern (C) {
         panic(tostr(data.loc.file), ":", data.loc.line, ": vla bound not positive");
     }
 
-    void __ubsan_handle_load_invalid_value(InvalidValue* data, ulong val) {
+    void __ubsan_handle_load_invalid_value(InvalidValue* data, void* val) {
         panic(tostr(data.loc.file), ":", data.loc.line, ": load invalid value");
     }
 
