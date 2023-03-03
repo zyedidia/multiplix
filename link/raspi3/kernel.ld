@@ -34,6 +34,12 @@ SECTIONS
         . = ALIGN(8);
         _kbss_end = .;
     }
+    .tls : {
+        *(.tdata*)
+        *(.tbss*)
+    }
+
+    ASSERT((SIZEOF(.tls) == 0), "ERROR: cannot have tdata or tbss")
 
     .heap : {
         . = ALIGN(16);

@@ -11,8 +11,6 @@ __gshared uint primary = 1;
 extern (C) {
     extern __gshared uint _kbss_start, _kbss_end;
     extern __gshared ubyte _kheap_start;
-    extern __gshared ubyte _tdata_start, _tdata_end;
-    extern __gshared ubyte _tbss_start, _tbss_end;
 
     void kmain(int coreid, ubyte* heap);
 
@@ -57,7 +55,6 @@ extern (C) {
     }
 
     ubyte* init_tls(int coreid, out uintptr stack_start) {
-        pragma(inline, false);
         import arch = kernel.arch;
         import kernel.board;
 
