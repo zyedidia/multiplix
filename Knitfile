@@ -177,6 +177,9 @@ return b{
     $ lint-%:VB: %
         dscanner --styleCheck $input --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 
+    $ doc:VB:
+        doc2 --genSource --genSearchIndex --document-undocumented -s doc/skeleton-default.html . -o doc/generated --data-dir=../adrdox
+
     include("user/hello/build.knit"),
 
     bootloader.meta(),
