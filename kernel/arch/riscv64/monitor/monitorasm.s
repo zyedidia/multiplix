@@ -31,11 +31,13 @@ _halt:
 	wfi
 	j _halt
 
+.section ".data.boot_lock"
 .globl boot_lock
 .align 4
 boot_lock:
 	.int 0
 
+.section ".data.wakeup"
 .globl wakeup
 .align 4
 wakeup:

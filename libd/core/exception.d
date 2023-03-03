@@ -15,6 +15,7 @@ extern (C) noreturn panicf(scope const char* fmt, ...) {
     import ulib.print;
     import kernel.irq;
     Irq.off();
+    print("panic: ");
     va_list ap;
     va_start(ap, fmt);
     vprintf(fmt, ap);

@@ -137,7 +137,7 @@ function build.flags_dc(dc, monitor, machine)
         return ""
     end
 
-    local san = get_gdc(conf.sanitize, "sanitizer", "-fsanitize=undefined -fno-wrapv -fversion=sanitizer")
+    local san = get_gdc(conf.sanitize, "sanitizer", "-fsanitize=kernel-address,undefined -fno-wrapv -fversion=sanitizer")
     local stackprot = get_gdc(conf.stackprot, "stack protector", "-fstack-protector-all")
     local analyzer = get_gdc(conf.analyzer, "analyzer", "-fanalyzer")
 

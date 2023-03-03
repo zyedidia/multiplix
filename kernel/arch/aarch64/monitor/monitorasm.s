@@ -28,6 +28,7 @@ _reset_sp:
 	mov sp, x1
 	ret
 
+.section ".data.wakeup"
 .globl wakeup
 .align 4
 wakeup:

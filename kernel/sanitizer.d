@@ -1,5 +1,7 @@
 module kernel.sanitizer;
 
+// Support for UBSAN and ASAN.
+
 version (sanitizer):
 version (GNU):
 
@@ -123,4 +125,66 @@ extern (C) {
     void __ubsan_handle_pointer_overflow(SrcLoc *loc, uintptr base, uintptr result) {
         panic(tostr(loc.file), ":", loc.line, ": pointer overflow");
     }
+}
+
+// ASAN
+
+extern (C) extern immutable uint _kcode_start, _kcode_end, _krodata_start, _krodata_end;
+
+void asan_access(uintptr addr, size_t size, bool write) {
+    bool in_range(uintptr addr, size_t size, immutable uint* start, immutable uint* end) {
+        return addr+size >= cast(uintptr) start && addr < cast(uintptr) end;
+    }
+
+    if (in_range(addr, size, &_kcode_start, &_kcode_end) && write) {
+        panicf("write of size %ld to kernel code (%lx)\n", size, addr);
+    }
+    if (in_range(addr, size, &_krodata_start, &_krodata_end) && write) {
+        panicf("write of size %ld to kernel read-only data (%lx)\n", size, addr);
+    }
+}
+
+extern (C) {
+    @used:
+    void __asan_load1_noabort(uintptr addr) {
+        asan_access(addr, 1, false);
+    }
+    void __asan_load2_noabort(uintptr addr) {
+        asan_access(addr, 2, false);
+    }
+    void __asan_load4_noabort(uintptr addr) {
+        asan_access(addr, 4, false);
+    }
+    void __asan_load8_noabort(uintptr addr) {
+        asan_access(addr, 8, false);
+    }
+    void __asan_load16_noabort(uintptr addr) {
+        asan_access(addr, 16, false);
+    }
+    void __asan_loadN_noabort(uintptr addr, size_t sz) {
+        asan_access(addr, sz, false);
+    }
+
+    void __asan_store1_noabort(uintptr addr) {
+        asan_access(addr, 1, true);
+    }
+    void __asan_store2_noabort(uintptr addr) {
+        asan_access(addr, 2, true);
+    }
+    void __asan_store4_noabort(uintptr addr) {
+        asan_access(addr, 4, true);
+    }
+    void __asan_store8_noabort(uintptr addr) {
+        asan_access(addr, 8, true);
+    }
+    void __asan_store16_noabort(uintptr addr) {
+        asan_access(addr, 16, true);
+    }
+    void __asan_storeN_noabort(uintptr addr, size_t sz) {
+        asan_access(addr, sz, true);
+    }
+
+    void __asan_handle_no_return() {}
+    void __asan_before_dynamic_init(const char* module_name) {}
+    void __asan_after_dynamic_init() {}
 }
