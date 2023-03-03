@@ -139,7 +139,7 @@ function build.flags_dc(dc, monitor, machine)
 
     local san = get_gdc(conf.sanitize, "sanitizer", "-fsanitize=undefined -fno-wrapv -fversion=sanitizer")
     local stackprot = get_gdc(conf.stackprot, "stack protector", "-fstack-protector-all")
-    local analyzer = get_gdc(conf.analyzer, "analyzer", "-fanalyzer -Wno-analyzer-infinite-recursion")
+    local analyzer = get_gdc(conf.analyzer, "analyzer", "-fanalyzer")
 
     local compiler = {
         gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror $san -Wframe-larger-than=1024 $stackprot $analyzer -ftransition=tls

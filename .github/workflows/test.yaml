@@ -27,7 +27,7 @@ jobs:
     # set up gnu toolchain
     - name: Install GNU toolchain
       run: |
-        wget -q https://github.com/zyedidia/build-gdc/releases/download/multiplix-toolchain-2023-2-26/gnu-${{ matrix.arch }}-linux-amd64.tar.gz -O /opt/gnu.tar.gz
+        wget -q https://github.com/zyedidia/build-gdc/releases/download/multiplix-toolchain-2023-3-2/gnu-${{ matrix.arch }}-linux-amd64.tar.gz -O /opt/gnu.tar.gz
         mkdir /opt/gnu-toolchain && tar -xf /opt/gnu.tar.gz -C /opt/gnu-toolchain --strip-components=1
         echo "/opt/gnu-toolchain/bin" >> $GITHUB_PATH
 
