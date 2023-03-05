@@ -22,7 +22,7 @@ struct Proc {
 
     shared Spinlock lock;
 
-    int pid = -1;
+    int pid;
     Pagetable* pt;
     Proc* parent;
     uint children;
@@ -46,7 +46,7 @@ struct Proc {
     void* wq;
 
     enum magic = 0xdeadbeef;
-    uint canary = magic;
+    uint canary;
 
     // The proc struct contains the entire kernel stack. Do not create Proc
     // structs on the stack.
@@ -96,6 +96,7 @@ struct Proc {
         this.brk.current = 0;
         import core.sync;
         pid = atomic_rmw_add(&nextpid, 1);
+        canary = magic;
 
         // initialize kernel context
         context.sp = kstackp();
