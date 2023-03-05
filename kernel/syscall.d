@@ -96,6 +96,7 @@ struct Syscall {
         child.context.retaddr = cast(uintptr) &Proc.forkret;
         child.context.set_pt(child.pt);
         child.parent = p;
+        child.canary = Proc.canary_magic;
         p.children++;
         child.brk = p.brk;
 

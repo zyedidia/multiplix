@@ -45,7 +45,7 @@ struct Proc {
     // identifier of the queue)
     void* wq;
 
-    enum magic = 0xdeadbeef;
+    enum canary_magic = 0xdeadbeef;
     uint canary;
 
     // The proc struct contains the entire kernel stack. Do not create Proc
@@ -96,7 +96,7 @@ struct Proc {
         this.brk.current = 0;
         import core.sync;
         pid = atomic_rmw_add(&nextpid, 1);
-        canary = magic;
+        canary = canary_magic;
 
         // initialize kernel context
         context.sp = kstackp();
@@ -131,7 +131,7 @@ struct Proc {
         import kernel.schedule;
         import kernel.irq;
         assert(!Irq.is_on());
-        assert(canary == Proc.magic);
+        assert(canary == Proc.canary_magic);
 
         import kernel.cpu;
         bool irqen = cpu.irqen;
