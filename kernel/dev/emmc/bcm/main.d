@@ -36,6 +36,8 @@ immutable EmmcCommand[] commands = [
     16: EmmcCommand(0, 0, 0, 0, RT.r48,     1, 0, 16),
     17: EmmcCommand(0, 0, 1, 0, RT.r48,     1, 1, 17),
     18: EmmcCommand(1, 1, 1, 1, RT.r48,     1, 1, 18),
+    24: EmmcCommand(0, 0, 0, 0, RT.r48,     1, 1, 24),
+    25: EmmcCommand(1, 1, 0, 1, RT.r48,     1, 1, 25),
     41: EmmcCommand(0, 0, 0, 0, RT.r48,     0, 0, 41),
     51: EmmcCommand(0, 0, 1, 0, RT.r48,     1, 1, 51),
     55: EmmcCommand(0, 0, 0, 0, RT.r48,     1, 0, 55),
