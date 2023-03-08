@@ -18,6 +18,16 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     arch.ArchTrap.setup();
 
+    import kernel.board;
+    IrqCtrl.setup();
+    IrqCtrl.set_config(30, IrqCtrl.icfgr_edge);
+    IrqCtrl.set_priority(30, 0);
+    IrqCtrl.set_core(30, 1);
+    IrqCtrl.clear(30);
+    IrqCtrl.enable(30);
+    import kernel.arch;
+    ArchTimer.intr();
+
     if (cpu.primary) {
         sys.allocator.construct(cast(uintptr) heap);
 
@@ -49,7 +59,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     import kernel.timer;
     Timer.delay_ms(50);
 
-    import kernel.arch;
     // start generating timer interrupts
     ArchTimer.intr();
 

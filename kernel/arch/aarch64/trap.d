@@ -48,6 +48,7 @@ extern (C) void kernel_exception(Regs* regs) {
 
 extern (C) void kernel_interrupt(Regs* regs) {
     import kernel.trap;
+    println("kernel interrupt");
     irq_handler(IrqType.timer);
 }
 

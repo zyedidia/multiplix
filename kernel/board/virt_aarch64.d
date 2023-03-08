@@ -3,6 +3,7 @@ module kernel.board.virt_aarch64;
 import kernel.dev.uart.ns16550;
 import kernel.dev.reboot.qsyscon;
 import kernel.dev.emmc.unsupported;
+import kernel.dev.irq.gic;
 
 import kernel.vm;
 
@@ -45,3 +46,4 @@ struct Machine {
 alias Uart = Ns16550!(pa2kpa(0x9000000));
 alias Reboot = QemuSyscon!(pa2kpa(0x100000));
 alias Emmc = UnsupportedEmmc;
+alias IrqCtrl = Gic!(pa2kpa(0x800_0000), pa2kpa(0x801_0000));
