@@ -34,6 +34,7 @@ struct BlockAllocator(A) {
         uint alloc_slots;
         uint total_slots;
         Header* next;
+        size_t size;
 
         void* allocate(size_t sz) {
             if (free_head == null) {
@@ -42,6 +43,7 @@ struct BlockAllocator(A) {
             void* alloc = cast(void*) free_head;
             free_head = free_head.next;
             alloc_slots++;
+            size = sz;
             return alloc;
         }
     }
