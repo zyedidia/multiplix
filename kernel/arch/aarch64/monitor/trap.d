@@ -26,6 +26,9 @@ extern (C) void monitor_exception(Regs* regs) {
         case Exception.ss:
             ExtDebug.handle_ss(SysReg.elr_el2, regs);
             break;
+        case Exception.wchpt:
+            ExtDebug.handle_watchpoint(SysReg.elr_el2, SysReg.far_el2, regs);
+            break;
         default:
             import core.exception;
             panic("[unhandled exception] monitor_exception: core: ", cpu.coreid, ", cause: ", exc_class, " elr: ", cast(void*) SysReg.elr_el2);

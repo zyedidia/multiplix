@@ -13,6 +13,7 @@ struct ExtDebug {
             case fwi.Debug.Fid.step_start:
                 SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
                 place_breakpoint(SysReg.elr_el2);
+                // place_watchpoint(0, DbgLsc.rdwr);
                 break;
             case fwi.Debug.Fid.step_start_at:
                 SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
@@ -33,7 +34,15 @@ struct ExtDebug {
         single_step();
     }
 
+    static void handle_watchpoint(uintptr epc, uintptr addr, Regs* regs) {
+        import ulib.print;
+        printf("watch event on address: %lx\n", addr);
+        toggle_watchpoints();
+    }
+
     static void handle_ss(uintptr epc, Regs* regs) {
+        import ulib.print;
+        // printf("ss pc: %lx x17: %lx\n", epc, regs.x17);
         single_step();
     }
 
@@ -42,12 +51,24 @@ struct ExtDebug {
         SysReg.dbgbcr0_el1 = bits.write(0, 23, 20, Dbgbcr.unlinked_insn) | Dbgbcr.aarch64 | Dbgbcr.el1_el0 | Dbgbcr.e;
     }
 
+    static void place_watchpoint(uintptr addr, uint lsc) {
+        SysReg.dbgwvr0_el1 = addr;
+        SysReg.dbgwcr0_el1 = lsc << 3 | 0b11111111 << 5 | Dbgbcr.el1_el0 | Dbgbcr.e;
+    }
+
     static void single_step() {
         SysReg.spsr_el2 = bits.set(SysReg.spsr_el2, Spsr.ss_bit);
     }
 
     static void clear_breakpoints() {
         SysReg.dbgbcr0_el1 = 0;
+    }
+
+    static void toggle_watchpoints() {
+        if ((SysReg.dbgwcr0_el1 & 1) == 1)
+            SysReg.dbgwcr0_el1 = SysReg.dbgwcr0_el1 & ~1;
+        else
+            SysReg.dbgwcr0_el1 = SysReg.dbgwcr0_el1 | 1;
     }
 
     static void clear_ss() {

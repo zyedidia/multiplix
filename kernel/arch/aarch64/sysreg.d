@@ -42,6 +42,7 @@ struct SysReg {
     mixin(GenSysReg!("tcr_el2"));
     mixin(GenSysReg!("cptr_el2"));
     mixin(GenSysReg!("mair_el2"));
+    mixin(GenSysReg!("far_el2"));
 
     mixin(GenSysReg!("sctlr_el1"));
     mixin(GenSysReg!("sp_el1"));
@@ -62,6 +63,8 @@ struct SysReg {
 
     mixin(GenSysReg!("dbgbcr0_el1"));
     mixin(GenSysReg!("dbgbvr0_el1"));
+    mixin(GenSysReg!("dbgwcr0_el1"));
+    mixin(GenSysReg!("dbgwvr0_el1"));
 
     mixin(GenSysReg!("cntfrq_el0"));
     mixin(GenSysRegRdOnly!("cntpct_el0"));
@@ -138,6 +141,12 @@ enum Dbgbcr {
     unlinked_mismatch_insn = 0b0100,
 }
 
+enum DbgLsc {
+    rdonly = 0b01,
+    wronly = 0b10,
+    rdwr = 0b11,
+}
+
 enum Dbgscr {
     mdbgen = 1 << 15,
 }
@@ -160,6 +169,7 @@ enum Exception {
     svc   = 0b010101,
     hvc   = 0b010110,
     brkpt = 0b110000,
+    wchpt = 0b110100,
     ss    = 0b110010,
 
     data_abort_lower = 0b100100,
