@@ -11,11 +11,21 @@ _start:
 	addi t0, a0, 1
 	slli t0, t0, 12 # t0 = (hartid + 1) * 4096
 	add sp, sp, t0  # sp = _kheap_start + (hartid + 1) * 4096
+	la t1, primary
+	lw a1, 0(t1)
+	li t0, 0
+	sw t0, 0(t1)
 	call dstart
 .globl _halt
 _halt:
 	wfi
 	j _halt
+
+.section ".data.primary"
+.globl primary
+.align 4
+primary:
+	.int 1
 
 # interrupts and exceptions that occur while in supervisor mode enter here.
 .globl kerneltrap

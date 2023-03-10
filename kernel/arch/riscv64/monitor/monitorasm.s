@@ -25,11 +25,20 @@ _spin:
 	lw t1, 0(t0)
 	beqz t1, _spin
 _primary_boot:
+	la t1, primary
+	lw a1, 0(t1)
+	sw zero, 0(t1)
 	call dstart
 .globl _halt
 _halt:
 	wfi
 	j _halt
+
+.section ".data.primary"
+.globl primary
+.align 4
+primary:
+	.int 1
 
 .section ".data.boot_lock"
 .globl boot_lock

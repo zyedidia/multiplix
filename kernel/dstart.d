@@ -6,46 +6,28 @@ import kernel.cpu;
 
 import libc;
 
-__gshared uint primary = 1;
-
 extern (C) {
     extern __gshared uint _kbss_start, _kbss_end;
     extern __gshared ubyte _kheap_start;
 
     void kmain(int coreid, ubyte* heap);
 
-    import kernel.spinlock;
-    shared Spinlock lock;
-
-
-    void dstart(int coreid) {
+    void dstart(int coreid, bool primary) {
         import kernel.board;
-
-        uintptr stack_start;
-        ubyte* heap = init_tls(coreid, stack_start);
         import core.sync;
-        compiler_fence();
 
-        // We use volatile for loading/storing primary because it is essential
-        // that primary not be stored in the BSS (since it is used before BSS
-        // initialization). Otherwise the compiler will actually invert primary
-        // so that it can be stored in the BSS.
-        if (vld(&primary)) {
-            uint* bss = &_kbss_start;
-            uint* bss_end = &_kbss_end;
-            while (bss < bss_end) {
-                vst(bss++, 0);
-            }
-
-            import kernel.board;
+        if (primary) {
+            init_bss();
+            memory_fence();
             Uart.setup(115200);
-            vst(&primary, 0);
-            _cpu[coreid].primary = true;
-        } else {
-            _cpu[coreid].primary = false;
         }
         memory_fence();
 
+        uintptr stack_start;
+        ubyte* heap = init_tls(coreid, stack_start);
+        compiler_fence();
+
+        _cpu[coreid].primary = primary;
         _cpu[coreid].coreid = coreid;
         _cpu[coreid].stack = stack_start;
 
@@ -54,7 +36,21 @@ extern (C) {
         kmain(coreid, heap);
     }
 
-    ubyte* init_tls(int coreid, out uintptr stack_start) {
+    version (GNU) {
+        import gcc.attributes;
+        @no_sanitize("kernel-address", "undefined")
+        private void init_bss();
+    }
+
+    private void init_bss() {
+        uint* bss = &_kbss_start;
+        uint* bss_end = &_kbss_end;
+        while (bss < bss_end) {
+            vst(bss++, 0);
+        }
+    }
+
+    private ubyte* init_tls(int coreid, out uintptr stack_start) {
         import arch = kernel.arch;
         import kernel.board;
 

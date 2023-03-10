@@ -12,6 +12,9 @@ _spin:
 	ldrsw x2, [x1]
 	cbz x2, _spin
 _primary_boot:
+	adr x2, primary
+	ldr x1, [x2]
+	str xzr, [x2]
 	bl dstart
 .globl _halt
 _halt:
@@ -27,6 +30,12 @@ _reset_sp:
 	add x1, x1, x2
 	mov sp, x1
 	ret
+
+.section ".data.primary"
+.globl primary
+.align 4
+primary:
+	.int 1
 
 .section ".data.wakeup"
 .globl wakeup

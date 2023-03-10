@@ -9,11 +9,20 @@ _start:
 	lsl x2, x2, #12
 	add x1, x1, x2
 	mov sp, x1
+	adr x2, primary
+	ldr x1, [x2]
+	str xzr, [x2]
 	bl dstart
 .globl _halt
 _halt:
 	wfe
 	b _halt
+
+.section ".data.primary"
+.globl primary
+.align 4
+primary:
+	.int 1
 
 // Kernel trap prologue and epilogue
 
