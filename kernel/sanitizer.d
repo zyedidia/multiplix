@@ -139,6 +139,10 @@ void asan_access(uintptr addr, size_t size, bool write) {
         return addr+size >= cast(uintptr) start && addr < cast(uintptr) end;
     }
 
+    if (addr == 0) {
+        panicf("%s of null pointer\n", write ? "write".ptr : "read".ptr);
+    }
+
     if (in_range(addr, size, &_kcode_start, &_kcode_end) && write) {
         panicf("write of size %ld to kernel code (%lx)\n", size, addr);
     }
