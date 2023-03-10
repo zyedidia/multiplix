@@ -1,5 +1,11 @@
 module core.exception;
 
+version (GNU) {
+    import gcc.attributes;
+    @no_sanitize("kernel-address", "undefined")
+    extern (C) noreturn panicf(scope const char* fmt, ...);
+}
+
 noreturn panic(Args...)(Args msg) {
     import ulib.print;
     import kernel.irq;

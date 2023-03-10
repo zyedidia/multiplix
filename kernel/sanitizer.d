@@ -1,5 +1,9 @@
 module kernel.sanitizer;
 
+import core.exception;
+import ulib.string;
+import gcc.attributes;
+
 // Support for UBSAN and ASAN.
 
 version (sanitizer):
@@ -51,15 +55,13 @@ alias Overflow = TypeData;
 alias InvalidValue = TypeData;
 alias VlaBound = TypeData;
 
-import core.exception;
-import ulib.string;
-import gcc.attributes;
-
+@no_sanitize("kernel-address", "undefined")
 void handle_overflow(Overflow* data, ulong lhs, ulong rhs, char op) {
-    panic(tostr(data.loc.file), ":", data.loc.line, ": integer overflow '", op, "'");
+    panicf("%s:%d: integer overflow '%c'\n", data.loc.file, data.loc.line, op);
 }
 
 extern (C) {
+    @no_sanitize("kernel-address", "undefined"):
     // otherwise these are removed by LTO before instrumentation happens
     @used:
     void __ubsan_handle_add_overflow(Overflow* data, ulong a, ulong b) {
@@ -75,55 +77,55 @@ extern (C) {
     }
 
     void __ubsan_handle_negate_overflow(Overflow* data, ulong a) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": negate overflow");
+        panicf("%s:%d: negate overflow\n", data.loc.file, data.loc.line);
     }
 
     void __ubsan_handle_divrem_overflow(Overflow* data, ulong a, ulong b) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": divrem overflow");
+        panicf("%s:%d: devrem overflow\n", data.loc.file, data.loc.line);
     }
 
     void __ubsan_handle_shift_out_of_bounds(ShiftOutOfBounds* data, ulong a, ulong b) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": shift out of bounds");
+        panicf("%s:%d: shift out of bounds\n", data.loc.file, data.loc.line);
     }
 
     void __ubsan_handle_type_mismatch(TypeMismatch* data, ulong addr) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": type mismatch: ", Hex(addr));
+        panicf("%s:%d: type mismatch %lx\n", data.loc.file, data.loc.line, addr);
     }
 
     void __ubsan_handle_type_mismatch_v1(TypeMismatch* data, ulong addr) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": type mismatch v1: ", Hex(addr), ", ", cast(int) data.type_check_kind, ", ", cast(int) data.alignment);
+        panicf("%s:%d: type mismatch v1: addr: %lx, kind: %d, align: %d\n", data.loc.file, data.loc.line, addr, data.type_check_kind, data.alignment);
     }
 
     void __ubsan_handle_out_of_bounds(OutOfBounds* data, ulong index) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": out of bounds");
+        panicf("%s:%d: out of bounds\n", data.loc.file, data.loc.line);
     }
 
     void __ubsan_handle_builtin_unreachable(SrcLoc* loc) {
-        panic(tostr(loc.file), ":", loc.line, ": unreachable");
+        panicf("%s:%d: unreachable\n", loc.file, loc.line);
     }
 
     void __ubsan_handle_missing_return(SrcLoc* loc) {
-        panic(tostr(loc.file), ":", loc.line, "missing return");
+        panicf("%s:%d: missing return\n", loc.file, loc.line);
     }
 
     void __ubsan_handle_vla_bound_not_positive(VlaBound* data, ulong bound) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": vla bound not positive");
+        panicf("%s:%d: vla bound not positive\n", data.loc.file, data.loc.line);
     }
 
     void __ubsan_handle_load_invalid_value(InvalidValue* data, void* val) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": load invalid value");
+        panicf("%s:%d: load invalid value\n", data.loc.file, data.loc.line);
     }
 
     void __ubsan_handle_nonnull_arg(NonnullArg* data) {
-        panic(tostr(data.loc.file), ":", data.loc.line, ": nonnull arg");
+        panicf("%s:%d: nonnull arg\n", data.loc.file, data.loc.line);
     }
 
     void __ubsan_handle_nonnull_return(SrcLoc *loc) {
-        panic(tostr(loc.file), ":", loc.line, ": nonnull return");
+        panicf("%s:%d: nonnull return\n", loc.file, loc.line);
     }
 
     void __ubsan_handle_pointer_overflow(SrcLoc *loc, uintptr base, uintptr result) {
-        panic(tostr(loc.file), ":", loc.line, ": pointer overflow");
+        panicf("%s:%d: pointer overflow\n", loc.file, loc.line);
     }
 }
 
@@ -131,6 +133,7 @@ extern (C) {
 
 extern (C) extern immutable uint _kcode_start, _kcode_end, _krodata_start, _krodata_end;
 
+@no_sanitize("kernel-address", "undefined"):
 void asan_access(uintptr addr, size_t size, bool write) {
     bool in_range(uintptr addr, size_t size, immutable uint* start, immutable uint* end) {
         return addr+size >= cast(uintptr) start && addr < cast(uintptr) end;
@@ -145,6 +148,7 @@ void asan_access(uintptr addr, size_t size, bool write) {
 }
 
 extern (C) {
+    @no_sanitize("kernel-address", "undefined"):
     @used:
     void __asan_load1_noabort(uintptr addr) {
         asan_access(addr, 1, false);

@@ -70,6 +70,9 @@ public:
                     write_elem("0x");
                     write_elem(va_arg!(ulong)(ap), 16);
                     break;
+                case 'c':
+                    write_elem(va_arg!(char)(ap));
+                    break;
                 case 's':
                     immutable(char)* s = va_arg!(immutable(char)*)(ap);
                     if (!s)
