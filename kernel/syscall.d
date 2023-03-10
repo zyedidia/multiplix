@@ -87,6 +87,7 @@ struct Syscall {
                 return -1;
             }
         }
+        assert(p.canary == Proc.canary_magic);
 
         // Initialize the child's context based on the parent.
         memcpy(&child.trapframe.regs, &p.trapframe.regs, Regs.sizeof);

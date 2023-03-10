@@ -50,7 +50,7 @@ struct Proc {
 
     // The proc struct contains the entire kernel stack. Do not create Proc
     // structs on the stack.
-    align(16) ubyte[2000] kstack;
+    align(16) ubyte[3008] kstack;
     static assert(kstack.length % 16 == 0);
 
     import kernel.vm;
