@@ -19,6 +19,10 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.ArchTrap.setup();
 
     if (cpu.primary) {
+        enum monitor_heap = sys.mb!(64);
+        arch.Debug.alloc_heap(heap, monitor_heap);
+        heap += monitor_heap;
+
         sys.allocator.construct(cast(uintptr) heap);
 
         // reallocate the hello ELF to make sure it is aligned properly

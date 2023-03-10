@@ -140,22 +140,28 @@ struct Debug {
     enum ext = 0x0A000000;
 
     enum Fid {
-        step_start = 0,
-        step_start_at = 1,
-        step_stop = 2,
+        enable = 0,
+        enable_at = 1,
+        disable = 2,
+        alloc_heap = 3,
     }
 
-    // start single stepping now
-    static void step_start() {
-        cast() ecall(ext, Fid.step_start);
+    // start checkers now
+    static void enable() {
+        cast() ecall(ext, Fid.enable);
     }
 
-    // start single stepping at addr
-    static void step_start_at(uintptr addr) {
-        cast() ecall(ext, Fid.step_start_at, addr);
+    // start checkers at addr
+    static void enable_at(uintptr addr) {
+        cast() ecall(ext, Fid.enable_at, addr);
     }
 
-    static void step_stop() {
-        cast() ecall(ext, Fid.step_stop);
+    static void disable() {
+        cast() ecall(ext, Fid.disable);
+    }
+
+    static void alloc_heap(void* start, size_t size) {
+        import kernel.vm;
+        cast() ecall(ext, Fid.alloc_heap, ka2pa(cast(uintptr) start), size);
     }
 }

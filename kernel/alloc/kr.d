@@ -1,5 +1,7 @@
 module kernel.alloc.kr;
 
+import kernel.spinlock;
+
 // K&R allocator
 struct KrAllocator {
     struct Header {
@@ -12,13 +14,14 @@ struct KrAllocator {
     Header* freep;
     ubyte* heap;
     ubyte* heap_end;
+    shared Spinlock lock;
 
     this(ubyte* heap_start, size_t size) {
         this.heap = heap_start;
         this.heap_end = heap_start + size;
     }
 
-    void* sbrk(size_t increment) {
+    void* sbrk(size_t increment) in (lock.holding()) {
         if (heap >= heap_end) {
             return null;
         }
@@ -28,7 +31,7 @@ struct KrAllocator {
     }
 
     enum nalloc = 1024; // minimum number of bytes to request
-    Header* morecore(size_t nu) {
+    Header* morecore(size_t nu) in (lock.holding()) {
         if (nu < nalloc) {
             nu = nalloc;
         }
@@ -42,6 +45,9 @@ struct KrAllocator {
     }
 
     void* alloc(size_t nbytes) {
+        lock.lock();
+        scope(exit) lock.unlock();
+
         size_t nunits = (nbytes + Header.sizeof-1)/Header.sizeof + 1;
         Header* prevp = void;
         Header* p = void;
@@ -68,6 +74,9 @@ struct KrAllocator {
     }
 
     void free(void* ap) {
+        lock.lock();
+        scope(exit) lock.unlock();
+
         Header* bp = cast(Header*) ap - 1; // point to block header
         Header* p = void;
         for (p = freep; !(bp > p && bp < p.ptr); p = p.ptr) {

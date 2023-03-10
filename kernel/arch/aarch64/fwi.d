@@ -55,23 +55,28 @@ struct Debug {
     enum ext = 1;
 
     enum Fid {
-        step_start = 0,
-        step_start_at = 1,
-        step_stop = 2,
+        enable = 0,
+        enable_at = 1,
+        disable = 2,
+        alloc_heap = 3,
     }
 
     // start single stepping now
-    static void step_start() {
-        cast() hvc(ext, Fid.step_start);
+    static void enable() {
+        cast() hvc(ext, Fid.enable);
     }
 
     // start single stepping at addr
-    static void step_start_at(uintptr addr) {
-        cast() hvc(ext, Fid.step_start_at, addr);
+    static void enable_at(uintptr addr) {
+        cast() hvc(ext, Fid.enable_at, addr);
     }
 
-    // stop single stepping
-    static void step_stop() {
-        cast() hvc(ext, Fid.step_stop);
+    static void disable() {
+        cast() hvc(ext, Fid.disable);
+    }
+
+    static void alloc_heap(void* start, size_t size) {
+        import kernel.vm;
+        cast() hvc(ext, Fid.alloc_heap, ka2pa(cast(uintptr) start), size);
     }
 }

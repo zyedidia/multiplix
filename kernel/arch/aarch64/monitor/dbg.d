@@ -10,18 +10,22 @@ import bits = ulib.bits;
 struct ExtDebug {
     static bool handler(uint fid, Regs* regs, uint* out_val) {
         switch (fid) {
-            case fwi.Debug.Fid.step_start:
+            case fwi.Debug.Fid.enable:
                 SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
                 place_breakpoint(SysReg.elr_el2);
                 // place_watchpoint(0, DbgLsc.rdwr);
                 break;
-            case fwi.Debug.Fid.step_start_at:
+            case fwi.Debug.Fid.enable_at:
                 SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
                 place_breakpoint(regs.x0);
                 break;
-            case fwi.Debug.Fid.step_stop:
+            case fwi.Debug.Fid.disable:
                 clear_breakpoints();
                 clear_ss();
+                break;
+            case fwi.Debug.Fid.alloc_heap:
+                import sys = kernel.sys;
+                sys.allocator.__ctor(cast(ubyte*) regs.x0, regs.x1);
                 break;
             default:
                 return false;

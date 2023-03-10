@@ -3,6 +3,7 @@ module ulib.hashmap;
 import kernel.alloc;
 
 import ulib.math;
+import libc;
 
 struct Hashmap(K, V, alias hashfn, alias eqfn) {
     struct Entry {
@@ -75,7 +76,7 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
             }
         }
 
-        .free(this.entries);
+        kfree(this.entries);
 
         this.cap = newmap.cap;
         this.entries = newmap.entries;
@@ -148,5 +149,9 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
         }
         return true;
     }
-}
 
+    void clear() {
+        memset(entries, 0, len * Entry.sizeof);
+        len = 0;
+    }
+}
