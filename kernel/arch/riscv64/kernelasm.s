@@ -13,8 +13,7 @@ _start:
 	add sp, sp, t0  # sp = _kheap_start + (hartid + 1) * 4096
 	la t1, primary
 	lw a1, 0(t1)
-	li t0, 0
-	sw t0, 0(t1)
+	sw zero, 0(t1)
 	call dstart
 .globl _halt
 _halt:
