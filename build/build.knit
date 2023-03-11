@@ -118,7 +118,7 @@ function build.flags_gnu(machine)
     return flags[machine.arch]
 end
 
-function build.flags_dc(dc, monitor, machine)
+function build.flags_compiler(monitor, machine)
     vmon = sel(monitor, "monitor", "kernel")
 
     local flags = {
@@ -126,26 +126,18 @@ function build.flags_dc(dc, monitor, machine)
         llvm = build.flags_llvm(machine),
     }
 
-    function get_gdc(opt, name, val)
-        if opt then
-            if dc ~= "gdc" then
-                error("error: " .. name .. " is only supported with gdc")
-            else
-                return val
-            end
-        end
-        return ""
-    end
+    local san = sel(conf.sanitize, "-fsanitize=kernel-address,undefined -fno-wrapv -fversion=sanitizer", "")
+    local stackprot = sel(conf.stackprot, "-fstack-protector-all", "")
+    local analyzer = sel(conf.analyzer, "-fanalyzer", "")
 
-    local san = get_gdc(conf.sanitize, "sanitizer", "-fsanitize=kernel-address,undefined -fno-wrapv -fversion=sanitizer")
-    local stackprot = get_gdc(conf.stackprot, "stack protector", "-fstack-protector-all")
-    local analyzer = get_gdc(conf.analyzer, "analyzer", "-fanalyzer")
+    local gnu_extra := $san $stackprot -Wframe-larger-than=1024 -Wall -Werror
 
     local compiler = {
-        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) -Wall -Werror $san -Wframe-larger-than=1024 $stackprot $analyzer -ftransition=tls
+        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) $gnu_extra -ftransition=tls $analyzer
         ldc2 := $(flags.llvm) -betterC -O3 -g -function-sections -data-sections -fthread-model=global-dynamic -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls
+        ldgcc := $(flags.gnu) $gnu_extra
     }
-    return compiler[dc]
+    return compiler
 end
 
 function build.flags(machine, lto, release, monitor)
@@ -168,10 +160,12 @@ function build.flags(machine, lto, release, monitor)
         end
     end
 
+    local compiler = build.flags_compiler(monitor, machine)
     local flags = {
         llvm = build.flags_llvm(machine),
         gnu = build.flags_gnu(machine),
-        dc = build.flags_dc(conf.dc, monitor, machine)
+        dc = compiler[conf.dc],
+        ldgcc = compiler["ldgcc"],
     }
 
     return {
@@ -179,7 +173,7 @@ function build.flags(machine, lto, release, monitor)
         dc_libc := $(flags.dc) $(sel(conf.dc ~= "gdc", dclto, ""))
         cc := -Os $(flags.gnu)
         as := -Os $(flags.gnu) -xassembler-with-cpp
-        ld := $ldlto -Wl,--gc-sections -nostdlib -nostartfiles -lgcc $(flags.gnu)
+        ld := $ldlto -Wl,--gc-sections -nostdlib -nostartfiles -lgcc $(flags.gnu) $(flags.ldgcc)
         qemu := $(machine.qemu) -nographic
     }
 end
