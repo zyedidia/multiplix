@@ -71,4 +71,7 @@ bool __equals(scope const string lhs, scope const string rhs);
 
 extern (C) noreturn _halt();
 
-public import core.exception : __switch_error;
+void __switch_error()(string file = __FILE__, size_t line = __LINE__) {
+    import core.exception;
+    __switch_errorT(file, line);
+}

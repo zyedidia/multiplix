@@ -46,10 +46,6 @@ void __switch_errorT()(string file = __FILE__, size_t line = __LINE__) @trusted 
     panic(file, ":", line, ": No appropriate switch clause found");
 }
 
-void __switch_error()(string file = __FILE__, size_t line = __LINE__) {
-    __switch_errorT(file, line);
-}
-
 // Called when an assert() fails.
 void _assert_msg(string msg, string file, uint line) {
     panic(file, ":", line, ": ", msg);
