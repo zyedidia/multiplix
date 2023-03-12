@@ -128,7 +128,7 @@ function build.flags_compiler(monitor, machine)
 
     local san = sel(conf.sanitize, "-fsanitize=kernel-address,undefined -fno-wrapv -fversion=sanitizer", "")
     local stackprot = sel(conf.stackprot, "-fstack-protector-all", "")
-    local analyzer = sel(conf.analyzer, "-fanalyzer", "")
+    local analyzer = sel(conf.analyzer, "-fanalyzer -Wno-analyzer-va-arg-type-mismatch", "")
 
     local gnu_extra := $san $stackprot -Wframe-larger-than=1024 -Wall -Werror
 
