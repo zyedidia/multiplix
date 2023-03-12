@@ -1,10 +1,19 @@
 module core.exception;
 
+import kernel.spinlock;
+
+import builtins = core.builtins;
+
+shared Spinlock lock;
+
 noreturn panic(Args...)(Args msg) {
     import ulib.print;
     import kernel.irq;
     Irq.off();
-    println("panic: ", msg);
+    lock.lock();
+    printf("panic (%p): ", builtins.return_address(0)-4);
+    println(msg);
+    lock.unlock();
     _panic();
     _halt();
 }
@@ -15,11 +24,13 @@ extern (C) noreturn panicf(scope const char* fmt, ...) {
     import ulib.print;
     import kernel.irq;
     Irq.off();
-    print("panic: ");
+    lock.lock();
+    printf("panic (%p): ", builtins.return_address(0)-4);
     va_list ap;
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
+    lock.unlock();
     _panic();
     _halt();
 }
