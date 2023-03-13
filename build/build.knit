@@ -126,9 +126,9 @@ function build.flags_compiler(monitor, machine)
         llvm = build.flags_llvm(machine),
     }
 
-    local san = sel(conf.sanitize, "-fsanitize=kernel-address,undefined -fno-wrapv -fversion=sanitizer", "")
+    local san = sel(conf.sanitize and not monitor, "-fsanitize=kernel-address,undefined -fno-wrapv -fversion=sanitizer", "")
     local stackprot = sel(conf.stackprot, "-fstack-protector-all", "")
-    local analyzer = sel(conf.analyzer, "-fanalyzer -Wno-analyzer-va-arg-type-mismatch", "")
+    local analyzer = sel(conf.analyzer, "-fanalyzer -Wno-analyzer-va-arg-type-mismatch -Wno-analyzer-va-list-exhausted", "")
 
     local gnu_extra := $san $stackprot -Wframe-larger-than=1024 -Wall -Werror
 

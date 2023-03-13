@@ -55,6 +55,10 @@ function bootloader.rules(bootelf, payload, unified)
                 $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(payload)
     end
 
+    rules = rules +
+        $ .bootobj/libd/libc.o:D[.bootobj/deps/libd/libc.dep]: libd/libc.d
+            $(tools.dc) $(flags.dc_libc) -Ilibd $input -c -$of $output $(makedeps(f".bootobj/deps/libd/libc.dep", output))
+
     return rules
 end
 

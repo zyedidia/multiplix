@@ -29,18 +29,18 @@ extern (C) {
         ubyte* heap = init_tls(coreid, stack_start);
         compiler_fence();
 
-        _cpu[coreid].primary = primary;
-        _cpu[coreid].coreid = coreid;
-        _cpu[coreid].stack = stack_start;
-
-        compiler_fence();
-
         if (primary) {
             init_bss();
             memory_fence();
             Uart.setup(115200);
         }
         memory_fence();
+
+        _cpu[coreid].primary = primary;
+        _cpu[coreid].coreid = coreid;
+        _cpu[coreid].stack = stack_start;
+
+        compiler_fence();
 
         Machine.setup();
 

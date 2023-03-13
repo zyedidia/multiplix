@@ -176,11 +176,16 @@ struct Asan {
 
     @no_sanitize("kernel-address", "undefined"):
     void access(uintptr addr, size_t size, bool write, void* retaddr) shared {
-        // TODO: lock might cause a recursive asan_access
+        if (!cpu.asan_active) {
+            return;
+        }
+        bool prev_asan = cpu.asan_active;
+        cpu.asan_active = false;
+
         lock.lock();
         scope(exit) lock.unlock();
 
-        if (pagemap == null || !cpu.asan_active) {
+        if (pagemap == null) {
             return;
         }
 
@@ -207,6 +212,8 @@ struct Asan {
                 }
             }
         }
+
+        cpu.asan_active = prev_asan;
     }
 }
 
