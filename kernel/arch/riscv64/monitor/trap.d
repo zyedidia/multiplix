@@ -23,10 +23,15 @@ extern (C) void monitortrap(Regs* regs) {
             Csr.mip = Csr.mip | (1 << Mip.stip);
             break;
         case Cause.breakpoint:
-            ExtDebug.handle_breakpoint(mepc, regs);
+            auto mtval = Csr.mtval;
+            if (mepc == mtval) {
+                ExtDebug.handle_breakpoint(mepc, regs);
+            } else {
+                ExtDebug.handle_watchpoint(mepc, mtval, regs);
+            }
             break;
         default:
             import core.exception;
-            panic("[unhandled cause] monitortrap: core: ", Csr.mhartid, ", cause: ", mcause, ", epc: ", cast(void*) mepc);
+            panic("[unhandled cause] monitortrap: core: ", Csr.mhartid, ", cause: ", mcause, ", epc: ", cast(void*) mepc, ", mtval: ", cast(void*) Csr.mtval);
     }
 }

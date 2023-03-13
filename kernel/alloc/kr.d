@@ -40,7 +40,7 @@ struct KrAllocator {
             return null;
         }
         up.size = nu;
-        free(cast(void*) (up+1));
+        free_internal(cast(void*) (up+1));
         return freep;
     }
 
@@ -76,7 +76,10 @@ struct KrAllocator {
     void free(void* ap) {
         lock.lock();
         scope(exit) lock.unlock();
+        free_internal(ap);
+    }
 
+    private void free_internal(void* ap) {
         Header* bp = cast(Header*) ap - 1; // point to block header
         Header* p = void;
         for (p = freep; !(bp > p && bp < p.ptr); p = p.ptr) {

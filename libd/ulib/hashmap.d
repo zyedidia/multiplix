@@ -151,7 +151,7 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
     }
 
     void clear() {
-        memset(entries, 0, len * Entry.sizeof);
+        memset(entries, 0, cap * Entry.sizeof);
         len = 0;
     }
 }

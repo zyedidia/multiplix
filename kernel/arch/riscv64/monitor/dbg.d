@@ -5,23 +5,38 @@ import kernel.arch.riscv64.csr;
 
 import kernel.cpu;
 import kernel.board;
+import kernel.spinlock;
 
 import sbi = kernel.arch.riscv64.sbi;
 
 import bits = ulib.bits;
 
-__gshared FenceChecker[Machine.ncores] fchks;
+shared FenceChecker[Machine.ncores] chks;
 
 struct ExtDebug {
     enum nbrk = 2; // number of hardware breakpoints per hart
 
+    enum BrkType {
+        read = 1 << 0,
+        write = 1 << 1,
+        exec = 1 << 2,
+
+        rwx = read | write | exec,
+        wx = write | exec,
+        x = exec,
+    }
+
+    enum Insn {
+        fencei = 0x100f,
+    }
+
     static bool handler(uint fid, Regs* regs, uint* out_val) {
         switch (fid) {
             case sbi.Debug.Fid.enable:
-                place_mismatch_breakpoint(Csr.mepc);
+                place_mismatch_breakpoint(Csr.mepc, BrkType.wx);
                 break;
             case sbi.Debug.Fid.enable_at:
-                place_breakpoint(regs.a0);
+                place_breakpoint(regs.a0, BrkType.x);
                 break;
             case sbi.Debug.Fid.disable:
                 clear_breakpoints();
@@ -29,6 +44,9 @@ struct ExtDebug {
             case sbi.Debug.Fid.alloc_heap:
                 import sys = kernel.sys;
                 sys.allocator.__ctor(cast(ubyte*) regs.a0, regs.a1);
+                for (int i = 0; i < chks.length; i++) {
+                    assert((cast()chks[i]).setup());
+                }
                 break;
             default:
                 return false;
@@ -37,36 +55,64 @@ struct ExtDebug {
     }
 
     static void handle_breakpoint(uintptr epc, Regs* regs) {
-        place_mismatch_breakpoint(epc);
+        place_mismatch_breakpoint(epc, BrkType.wx);
+        auto epcpa = va2pa(epc);
+        chks[cpu.coreid].on_exec(epc, epcpa);
+        if (load_insn(epcpa) == Insn.fencei) {
+            chks[cpu.coreid].on_fence();
+        }
     }
 
     static void handle_watchpoint(uintptr epc, uintptr va, Regs* regs) {
-
+        place_mismatch_breakpoint(epc, BrkType.x);
+        auto pa = va2pa(va);
+        for (int i = 0; i < chks.length; i++) {
+            chks[i].on_store(pa, epc);
+        }
     }
 
-    static void place_breakpoint(uintptr addr) {
+    static void place_breakpoint(uintptr addr, BrkType flags) {
         Csr.tselect = 0;
-        Csr.tdata1 = 0b011100;
+        Csr.tdata1 = 0b011000 | flags;
         Csr.tdata2 = addr;
     }
 
-    static void place_mismatch_breakpoint(uintptr addr) {
-        // break on >= addr + 2
-        Csr.tselect = 0;
-        Csr.tdata1 = bits.write(0b011100, 10, 7, 2);
-        Csr.tdata2 = addr + 2;
-
+    static void place_mismatch_breakpoint(uintptr addr, BrkType flags) {
         // break on < addr
-        Csr.tselect = 1;
-        Csr.tdata1 = bits.write(0b011100, 10, 7, 3);
+        Csr.tselect = 0;
+        Csr.tdata1 = bits.write(0b011000 | flags, 10, 7, 3);
         Csr.tdata2 = addr;
+
+        // break on >= addr + 2
+        Csr.tselect = 1;
+        Csr.tdata1 = bits.write(0b011000 | flags, 10, 7, 2);
+        Csr.tdata2 = addr + 2;
     }
 
     static void clear_breakpoints() {
-        for (uint i = 0; i < nbrk; i++) {
-            Csr.tselect = i;
-            Csr.tdata1 = 0;
+        Csr.tselect = 0;
+        Csr.tdata1 = 0;
+        Csr.tselect = 1;
+        Csr.tdata1 = 0;
+    }
+
+    static uint load_insn(uintptr epcpa) {
+        if (epcpa % 4 == 0) {
+            return *(cast(uint*) epcpa);
         }
+        return (*(cast(ushort*) epcpa)) | (*(cast(ushort*) epcpa + 1) << 16);
+    }
+
+    static uintptr va2pa(uintptr va) {
+        import kernel.vm;
+        import kernel.arch.riscv64.vm;
+        Pagetable* pt = cast(Pagetable*) ((Csr.satp & 0xfffffffffff) << 12);
+        assert(pt);
+        auto map = pt.lookup(va);
+        if (!map.has()) {
+            return -1;
+        }
+        return map.get().pa;
     }
 }
 
@@ -87,20 +133,31 @@ struct FenceChecker {
     import ulib.hashmap;
     import core.exception;
     Hashmap!(uintptr, bool, hash, eq) mem;
+    shared Spinlock lock;
 
-    void on_store(uintptr pa) {
-        if (!mem.put(pa, true)) {
+    bool setup() {
+        return Hashmap!(uintptr, bool, hash, eq).alloc(&mem, 1024);
+    }
+
+    void on_store(uintptr pa, uintptr epc) shared {
+        lock.lock();
+        if (!(cast()mem).put(pa, true)) {
             panic("fence: out of memory");
         }
+        lock.unlock();
     }
 
-    void on_exec(uintptr pa) {
-        if (mem.get(pa, null)) {
-            panicf("fence: executed %lx without preceding fence", pa);
+    void on_exec(uintptr va, uintptr pa) shared {
+        lock.lock();
+        if ((cast()mem).get(pa, null)) {
+            panicf("fence: executed %lx (va: %lx) without preceding fence", pa, va);
         }
+        lock.unlock();
     }
 
-    void on_fence() {
-        mem.clear();
+    void on_fence() shared {
+        lock.lock();
+        (cast()mem).clear();
+        lock.unlock();
     }
 }
