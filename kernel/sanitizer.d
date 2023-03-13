@@ -133,65 +133,125 @@ extern (C) {
 
 extern (C) extern immutable uint _kcode_start, _kcode_end, _krodata_start, _krodata_end;
 
-@no_sanitize("kernel-address", "undefined"):
-void asan_access(uintptr addr, size_t size, bool write, void* retaddr) {
-    bool in_range(uintptr addr, size_t size, immutable uint* start, immutable uint* end) {
-        return addr+size >= cast(uintptr) start && addr < cast(uintptr) end;
+import kernel.spinlock;
+import kernel.cpu;
+import kernel.alloc;
+
+struct Asan {
+    Spinlock lock;
+    ubyte[] pagemap;
+    uintptr mem_base;
+
+    void setup(uintptr mem_base, size_t mem_size) shared {
+        auto pages = knew_array!(ubyte)(mem_size);
+        assert(pages, "failed to initialize ASAN");
+        this.pagemap = cast(shared(ubyte[])) pages;
+        this.mem_base = mem_base;
     }
 
-    import sys = kernel.sys;
-    if (addr < sys.pagesize) {
-        panicf("%s of null page: %lx (at %p)\n", write ? "write".ptr : "read".ptr, addr, retaddr);
+    void enable() shared {
+        cpu.asan_active = true;
     }
 
-    if (in_range(addr, size, &_kcode_start, &_kcode_end) && write) {
-        panicf("write of size %ld to kernel code: %lx (at %p)\n", size, addr, retaddr);
+    void disable() shared {
+        cpu.asan_active = false;
     }
-    if (in_range(addr, size, &_krodata_start, &_krodata_end) && write) {
-        panicf("write of size %ld to kernel read-only data: %lx (at %p)\n", size, addr, retaddr);
+
+    import libc;
+    void mark_alloc(uintptr addr, size_t size) shared {
+        lock.lock();
+        scope(exit) lock.unlock();
+        if (!pagemap)
+            return;
+        memset(&(cast()pagemap[addr - mem_base]), 1, size);
+    }
+
+    void mark_free(uintptr addr, size_t size) shared {
+        lock.lock();
+        scope(exit) lock.unlock();
+        if (!pagemap)
+            return;
+        memset(&(cast()pagemap[addr - mem_base]), 0, size);
+    }
+
+    @no_sanitize("kernel-address", "undefined"):
+    void access(uintptr addr, size_t size, bool write, void* retaddr) shared {
+        // TODO: lock might cause a recursive asan_access
+        lock.lock();
+        scope(exit) lock.unlock();
+
+        if (pagemap == null || !cpu.asan_active) {
+            return;
+        }
+
+        bool in_range(uintptr addr, size_t size, uintptr start, uintptr end) {
+            return addr+size >= start && addr < end;
+        }
+
+        import sys = kernel.sys;
+        if (addr < sys.pagesize) {
+            panicf("%s of null page: %lx (at %p)\n", write ? "write".ptr : "read".ptr, addr, retaddr);
+        }
+
+        if (in_range(addr, size, cast(uintptr) &_kcode_start, cast(uintptr) &_kcode_end) && write) {
+            panicf("write of size %ld to kernel code: %lx (at %p)\n", size, addr, retaddr);
+        }
+        if (in_range(addr, size, cast(uintptr) &_krodata_start, cast(uintptr) &_krodata_end) && write) {
+            panicf("write of size %ld to kernel read-only data: %lx (at %p)\n", size, addr, retaddr);
+        }
+
+        if (in_range(addr, size, mem_base, mem_base + pagemap.length)) {
+            for (int i = 0; i < size; i++) {
+                if (!pagemap[addr - mem_base + i]) {
+                    panicf("access of size %ld to unallocated heap data: %lx (at %p)\n", size, addr, retaddr);
+                }
+            }
+        }
     }
 }
+
+shared Asan asan;
 
 extern (C) {
     @no_sanitize("kernel-address", "undefined"):
     @used:
     import core.builtins;
     void __asan_load1_noabort(uintptr addr) {
-        asan_access(addr, 1, false, return_address(0));
+        asan.access(addr, 1, false, return_address(0));
     }
     void __asan_load2_noabort(uintptr addr) {
-        asan_access(addr, 2, false, return_address(0));
+        asan.access(addr, 2, false, return_address(0));
     }
     void __asan_load4_noabort(uintptr addr) {
-        asan_access(addr, 4, false, return_address(0));
+        asan.access(addr, 4, false, return_address(0));
     }
     void __asan_load8_noabort(uintptr addr) {
-        asan_access(addr, 8, false, return_address(0));
+        asan.access(addr, 8, false, return_address(0));
     }
     void __asan_load16_noabort(uintptr addr) {
-        asan_access(addr, 16, false, return_address(0));
+        asan.access(addr, 16, false, return_address(0));
     }
     void __asan_loadN_noabort(uintptr addr, size_t sz) {
-        asan_access(addr, sz, false, return_address(0));
+        asan.access(addr, sz, false, return_address(0));
     }
 
     void __asan_store1_noabort(uintptr addr) {
-        asan_access(addr, 1, true, return_address(0));
+        asan.access(addr, 1, true, return_address(0));
     }
     void __asan_store2_noabort(uintptr addr) {
-        asan_access(addr, 2, true, return_address(0));
+        asan.access(addr, 2, true, return_address(0));
     }
     void __asan_store4_noabort(uintptr addr) {
-        asan_access(addr, 4, true, return_address(0));
+        asan.access(addr, 4, true, return_address(0));
     }
     void __asan_store8_noabort(uintptr addr) {
-        asan_access(addr, 8, true, return_address(0));
+        asan.access(addr, 8, true, return_address(0));
     }
     void __asan_store16_noabort(uintptr addr) {
-        asan_access(addr, 16, true, return_address(0));
+        asan.access(addr, 16, true, return_address(0));
     }
     void __asan_storeN_noabort(uintptr addr, size_t sz) {
-        asan_access(addr, sz, true, return_address(0));
+        asan.access(addr, sz, true, return_address(0));
     }
 
     void __asan_handle_no_return() {}

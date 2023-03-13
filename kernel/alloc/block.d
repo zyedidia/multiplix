@@ -54,6 +54,7 @@ struct BlockAllocator(A) {
     Header*[nblocks] full_blocks;
 
     void* alloc(size_t sz) {
+        size_t objsz = sz;
         // make sure the size is at least as large as a Free pointer.
         sz = sz < (Free*).sizeof ? sz = (Free*).sizeof : sz;
         // make sure size is a power of 2.
@@ -61,6 +62,20 @@ struct BlockAllocator(A) {
 
         lock.lock();
         scope(exit) lock.unlock();
+
+        void mark_alloc(void* addr, size_t size) {
+            version (sanitizer) {
+                import kernel.sanitizer;
+                if (addr)
+                    asan.mark_alloc(cast(uintptr) addr, size);
+            }
+        }
+
+        version (sanitizer) {
+            import kernel.sanitizer;
+            asan.disable();
+            scope(exit) asan.enable();
+        }
 
         if (sz >= blocksize) {
             // size is big enough to go to the underlying allocator
@@ -72,7 +87,7 @@ struct BlockAllocator(A) {
 
         void* alloc_into(Header* block) {
             void* ptr = block.allocate(sz);
-            if (block.alloc_slots >= block.total_slots) {
+            if (ptr && block.alloc_slots >= block.total_slots) {
                 // block became full so the new head of partial_blocks is the
                 // next block.
                 partial_blocks[nblk] = block.next;
@@ -84,7 +99,9 @@ struct BlockAllocator(A) {
         }
 
         if (block) {
-            return alloc_into(block);
+            void* p = alloc_into(block);
+            mark_alloc(p, objsz);
+            return p;
         }
 
         // no free blocks for this size, make a new one
@@ -95,7 +112,9 @@ struct BlockAllocator(A) {
         // add it to the partial_blocks list.
         block.next = partial_blocks[nblk];
         partial_blocks[nblk] = block;
-        return alloc_into(block);
+        void* p = alloc_into(block);
+        mark_alloc(p, objsz);
+        return p;
     }
 
     void free(void* val) {
@@ -104,8 +123,24 @@ struct BlockAllocator(A) {
         }
         lock.lock();
         scope(exit) lock.unlock();
+
+        void mark_free(void* addr, size_t size) {
+            version (sanitizer) {
+                import kernel.sanitizer;
+                if (addr)
+                    asan.mark_free(cast(uintptr) addr, size);
+            }
+        }
+        version (sanitizer) {
+            import kernel.sanitizer;
+            asan.disable();
+            scope(exit) asan.enable();
+        }
+
         // round down to nearest page boundary to get the header for the block
         Header* hdr = cast(Header*) (cast(uintptr) val & (~0 << (bits.msb(sys.pagesize) - 1)));
+
+        mark_free(val, hdr.size);
 
         hdr.alloc_slots--;
         if (hdr.alloc_slots == 0) {

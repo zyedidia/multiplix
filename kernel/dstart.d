@@ -12,16 +12,18 @@ extern (C) {
 
     void kmain(int coreid, ubyte* heap);
 
+    version (GNU) {
+        import gcc.attributes;
+        @no_sanitize("kernel-address", "undefined") {
+            private void init_bss();
+            private ubyte* init_tls(int coreid, out uintptr stack_start);
+            void dstart(int coreid, bool primary);
+        }
+    }
+
     void dstart(int coreid, bool primary) {
         import kernel.board;
         import core.sync;
-
-        if (primary) {
-            init_bss();
-            memory_fence();
-            Uart.setup(115200);
-        }
-        memory_fence();
 
         uintptr stack_start;
         ubyte* heap = init_tls(coreid, stack_start);
@@ -31,15 +33,18 @@ extern (C) {
         _cpu[coreid].coreid = coreid;
         _cpu[coreid].stack = stack_start;
 
+        compiler_fence();
+
+        if (primary) {
+            init_bss();
+            memory_fence();
+            Uart.setup(115200);
+        }
+        memory_fence();
+
         Machine.setup();
 
         kmain(coreid, heap);
-    }
-
-    version (GNU) {
-        import gcc.attributes;
-        @no_sanitize("kernel-address", "undefined")
-        private void init_bss();
     }
 
     private void init_bss() {

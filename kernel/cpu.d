@@ -12,6 +12,10 @@ struct Cpu {
     // for timer interrupt wait queue
     import kernel.wait;
     WaitQueue ticksq;
+
+    version (sanitizer) {
+        bool asan_active;
+    }
 }
 
 import kernel.board;
