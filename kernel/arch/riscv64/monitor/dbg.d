@@ -12,6 +12,7 @@ import sbi = kernel.arch.riscv64.sbi;
 import bits = ulib.bits;
 
 shared FenceChecker[Machine.ncores] chks;
+__gshared bool[Machine.ncores] enabled;
 
 struct ExtDebug {
     enum nbrk = 2; // number of hardware breakpoints per hart
@@ -32,14 +33,18 @@ struct ExtDebug {
 
     static bool handler(uint fid, Regs* regs, uint* out_val) {
         switch (fid) {
+            import ulib.print;
             case sbi.Debug.Fid.enable:
                 place_mismatch_breakpoint(Csr.mepc, BrkType.wx);
+                enabled[cpu.coreid] = true;
                 break;
             case sbi.Debug.Fid.enable_at:
                 place_breakpoint(regs.a0, BrkType.x);
                 break;
             case sbi.Debug.Fid.disable:
                 clear_breakpoints();
+                *out_val = enabled[cpu.coreid];
+                enabled[cpu.coreid] = false;
                 break;
             case sbi.Debug.Fid.alloc_heap:
                 import sys = kernel.sys;

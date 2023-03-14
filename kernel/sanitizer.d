@@ -265,3 +265,5 @@ extern (C) {
     void __asan_before_dynamic_init(const char* module_name) {}
     void __asan_after_dynamic_init() {}
 }
+
+// CONCURRENCY SANITIZER

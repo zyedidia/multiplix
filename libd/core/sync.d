@@ -118,6 +118,18 @@ void compiler_fence() {
     }
 }
 
+template DisableCheck() {
+    const char[] DisableCheck = `
+        version (check) {
+            version (kernel) {
+                import kernel.arch;
+                bool en = Debug.disable();
+                scope(exit) if (en) Debug.enable();
+            }
+        }
+    `;
+}
+
 version (GNU) {
     enum MemoryOrder {
         /**
@@ -159,22 +171,27 @@ version (GNU) {
     }
 
     void atomic_store(uint val, shared uint* ptr, MemoryOrder order = MemoryOrder.seq) {
+        mixin(DisableCheck!());
         __atomic_store_4(ptr, val, order);
     }
 
     bool atomic_cmp_xchg(shared uint* ptr, uint cmp, uint val) {
+        mixin(DisableCheck!());
         return __atomic_compare_exchange_4(ptr, &cmp, val, false, MemoryOrder.seq, MemoryOrder.seq);
     }
 
     uint lock_test_and_set(shared(uint*) lock, uint val) {
+        mixin(DisableCheck!());
         return __sync_lock_test_and_set_4(lock, val);
     }
 
     void lock_release(shared(uint*) lock) {
+        mixin(DisableCheck!());
         __sync_lock_release_4(lock);
     }
 
     T atomic_rmw_add(T)(in shared T* ptr, T val, MemoryOrder order = MemoryOrder.seq) {
+        mixin(DisableCheck!());
         static if (is(T == ubyte) || is(T == byte)) {
             return cast(T) __atomic_add_fetch_1(cast(shared void*) ptr, cast(ubyte) val, order) - val;
         } else static if (is(T == ushort) || is(T == short)) {
@@ -189,6 +206,7 @@ version (GNU) {
     }
 
     T atomic_rmw_sub(T)(in shared T* ptr, T val, MemoryOrder order = MemoryOrder.seq) {
+        mixin(DisableCheck!());
         static if (is(T == ubyte) || is(T == byte)) {
             return cast(T) __atomic_sub_fetch_1(cast(shared void*) ptr, cast(ubyte) val, order) - val;
         } else static if (is(T == ushort) || is(T == short)) {
@@ -224,7 +242,6 @@ version (LDC) {
 
     enum AtomicRmwSizeLimit = size_t.sizeof;
 
-
     /// Used to introduce happens-before edges between operations.
     pragma(LDC_fence)
         void memory_fence(AtomicOrdering ordering = DefaultOrdering,
@@ -232,7 +249,12 @@ version (LDC) {
 
     /// Atomically stores val in memory at ptr.
     pragma(LDC_atomic_store)
-        void atomic_store(T)(T val, shared T* ptr, AtomicOrdering ordering = DefaultOrdering);
+        void _atomic_store(T)(T val, shared T* ptr, AtomicOrdering ordering = DefaultOrdering);
+
+    void atomic_store(T)(T val, shared T* ptr, AtomicOrdering ordering = DefaultOrdering) {
+        mixin(DisableCheck!());
+        _atomic_store(val, ptr, ordering);
+    }
 
     struct CmpXchgResult(T) {
         T previousValue;
@@ -250,21 +272,34 @@ version (LDC) {
             bool weak = false);
 
     bool atomic_cmp_xchg(T)(shared T* ptr, T cmp, T val) {
+        mixin(DisableCheck!());
         return _atomic_cmp_xchg(ptr, cmp, val).exchanged;
     }
 
     uint lock_test_and_set(shared(uint*) lock, uint val) {
+        mixin(DisableCheck!());
         return _atomic_cmp_xchg(lock, 0, 1).previousValue;
     }
 
     void lock_release(shared(uint*) lock) {
-        atomic_store(0, lock);
+        mixin(DisableCheck!());
+        _atomic_store(0, lock);
     }
 
     /// Atomically sets *ptr += val and returns the previous *ptr value.
     pragma(LDC_atomic_rmw, "add")
-        T atomic_rmw_add(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering);
+        T _atomic_rmw_add(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering);
     /// Atomically sets *ptr += val and returns the previous *ptr value.
     pragma(LDC_atomic_rmw, "sub")
-        T atomic_rmw_sub(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering);
+        T _atomic_rmw_sub(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering);
+
+    T atomic_rmw_add(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering) {
+        mixin(DisableCheck!());
+        return _atomic_rmw_add(ptr, val);
+    }
+
+    T atomic_rmw_sub(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering) {
+        mixin(DisableCheck!());
+        return _atomic_rmw_sub(ptr, val);
+    }
 }

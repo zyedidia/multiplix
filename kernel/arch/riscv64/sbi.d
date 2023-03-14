@@ -152,12 +152,12 @@ struct Debug {
     }
 
     // start checkers at addr
-    static void enable_at(uintptr addr) {
-        cast() ecall(ext, Fid.enable_at, addr);
-    }
+    // static void enable_at(uintptr addr) {
+    //     cast() ecall(ext, Fid.enable_at, addr);
+    // }
 
-    static void disable() {
-        cast() ecall(ext, Fid.disable);
+    static bool disable() {
+        return ecall(ext, Fid.disable).value != 0;
     }
 
     static void alloc_heap(void* start, size_t size) {

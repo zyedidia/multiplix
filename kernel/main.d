@@ -25,6 +25,10 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
         sys.allocator.construct(cast(uintptr) heap);
 
+        version (check) {
+            arch.Debug.enable();
+        }
+
         // reallocate the hello ELF to make sure it is aligned properly
         import kernel.alloc;
         ubyte* hello = cast(ubyte*) kalloc(hello_elf.length);
@@ -44,6 +48,10 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         test.run_all();
 
         arch.Cpu.start_all_cores();
+    } else {
+        version (check) {
+            arch.Debug.enable();
+        }
     }
 
     arch.kernel_ptswitch(&kernel_pagetable);

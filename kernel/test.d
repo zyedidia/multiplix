@@ -8,15 +8,14 @@ void run_all() {
     }
 }
 
-import kernel.cpu;
-
 unittest {
+    import kernel.cpu;
     assert(cpu.coreid >= 0);
 }
 
-import kernel.alloc;
-
 unittest {
+    import kernel.alloc;
+
     struct Foo {
         int x = 42;
         int y = 10;

@@ -12,6 +12,7 @@ conf = {
     stackprot = choose(tobool(cli.stackprot), uconf.stackprot, false),
     analyzer = choose(tobool(cli.analyzer), uconf.analyzer, false),
     test = choose(tobool(cli.test), uconf.test, false),
+    check = choose(tobool(cli.check), uconf.check, false),
 }
 
 of = sel(conf.dc == "gdc", "o", "of")
