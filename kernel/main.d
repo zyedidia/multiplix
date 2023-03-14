@@ -8,6 +8,7 @@ shared Spinlock lock;
 
 import arch = kernel.arch;
 
+// Pagetable used by the kernel scheduler.
 __gshared arch.Pagetable kernel_pagetable;
 
 extern (C) void kmain(int coreid, ubyte* heap) {
@@ -19,34 +20,40 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.ArchTrap.setup();
 
     if (cpu.primary) {
+        // Allocate a heap for the monitor (the monitor checkers allocate
+        // memory).
         enum monitor_heap = sys.mb!(64);
         arch.Debug.alloc_heap(heap, monitor_heap);
         heap += monitor_heap;
 
+        // Initialize the system allocator.
         sys.allocator.construct(cast(uintptr) heap);
 
         version (check) {
             arch.Debug.enable();
         }
 
-        // reallocate the hello ELF to make sure it is aligned properly
+        // Reallocate the hello ELF to make sure it is aligned properly.
         import kernel.alloc;
         ubyte* hello = cast(ubyte*) kalloc(hello_elf.length);
         assert(hello);
         import libc;
         memcpy(hello, hello_elf.ptr, hello_elf.length);
 
+        // Initialize the hello process.
         if (!runq.start(hello[0 .. hello_elf.length])) {
             println("could not initialize hello.elf");
             return;
         }
 
+        // Map the kernel into the kernel pagetable.
         arch.kernel_procmap(&kernel_pagetable);
 
-        // run unit tests if they exist
+        // Run unit tests if they exist.
         import test = kernel.test;
         test.run_all();
 
+        // Initialize all cores.
         arch.Cpu.start_all_cores();
     } else {
         version (check) {
@@ -54,8 +61,13 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         }
     }
 
+    // Switch to the kernel pagetable (from the early boot pagetable). The main
+    // difference between this pagetable and the boot pagetable is that in this
+    // pagetable, nothing is mapped in the lower half of the address space.
     arch.kernel_ptswitch(&kernel_pagetable);
 
+    // Any architecture-specific setup, such as enabling VM/caches in the
+    // monitor and enabling the cycle counter (aarch64).
     arch.setup();
 
     lock.lock();
@@ -66,8 +78,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     Timer.delay_ms(50);
 
     import kernel.arch;
-    // start generating timer interrupts
+    // Start generating timer interrupts.
     ArchTimer.intr();
 
+    // Enter the scheduler.
     scheduler();
 }

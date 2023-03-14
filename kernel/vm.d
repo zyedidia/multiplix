@@ -40,10 +40,10 @@ uintptr pa2kpa(uintptr pa) {
 
 // Virtual memory permissions.
 enum Perm {
-    r = 1 << 0, // read
-    w = 1 << 1, // write
-    x = 1 << 2, // execute
-    u = 1 << 3, // user-accessible
+    r = 1 << 0,   // read
+    w = 1 << 1,   // write
+    x = 1 << 2,   // execute
+    u = 1 << 3,   // user-accessible
     cow = 1 << 4, // copy-on-write
 
     rw  = r | w,
@@ -74,6 +74,7 @@ struct VaMapping {
 import kernel.arch;
 import ulib.option;
 
+// Look up virtual address va in the pagetable.
 Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
     Pte.Pg pgtype;
     Pte* pte = pt.walk(va, pgtype);
@@ -87,6 +88,7 @@ Opt!(VaMapping) lookup(Pagetable* pt, uintptr va) {
 import kernel.alloc;
 import kernel.page;
 
+// Map the page va -> pa with the given permissions.
 bool mappg(Pagetable* pt, uintptr va, uintptr pa, Perm perm) {
     if (!pt.map(va, pa, Pte.Pg.normal, perm, &sys.allocator))
         return false;
@@ -96,6 +98,8 @@ bool mappg(Pagetable* pt, uintptr va, uintptr pa, Perm perm) {
     return true;
 }
 
+// Unmap the page at va. If free is true, also frees the page if its reference
+// count is 0.
 void unmappg(Pagetable* pt, uintptr va, bool free) {
     auto level = Pte.Pg.normal;
     Pte* pte = pt.walk!(void, false)(va, level, null);

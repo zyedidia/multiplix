@@ -13,6 +13,8 @@ extern (C) {
     void kmain(int coreid, ubyte* heap);
 
     version (GNU) {
+        // Disable compiler instrumentation for initialization routines so that
+        // the sanitizers don't run before the machine is setup.
         import gcc.attributes;
         @no_sanitize("kernel-address", "undefined") {
             private void init_bss();
@@ -21,6 +23,8 @@ extern (C) {
         }
     }
 
+    // Set up core-local storage, BSS, and anything machine-specific and then
+    // jump to kmain.
     void dstart(int coreid, bool primary) {
         import kernel.board;
         import core.sync;
@@ -59,9 +63,11 @@ extern (C) {
         import arch = kernel.arch;
         import kernel.board;
 
+        // Calculate the size of the stack.
         uintptr stack_base = cast(uintptr) &_kheap_start;
         stack_start = stack_base + (coreid + 1) * 4096;
 
+        // Write the address of this core's cpu struct to the thread pointer.
         arch.wr_cpu(&_cpu[coreid]);
 
         return cast(ubyte*) (stack_base + Machine.ncores * 4096);

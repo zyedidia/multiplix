@@ -23,7 +23,6 @@ struct ArchTrap {
         SysReg.vbar_el1 = cast(uintptr) &kernelvec;
     }
 
-    // TODO: use daifset and daifclr instead
     // enable/disble fiq and irq
     static void on() {
         // setting a bit to 0 unmasks (enables) the irq

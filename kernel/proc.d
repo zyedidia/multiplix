@@ -41,21 +41,22 @@ struct Proc {
     }
 
     State state;
-    // blocked on a wait queue (the address of the queue is used as a unique
-    // identifier of the queue)
+    // The waitqueue that this process is blocked on (stores the address only).
+    // The address of the queue is used as a unique identifier of the queue.
     void* wq;
 
     enum canary_magic = 0xdeadbeef;
     uint canary;
 
     // The proc struct contains the entire kernel stack. Do not create Proc
-    // structs on the stack.
+    // structs on the stack (should cause a GDC error).
     align(16) ubyte[3008] kstack;
     static assert(kstack.length % 16 == 0);
 
     import kernel.vm;
     import kernel.alloc;
 
+    // Initialize a new process from the given ELF binary.
     bool initialize(ubyte[] bin) {
         import elf = kernel.elf;
         import ulib.math;
@@ -106,13 +107,17 @@ struct Proc {
         return true;
     }
 
+    // Returns the top of the kernel stack.
     uintptr kstackp() {
         return cast(uintptr) &kstack[$-16];
     }
 
+    // Free this process and all associated memory.
     void free() {
         foreach (map; VmRange(pt)) {
             if (!iska(map.va)) {
+                // Any page that is mapped in the process pagetable is freed if
+                // its reference count reaches 0.
                 import kernel.page;
                 auto pg = &pages[map.pa / sys.pagesize];
                 pg.lock();
@@ -123,6 +128,7 @@ struct Proc {
             }
         }
 
+        // Free the pagetable.
         pt.free();
     }
 
@@ -142,8 +148,7 @@ struct Proc {
     import kernel.wait;
     import kernel.schedule;
 
-    // Removes this proc from the runnable queue, yields, and places it
-    // back.
+    // Mark this process as blocked and yield on the given waitqueue.
     void block(void* wq) in (lock.holding()) {
         state = Proc.State.blocked;
         this.wq = wq;
@@ -151,6 +156,7 @@ struct Proc {
         yield();
     }
 
+    // This is a newly initialized process's entrypoint.
     static void forkret() {
         usertrapret(runq.curproc);
     }

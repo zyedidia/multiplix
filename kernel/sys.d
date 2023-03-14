@@ -11,6 +11,8 @@ version (kernel) {
     import kernel.alloc.buddy;
     import kernel.alloc.block;
 
+    // The kernel's system allocator is a block allocator wrapped around a
+    // buddy allocator.
     alias Buddy = BuddyAllocator!(pagesize, Machine.memsize);
     __gshared Buddy buddy;
 
@@ -21,6 +23,7 @@ version (kernel) {
 } else version (monitor) {
     import kernel.alloc.kr;
 
+    // The monitor's system allocator is a simple K&R allocator.
     __gshared KrAllocator kr;
     alias allocator = kr;
 }

@@ -5,6 +5,8 @@ import kernel.proc;
 import kernel.arch;
 import ulib.list;
 
+// A RunQ tracks a list of runnable processes and the context for the
+// associated scheduler. There is one RunQ per core.
 struct RunQ {
     Proc* curproc;
     private List!(Proc) runnable;
@@ -21,6 +23,7 @@ struct RunQ {
         return runnable.length;
     }
 
+    // Allocate a new process node and return its address.
     Proc* next() {
         Node* n = knew!(Node)();
         if (!n) {
@@ -35,6 +38,7 @@ struct RunQ {
     }
 
     import kernel.alloc;
+    // Start a new process in this RunQ.
     bool start(ubyte[] binary) {
         Proc* p = next();
         if (!p) {
@@ -50,7 +54,7 @@ struct RunQ {
         return true;
     }
 
-    // Puts n in the runnable queue.
+    // Enqueue a process.
     void enqueue(Proc* p) in (p.lock.holding())
                           in (p.state != Proc.State.exited) {
         p.state = Proc.State.runnable;
@@ -75,10 +79,13 @@ import kernel.board;
 __gshared RunQ[Machine.ncores] global_runqs;
 
 import kernel.cpu;
+
+// Returns the RunQ for this core.
 ref RunQ runq() {
     return global_runqs[cpu.coreid];
 }
 
+// Returns the next RunQ to schedule a process on.
 ref RunQ next_runq() {
     // import ulib.rand;
     // int core = rand() % Machine.ncores;
@@ -108,9 +115,10 @@ noreturn scheduler() {
         assert(p.state == Proc.State.runnable);
         p.lock.unlock();
         runq.curproc = p;
+        // Switch to the process.
         kswitch(&runq.context, &p.context);
 
-        // process is done running for now
+        // Process is done running for now, requeue it if still runnable.
         runq.curproc = null;
         p.lock.lock();
         if (p.state == Proc.State.runnable) {

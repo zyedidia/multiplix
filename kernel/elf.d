@@ -72,6 +72,9 @@ import kernel.vm;
 import sys = kernel.sys;
 import libc;
 
+// Load the ELF file starting at 'elfdat' into the pagetable 'pt'. Returns true
+// on success, and also sets the program's entrypoint and brk address (the
+// first address beyond the highest loadable segment).
 bool load(int W)(Pagetable* pt, ubyte* elfdat, out uintptr entry, out uintptr brk) {
     FileHeader!(W)* elf = cast(FileHeader!(W)*) elfdat;
 
@@ -95,6 +98,9 @@ bool load(int W)(Pagetable* pt, ubyte* elfdat, out uintptr entry, out uintptr br
         uintptr va_start = ph.vaddr - pad;
         size_t sz = max(ph.memsz + pad, cast(ulong) sys.pagesize);
         for (uintptr va = va_start; va < va_start + sz; va += sys.pagesize) {
+            // Allocate and map one page at a time. The main reason to do this
+            // is so that all pages can be easily freed by a pagetable walk
+            // when the process is freed.
             ubyte* mem = cast(ubyte*) kalloc(sys.pagesize);
             if (!mem) {
                 return false;
@@ -105,16 +111,21 @@ bool load(int W)(Pagetable* pt, ubyte* elfdat, out uintptr entry, out uintptr br
             pad = 0;
             size_t soff = va - ph.vaddr;
             if (ph.filesz > soff) {
+                // Haven't yet reached ph.filesz, so there is more data from
+                // the ELF file to copy in.
                 size_t n = min(sys.pagesize - written, ph.filesz - soff);
                 memcpy(mem + written, elfdat + ph.offset + soff, n);
                 written += n;
             }
+            // Set the rest of the data to 0.
             memset(mem + written, 0, sys.pagesize - written);
             if (!pt.mappg(va, ka2pa(cast(uintptr) mem), Perm.urwx)) {
                 kfree(mem);
                 return false;
             }
 
+            // Must synchronize the instruction and data caches for this region
+            // since it is executable.
             import core.sync;
             sync_idmem(mem, written);
         }

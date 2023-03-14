@@ -43,7 +43,6 @@ struct Regs {
 struct Context {
     ulong lr;
     ulong sp;
-    // TODO: do we want to save fp (x29)?
 
     // callee-saved
     ulong x19;

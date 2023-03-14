@@ -9,7 +9,7 @@ import kernel.irq;
 // Basic mutual exclusion lock.
 struct Spinlock {
     shared uint locked = 0;
-    Cpu* mycpu = null;
+    Cpu* mycpu = null; // used to determine if this core is holding the lock
 
     // Acquire the lock.
     shared void lock() {
