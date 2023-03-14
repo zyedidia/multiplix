@@ -28,8 +28,10 @@ struct Machine {
         MemType type;
     }
 
+    enum MemRange main_memory = MemRange(0x0, sys.mb!(512), MemType.normal);
+
     enum MemRange[2] mem_ranges = [
-        MemRange(0, sys.mb!(512), MemType.normal),
+        main_memory,
         MemRange(device_base, sys.mb!(18), MemType.device),
     ];
 
@@ -41,8 +43,6 @@ struct Machine {
         }
         return MemType.normal;
     }
-
-    enum size_t memsize = sys.mb!(512);
 
     static void setup() {
         version (kernel) {

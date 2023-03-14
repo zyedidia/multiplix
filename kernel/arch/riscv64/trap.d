@@ -44,7 +44,7 @@ extern (C) void kerneltrap() {
         irq_handler(IrqType.timer);
     } else {
         import core.exception;
-        panic("[unhandled kernel trap] core: ", cpu.coreid, " epc: ", cast(void*) sepc, " cause: ", scause);
+        panic("[unhandled kernel trap] core: ", cpu.coreid, " epc: ", cast(void*) sepc, " cause: ", scause, " stval: ", cast(void*) Csr.stval);
     }
 }
 

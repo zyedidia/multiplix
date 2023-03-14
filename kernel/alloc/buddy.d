@@ -8,7 +8,7 @@ import ulib.bits : msb;
 
 // Implementation of a buddy page allocator.
 
-struct BuddyAllocator(uint pagesize, size_t memsize) {
+struct BuddyAllocator(uint pagesize, uintptr mem_base, size_t mem_size) {
 private:
     // Lock for protecting shared access.
     shared Spinlock lock;
@@ -22,7 +22,7 @@ private:
     }
 
     enum min_order = msb(pagesize) - 1;
-    enum max_order = msb(memsize) - 1;
+    enum max_order = msb(mem_size) - 1;
 
     struct PhysPage {
         bool free;
@@ -55,7 +55,7 @@ private:
     }
 
     // An array that tracks the status of every page in the machine.
-    PhysPage[memsize / pagesize] pages;
+    PhysPage[mem_size / pagesize] pages;
 
     // Checks if a page is valid for a given order.
     bool valid(uintptr pn, uint order) {
@@ -77,8 +77,12 @@ private:
         return pagenum(pa - (1UL << p.order));
     }
 
+    uintptr free_to_pa(FreePage* fp) {
+        return vm.ka2pa(cast(uintptr) fp - mem_base);
+    }
+
     FreePage* pn_to_free(uintptr pn) {
-        return cast(FreePage*) vm.pa2ka(pageaddr(pn));
+        return cast(FreePage*) vm.pa2ka(pageaddr(pn) + mem_base);
     }
 
 public:
@@ -86,9 +90,9 @@ public:
     // Note: 'heap_start' is a virtual address
     this(uintptr heap_start) {
         heap_start = vm.ka2pa(heap_start);
-        for (uintptr pa = 0; pa < memsize; pa += pagesize) {
+        for (uintptr pa = 0; pa < mem_size; pa += pagesize) {
             uintptr pn = pagenum(pa);
-            pages[pn].free = pa >= heap_start;
+            pages[pn].free = pa + mem_base >= heap_start;
             pages[pn].order = min_order;
 
             uint order = pages[pn].order;
@@ -111,7 +115,7 @@ public:
         // Now we set up the free lists by looping over each block and adding
         // it to the list
         uintptr pn = 0;
-        while (pn < pagenum(memsize)) {
+        while (pn < pagenum(mem_size)) {
             PhysPage page = pages[pn];
             assert(valid(pn, page.order));
             if (page.free) {
@@ -143,7 +147,7 @@ public:
             for (uint i = min_order; i <= max_order; i++) {
                 if (free_lists[i]) {
                     // found a free page
-                    uintptr pa = vm.ka2pa(cast(uintptr) free_lists[i]);
+                    uintptr pa = free_to_pa(free_lists[i]);
                     uintptr pn = pagenum(pa);
                     assert(pages[pn].free);
                     assert(pages[pn].order == i);
@@ -151,7 +155,7 @@ public:
                         // The page matches the order so we can return it directly
                         free_remove(free_lists[i], i);
                         pages[pn].free = false;
-                        auto va = vm.pa2ka(pa);
+                        auto va = vm.pa2ka(pa) + mem_base;
                         return cast(void*) va;
                     } else if (i > order) {
                         // We found a block that is greater than the requested

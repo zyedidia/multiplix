@@ -13,7 +13,7 @@ version (kernel) {
 
     // The kernel's system allocator is a block allocator wrapped around a
     // buddy allocator.
-    alias Buddy = BuddyAllocator!(pagesize, Machine.memsize);
+    alias Buddy = BuddyAllocator!(pagesize, Machine.main_memory.start, Machine.main_memory.sz);
     __gshared Buddy buddy;
 
     alias Block = BlockAllocator!(typeof(buddy));

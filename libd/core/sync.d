@@ -260,14 +260,14 @@ version (LDC) {
     pragma(LDC_atomic_load)
         T _atomic_load(T)(in shared T* ptr, AtomicOrdering ordering = DefaultOrdering);
 
-    void atomic_store(T)(T val, shared T* ptr, AtomicOrdering ordering = DefaultOrdering) {
+    void atomic_store(T, AtomicOrdering ordering = DefaultOrdering)(T val, shared T* ptr) {
         mixin(DisableCheck!());
         _atomic_store(val, ptr, ordering);
     }
 
-    T atomic_load(T)(in shared T* ptr, AtomicOrdering ordering = DefaultOrdering) {
+    T atomic_load(T, AtomicOrdering ordering = DefaultOrdering)(in shared T* ptr) {
         mixin(DisableCheck!());
-        return _atomic_load(ptr);
+        return _atomic_load(ptr, ordering);
     }
 
     struct CmpXchgResult(T) {
@@ -307,13 +307,13 @@ version (LDC) {
     pragma(LDC_atomic_rmw, "sub")
         T _atomic_rmw_sub(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering);
 
-    T atomic_rmw_add(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering) {
+    T atomic_rmw_add(T, AtomicOrdering ordering = DefaultOrdering)(in shared T* ptr, T val) {
         mixin(DisableCheck!());
-        return _atomic_rmw_add(ptr, val);
+        return _atomic_rmw_add(ptr, val, ordering);
     }
 
-    T atomic_rmw_sub(T)(in shared T* ptr, T val, AtomicOrdering ordering = DefaultOrdering) {
+    T atomic_rmw_sub(T, AtomicOrdering ordering = DefaultOrdering)(in shared T* ptr, T val) {
         mixin(DisableCheck!());
-        return _atomic_rmw_sub(ptr, val);
+        return _atomic_rmw_sub(ptr, val, ordering);
     }
 }

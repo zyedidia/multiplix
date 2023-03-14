@@ -23,11 +23,12 @@ struct Machine {
         size_t sz;
     }
 
-    enum MemRange[1] mem_ranges = [
-        MemRange(0, sys.gb!(4)),
-    ];
+    enum MemRange main_memory = MemRange(0x4000_0000, sys.gb!(3));
 
-    enum size_t memsize = sys.gb!(3);
+    enum MemRange[1] mem_ranges = [
+        MemRange(0, sys.gb!(1)),
+        main_memory,
+    ];
 
     static void setup() {}
 }

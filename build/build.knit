@@ -136,7 +136,7 @@ function build.flags_compiler(monitor, machine)
 
     local compiler = {
         gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) $gnu_extra -ftransition=tls $analyzer $unittest $check
-        ldc2 := $(flags.llvm) -betterC -O3 -g -function-sections -data-sections -fthread-model=global-dynamic -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls $unittest $check
+        ldc2 := $(flags.llvm) -betterC -O0 -g -function-sections -data-sections -fthread-model=global-dynamic -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls $unittest $check
         ldgcc := $(flags.gnu) $gnu_extra
     }
     return compiler
