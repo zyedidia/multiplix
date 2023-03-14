@@ -83,7 +83,6 @@ extern (C) {
 
     void _d_assertp(immutable(char*) file, uint line) {
         import libc : strlen;
-
         _assert(file[0 .. strlen(file)], line);
     }
 
@@ -93,7 +92,6 @@ extern (C) {
 
     void _d_arrayboundsp(immutable(char*) file, uint line) {
         import libc : strlen;
-
         _arraybounds(file[0 .. strlen(file)], line);
     }
 
@@ -104,7 +102,6 @@ extern (C) {
     void _d_arraybounds_slicep(immutable(char*) file, uint line, size_t lower,
             size_t upper, size_t length) {
         import libc : strlen;
-
         _arraybounds_slice(file[0 .. strlen(file)], line, lower, upper, length);
     }
 
@@ -114,12 +111,16 @@ extern (C) {
 
     void _d_arraybounds_indexp(immutable(char*) file, uint line, size_t index, size_t length) {
         import libc : strlen;
-
         _arraybounds_index(file[0 .. strlen(file)], line, index, length);
     }
 
     void _d_unittest(string file, uint line) {
         _assert(file, line);
+    }
+
+    void _d_unittestp(immutable(char*) file, uint line) {
+        import libc : strlen;
+        _assert(file[0 .. strlen(file)], line);
     }
 
     void _d_unittest_msg(string msg, string file, uint line) {

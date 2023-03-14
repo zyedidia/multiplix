@@ -39,6 +39,10 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
         arch.kernel_procmap(&kernel_pagetable);
 
+        // run unit tests if they exist
+        import test = kernel.test;
+        test.run_all();
+
         arch.Cpu.start_all_cores();
     }
 

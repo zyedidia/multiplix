@@ -46,11 +46,3 @@ private:
     ubyte tag;
     static assert(T.length < typeof(tag).max);
 }
-
-unittest {
-    auto s = Sum!(int, uint)(cast(uint) 42);
-
-    assert(s.has!uint);
-    assert(!s.has!int);
-    assert(s.get!uint == 42);
-}

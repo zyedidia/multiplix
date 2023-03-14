@@ -11,6 +11,7 @@ conf = {
     sanitize = choose(tobool(cli.san), tobool(cli.sanitize), uconf.sanitize, false),
     stackprot = choose(tobool(cli.stackprot), uconf.stackprot, false),
     analyzer = choose(tobool(cli.analyzer), uconf.analyzer, false),
+    test = choose(tobool(cli.test), uconf.test, false),
 }
 
 of = sel(conf.dc == "gdc", "o", "of")

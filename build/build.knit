@@ -129,12 +129,13 @@ function build.flags_compiler(monitor, machine)
     local san = sel(conf.sanitize and not monitor, "-fsanitize=kernel-address,undefined -fno-wrapv -fversion=sanitizer", "")
     local stackprot = sel(conf.stackprot, "-fstack-protector-all", "")
     local analyzer = sel(conf.analyzer, "-fanalyzer -Wno-analyzer-va-arg-type-mismatch -Wno-analyzer-va-list-exhausted", "")
+    local unittest = sel(conf.test, sel(conf.dc == "gdc", "-funittest", "-unittest"), "")
 
     local gnu_extra := $san $stackprot -Wframe-larger-than=1024 -Wall -Werror
 
     local compiler = {
-        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) $gnu_extra -ftransition=tls $analyzer
-        ldc2 := $(flags.llvm) -betterC -O3 -g -function-sections -data-sections -fthread-model=global-dynamic -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls
+        gdc := $(flags.gnu) -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -O3 -g -ffunction-sections -fdata-sections -fversion=$vmon -fversion=$(machine.board) -J. -fno-tree-loop-distribute-patterns $(machine.mflags) $gnu_extra -ftransition=tls $analyzer $unittest
+        ldc2 := $(flags.llvm) -betterC -O3 -g -function-sections -data-sections -fthread-model=global-dynamic -fvisibility=hidden -d-version=$vmon -d-version=$(machine.board) -J. -disable-simplify-libcalls $unittest
         ldgcc := $(flags.gnu) $gnu_extra
     }
     return compiler
