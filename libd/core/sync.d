@@ -175,6 +175,11 @@ version (GNU) {
         __atomic_store_4(ptr, val, order);
     }
 
+    uint atomic_load(shared const void* ptr, MemoryOrder order = MemoryOrder.seq) {
+        mixin(DisableCheck!());
+        return __atomic_load_4(ptr, order);
+    }
+
     bool atomic_cmp_xchg(shared uint* ptr, uint cmp, uint val) {
         mixin(DisableCheck!());
         return __atomic_compare_exchange_4(ptr, &cmp, val, false, MemoryOrder.seq, MemoryOrder.seq);
@@ -251,9 +256,18 @@ version (LDC) {
     pragma(LDC_atomic_store)
         void _atomic_store(T)(T val, shared T* ptr, AtomicOrdering ordering = DefaultOrdering);
 
+    /// Atomically loads and returns a value from memory at ptr.
+    pragma(LDC_atomic_load)
+        T _atomic_load(T)(in shared T* ptr, AtomicOrdering ordering = DefaultOrdering);
+
     void atomic_store(T)(T val, shared T* ptr, AtomicOrdering ordering = DefaultOrdering) {
         mixin(DisableCheck!());
         _atomic_store(val, ptr, ordering);
+    }
+
+    T atomic_load(T)(in shared T* ptr, AtomicOrdering ordering = DefaultOrdering) {
+        mixin(DisableCheck!());
+        return _atomic_load(ptr);
     }
 
     struct CmpXchgResult(T) {

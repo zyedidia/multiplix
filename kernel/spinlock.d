@@ -33,6 +33,6 @@ struct Spinlock {
     }
 
     shared bool holding() {
-        return locked && cast(void*) mycpu == cast(void*) &cpu();
+        return atomic_load(&locked) && cast(void*) mycpu == cast(void*) &cpu();
     }
 }
