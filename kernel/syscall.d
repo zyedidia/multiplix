@@ -32,7 +32,7 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
             break;
         default:
             println("invalid syscall: ", sysno);
-            return -1;
+            return Syscall.Err.E_NOSYS;
     }
 
     return ret;
@@ -58,6 +58,31 @@ struct Syscall {
         read      = 7,
     }
 
+    enum Err {
+        E_AGAIN = -11,       // Try again
+        E_BADF = -9,         // Bad file number
+        E_CHILD = -10,       // No child processes
+        E_FAULT = -14,       // Bad address
+        E_FBIG = -27,        // File too large
+        E_INTR = -4,         // Interrupted system call
+        E_INVAL = -22,       // Invalid argument
+        E_IO = -5,           // I/O error
+        E_MFILE = -24,       // Too many open files
+        E_NFILE = -23,       // File table overflow
+        E_NOENT = -2,        // No such file or directory
+        E_NOEXEC = -8,       // Exec format error
+        E_NOMEM = -12,       // Out of memory
+        E_NOSPC = -28,       // No space left on device
+        E_NOSYS = -38,       // Invalid system call number
+        E_NXIO = -6,         // No such device or address
+        E_PERM = -1,         // Operation not permitted
+        E_PIPE = -32,        // Broken pipe
+        E_SPIPE = -29,       // Illegal seek
+        E_SRCH = -3,         // No such process
+        E_TXTBSY = -26,      // Text file busy
+        E_2BIG = -7,         // Argument list too long
+    }
+
     static int getpid(Proc* p) {
         return p.pid;
     }
@@ -66,13 +91,13 @@ struct Syscall {
         // Get a new runnable process.
         Proc* child = runq.next();
         if (!child) {
-            return -1;
+            return Err.E_NOMEM;
         }
 
         // Allocate the pagetable and map the kernel.
         child.pt = knew!(Pagetable)();
         if (!child.pt)
-            return -1;
+            return Err.E_NOMEM;
         kernel_procmap(child.pt);
 
         // Map all user pages from the parent.
@@ -84,7 +109,7 @@ struct Syscall {
             map.pte.perm = (map.perm & ~Perm.w) | Perm.cow;
             if (!child.pt.mappg(map.va, map.pa, Perm.urx | Perm.cow)) {
                 child.free();
-                return -1;
+                return Err.E_NOMEM;
             }
         }
         assert(p.canary == Proc.canary_magic);
@@ -112,18 +137,21 @@ struct Syscall {
     }
 
     import kernel.wait;
+    // Exited processes, waiting to be reaped by parents.
     static shared WaitQueue exited;
+    // Waiting processes, waiting for a child to exit.
     static shared WaitQueue waiters;
 
+    // Wait for a child to exit.
     static int wait(Proc* waiter) {
         if (waiter.children == 0)
-            return -1;
+            return Err.E_CHILD;
 
         while (true) {
             exited.lock.lock();
             foreach (ref zombie; (cast()exited).procs) {
                 if (zombie.val.parent == waiter) {
-                    // child has exited
+                    // Child has exited.
                     int pid = zombie.val.pid;
                     (cast()exited).procs.remove(zombie);
                     zombie.val.free();
@@ -134,11 +162,11 @@ struct Syscall {
                 }
             }
             exited.lock.unlock();
-            // block and wait for something to exit
+            // Block and wait for something to exit.
             waiter.lock.lock();
             waiters.enqueue(waiter);
             waiter.block(cast(void*) &waiters);
-            // we have woken up, so check the zombies again for a child
+            // We have woken up, so check the zombies again for a child.
         }
     }
 
@@ -154,6 +182,7 @@ struct Syscall {
             if (p.parent) {
                 p.parent.lock.lock();
 
+                // Wake up parent if they are waiting in the waiters queue.
                 if (p.parent && p.parent.state == Proc.State.blocked && p.parent.wq == &waiters) {
                     waiters.wake_one(p.parent);
                 }
@@ -172,25 +201,25 @@ struct Syscall {
         if (p.brk.current == 0) {
             void* pg = kalloc(sys.pagesize);
             if (!pg) {
-                return -1;
+                return Err.E_NOMEM;
             }
             if (!p.pt.mappg(p.brk.initial, ka2pa(cast(uintptr) pg), Perm.urwx)) {
                 kfree(pg);
-                return -1;
+                return Err.E_NOMEM;
             }
             p.brk.current = p.brk.initial;
         }
 
         // Requested increment brings the brk beyond maxva or the initial brk.
         if (p.brk.current + incr >= Proc.maxva || p.brk.current + incr < p.brk.initial) {
-            return -1;
+            return Err.E_INVAL;
         }
 
         uintptr newbrk = p.brk.current;
         if (incr > 0) {
             newbrk = p.pt.alloc(p.brk.current, p.brk.current + incr, Perm.urwx);
             if (!newbrk)
-                return -1;
+                return Err.E_NOMEM;
         } else if (incr < 0) {
             newbrk = p.pt.dealloc(p.brk.current, p.brk.current + incr);
         }
@@ -207,6 +236,10 @@ struct Syscall {
         import kernel.cpu;
         p.lock.lock();
         while (1) {
+            // Add this process to this core's ticks queue. It will be woken up
+            // every timer tick, and if the sleep time has been reached, the
+            // process will remove itself from the ticks queue and stay
+            // runnable.
             cpu.ticksq.enqueue_(p);
             if (Timer.us_since(start_time) >= us) {
                 break;
@@ -235,19 +268,19 @@ struct Syscall {
         // Validate buffer.
         size_t overflow = addr + sz;
         if (overflow < addr || addr >= Proc.maxva) {
-            return -1; // E_FAULT
+            return Err.E_FAULT;
         }
 
         for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
             auto vmap = p.pt.lookup(va);
             if (!vmap.has() || !vmap.get().user) {
-                return -1; // E_FAULT
+                return Err.E_FAULT;
             }
         }
 
         // TODO: We only support console stdout for now.
         if (fd != 1) {
-            return -1;
+            return Err.E_BADF;
         }
 
         string buf = cast(string) (cast(ubyte*) addr)[0 .. sz];
