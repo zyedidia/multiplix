@@ -18,7 +18,7 @@ import sys = kernel.sys;
 struct Pages {
     private Page[Machine.main_memory.sz / sys.pagesize] pages;
 
-    ref shared(Page) opIndex(ulong pn) shared {
+    ref shared(Page) opIndex(ulong pn) return shared {
         return pages[pn - Machine.main_memory.start / sys.pagesize];
     }
 }
