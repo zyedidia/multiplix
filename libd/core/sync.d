@@ -175,7 +175,7 @@ version (GNU) {
         __atomic_store_4(ptr, val, order);
     }
 
-    uint atomic_load(shared const void* ptr, MemoryOrder order = MemoryOrder.seq) {
+    uint atomic_load(shared const uint* ptr, MemoryOrder order = MemoryOrder.seq) {
         mixin(DisableCheck!());
         return __atomic_load_4(ptr, order);
     }

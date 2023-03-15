@@ -3,8 +3,6 @@ module object;
 alias string = immutable(char)[];
 alias size_t = typeof(int.sizeof);
 alias ptrdiff_t = typeof(cast(void*) 0 - cast(void*) 0);
-alias ssize_t = long;
-alias off_t = long;
 
 alias noreturn = typeof(*null);
 

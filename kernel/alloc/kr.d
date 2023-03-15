@@ -74,6 +74,9 @@ struct KrAllocator {
     }
 
     void free(void* ap) {
+        if (!ap)
+            return;
+
         lock.lock();
         scope(exit) lock.unlock();
         free_internal(ap);

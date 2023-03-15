@@ -25,7 +25,7 @@ struct Machine {
 
     enum MemRange main_memory = MemRange(0x8000_0000, sys.gb!(2));
 
-    enum MemRange[1] mem_ranges = [
+    enum MemRange[2] mem_ranges = [
         MemRange(0, sys.gb!(2)),
         main_memory,
     ];

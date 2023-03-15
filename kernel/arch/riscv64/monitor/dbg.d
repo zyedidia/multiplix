@@ -12,8 +12,10 @@ import sbi = kernel.arch.riscv64.sbi;
 import bits = ulib.bits;
 
 import kernel.check.fence;
+import kernel.check.conc;
 
-shared FenceChecker[Machine.ncores] chks;
+shared FenceChecker[Machine.ncores] fence_cks;
+shared ConcChecker conc_ck;
 __gshared bool[Machine.ncores] enabled;
 
 struct ExtDebug {
@@ -25,6 +27,7 @@ struct ExtDebug {
         exec = 1 << 2,
 
         rwx = read | write | exec,
+        rw = read | write,
         wx = write | exec,
         x = exec,
     }
@@ -37,7 +40,7 @@ struct ExtDebug {
         switch (fid) {
             import ulib.print;
             case sbi.Debug.Fid.enable:
-                place_mismatch_breakpoint(Csr.mepc, BrkType.wx);
+                place_mismatch_breakpoint(Csr.mepc, BrkType.rw);
                 enabled[cpu.coreid] = true;
                 break;
             case sbi.Debug.Fid.disable:
@@ -48,8 +51,8 @@ struct ExtDebug {
             case sbi.Debug.Fid.alloc_heap:
                 import sys = kernel.sys;
                 sys.allocator.__ctor(cast(ubyte*) regs.a0, regs.a1);
-                for (int i = 0; i < chks.length; i++) {
-                    assert((cast()chks[i]).setup());
+                for (int i = 0; i < fence_cks.length; i++) {
+                    assert((cast()fence_cks[i]).setup());
                 }
                 break;
             default:
@@ -61,18 +64,19 @@ struct ExtDebug {
     static void handle_breakpoint(uintptr epc, Regs* regs) {
         place_mismatch_breakpoint(epc, BrkType.wx);
         auto epcpa = va2pa(epc);
-        chks[cpu.coreid].on_exec(epc, epcpa);
+        fence_cks[cpu.coreid].on_exec(epc, epcpa);
         if (load_insn(epcpa) == Insn.fencei) {
-            chks[cpu.coreid].on_fence();
+            fence_cks[cpu.coreid].on_fence();
         }
     }
 
     static void handle_watchpoint(uintptr epc, uintptr va, Regs* regs) {
         place_mismatch_breakpoint(epc, BrkType.x);
-        auto pa = va2pa(va);
-        for (int i = 0; i < chks.length; i++) {
-            chks[i].on_store(pa, epc);
-        }
+        conc_ck.on_access(va, 1, epc);
+        // auto pa = va2pa(va);
+        // for (int i = 0; i < fence_cks.length; i++) {
+        //     fence_cks[i].on_store(pa, epc);
+        // }
     }
 
     static void place_breakpoint(uintptr addr, BrkType flags) {
