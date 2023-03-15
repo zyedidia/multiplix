@@ -1,5 +1,7 @@
 module kernel.test;
 
+import ulib.print;
+
 void run_all() {
     alias tests = __traits(getUnitTests, kernel.test);
 
@@ -23,6 +25,18 @@ unittest {
 
     auto f = knew!(Foo)();
     assert(f.x == 42 && f.y == 10);
+}
+
+version (sanitizer) {
+    unittest {
+        import kernel.alloc;
+        import core.volatile;
+
+        ubyte* f = cast(ubyte*) kalloc(11);
+        assert(f);
+        printf("should cause panic:\n");
+        vld(&f[12]);
+    }
 }
 
 unittest {

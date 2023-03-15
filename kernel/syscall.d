@@ -155,10 +155,8 @@ struct Syscall {
                     int pid = zombie.val.pid;
                     (cast()exited).procs.remove(zombie);
                     zombie.val.free();
-                    printf("1: %p %p\n", zombie, waiter);
                     kfree(zombie);
                     waiter.children--;
-                    printf("2\n");
                     exited.lock.unlock();
                     return pid;
                 }

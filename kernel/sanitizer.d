@@ -169,8 +169,6 @@ struct Asan {
         scope(exit) lock.unlock();
         if (!pagemap)
             return;
-        import ulib.print;
-        printf("mark free: %lx, %lx\n", addr, size);
         memset(&(cast()pagemap[addr - mem_base]), 0, size);
     }
 
