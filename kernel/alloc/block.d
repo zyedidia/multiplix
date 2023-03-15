@@ -79,7 +79,9 @@ struct BlockAllocator(A) {
 
         if (sz >= blocksize) {
             // size is big enough to go to the underlying allocator
-            return allocator.alloc(sz);
+            void* p = allocator.alloc(sz);
+            mark_alloc(p, sz);
+            return p;
         }
         auto nblk = log2ceil(sz);
         // find a block for this size that has space.
