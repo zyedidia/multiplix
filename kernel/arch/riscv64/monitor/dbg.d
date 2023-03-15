@@ -11,6 +11,8 @@ import sbi = kernel.arch.riscv64.sbi;
 
 import bits = ulib.bits;
 
+import kernel.check.fence;
+
 shared FenceChecker[Machine.ncores] chks;
 __gshared bool[Machine.ncores] enabled;
 
@@ -37,9 +39,6 @@ struct ExtDebug {
             case sbi.Debug.Fid.enable:
                 place_mismatch_breakpoint(Csr.mepc, BrkType.wx);
                 enabled[cpu.coreid] = true;
-                break;
-            case sbi.Debug.Fid.enable_at:
-                place_breakpoint(regs.a0, BrkType.x);
                 break;
             case sbi.Debug.Fid.disable:
                 clear_breakpoints();
@@ -118,51 +117,5 @@ struct ExtDebug {
             return -1;
         }
         return map.get().pa;
-    }
-}
-
-private ulong hash(uintptr key) {
-    key ^= key >> 33;
-    key *= 0xff51afd7ed558ccd;
-    key ^= key >> 33;
-    key *= 0xc4ceb9fe1a85ec53;
-    key ^= key >> 33;
-    return key;
-}
-
-private bool eq(uintptr a, uintptr b) {
-    return a == b;
-}
-
-struct FenceChecker {
-    import ulib.hashmap;
-    import core.exception;
-    Hashmap!(uintptr, bool, hash, eq) mem;
-    shared Spinlock lock;
-
-    bool setup() {
-        return Hashmap!(uintptr, bool, hash, eq).alloc(&mem, 1024);
-    }
-
-    void on_store(uintptr pa, uintptr epc) shared {
-        lock.lock();
-        if (!(cast()mem).put(pa, true)) {
-            panic("fence: out of memory");
-        }
-        lock.unlock();
-    }
-
-    void on_exec(uintptr va, uintptr pa) shared {
-        lock.lock();
-        if ((cast()mem).get(pa, null)) {
-            panicf("fence: executed %lx (va: %lx) without preceding fence", pa, va);
-        }
-        lock.unlock();
-    }
-
-    void on_fence() shared {
-        lock.lock();
-        (cast()mem).clear();
-        lock.unlock();
     }
 }

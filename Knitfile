@@ -71,6 +71,7 @@ function src.libkern()
         knit.rglob("kernel/dev", "*.d"),
         knit.rglob("kernel/alloc", "*.d"),
         knit.rglob("kernel/fs", "*.d"),
+        knit.rglob("kernel/check", "*.d"),
         knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
         {
             "kernel/arch/package.d",

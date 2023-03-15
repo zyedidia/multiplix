@@ -66,13 +66,8 @@ struct Debug {
         cast() hvc(ext, Fid.enable);
     }
 
-    // start single stepping at addr
-    static void enable_at(uintptr addr) {
-        cast() hvc(ext, Fid.enable_at, addr);
-    }
-
-    static void disable() {
-        cast() hvc(ext, Fid.disable);
+    static bool disable() {
+        return hvc(ext, Fid.disable) != 0;
     }
 
     static void alloc_heap(void* start, size_t size) {

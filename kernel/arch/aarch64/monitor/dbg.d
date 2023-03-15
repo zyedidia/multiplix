@@ -7,25 +7,35 @@ import fwi = kernel.arch.aarch64.fwi;
 
 import bits = ulib.bits;
 
+import kernel.cpu;
+import kernel.board;
+
+import kernel.check.fence;
+
+shared FenceChecker[Machine.ncores] chks;
+__gshared bool[Machine.ncores] enabled;
+
 struct ExtDebug {
     static bool handler(uint fid, Regs* regs, uint* out_val) {
         switch (fid) {
             case fwi.Debug.Fid.enable:
                 SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
                 place_breakpoint(SysReg.elr_el2);
-                // place_watchpoint(0, DbgLsc.rdwr);
-                break;
-            case fwi.Debug.Fid.enable_at:
-                SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
-                place_breakpoint(regs.x0);
+                place_watchpoint(0, DbgLsc.rdwr);
+                enabled[cpu.coreid] = true;
                 break;
             case fwi.Debug.Fid.disable:
                 clear_breakpoints();
                 clear_ss();
+                *out_val = enabled[cpu.coreid];
+                enabled[cpu.coreid] = false;
                 break;
             case fwi.Debug.Fid.alloc_heap:
                 import sys = kernel.sys;
                 sys.allocator.__ctor(cast(ubyte*) regs.x0, regs.x1);
+                for (int i = 0; i < chks.length; i++) {
+                    assert((cast()chks[i]).setup());
+                }
                 break;
             default:
                 return false;
@@ -46,7 +56,6 @@ struct ExtDebug {
 
     static void handle_ss(uintptr epc, Regs* regs) {
         import ulib.print;
-        // printf("ss pc: %lx x17: %lx\n", epc, regs.x17);
         single_step();
     }
 

@@ -5,6 +5,19 @@ import kernel.alloc;
 import ulib.math;
 import libc;
 
+ulong hash(uintptr key) {
+    key ^= key >> 33;
+    key *= 0xff51afd7ed558ccd;
+    key ^= key >> 33;
+    key *= 0xc4ceb9fe1a85ec53;
+    key ^= key >> 33;
+    return key;
+}
+
+bool eq(uintptr a, uintptr b) {
+    return a == b;
+}
+
 struct Hashmap(K, V, alias hashfn, alias eqfn) {
     struct Entry {
         K key;
