@@ -20,9 +20,18 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.ArchTrap.setup();
 
     if (cpu.primary) {
+        enum monitor_heap = sys.mb!(64);
+
+        version (sanitizer) {
+            import kernel.board;
+            import kernel.sanitizer;
+            ubyte[] asan_pages = heap[0 .. Machine.main_memory.sz / 2];
+            heap += Machine.main_memory.sz / 2;
+            asan.setup(asan_pages, cast(uintptr) heap + monitor_heap, Machine.main_memory.sz / 2);
+        }
+
         // Allocate a heap for the monitor (the monitor checkers allocate
         // memory).
-        enum monitor_heap = sys.mb!(64);
         arch.Debug.alloc_heap(heap, monitor_heap);
         heap += monitor_heap;
 

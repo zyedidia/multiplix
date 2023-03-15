@@ -53,6 +53,8 @@ struct BlockAllocator(A) {
     Header*[nblocks] partial_blocks;
     Header*[nblocks] full_blocks;
 
+    import kernel.sanitizer;
+
     void* alloc(size_t sz) {
         size_t objsz = sz;
         // make sure the size is at least as large as a Free pointer.
@@ -60,27 +62,25 @@ struct BlockAllocator(A) {
         // make sure size is a power of 2.
         sz = pow2ceil(sz);
 
-        lock.lock();
-        scope(exit) lock.unlock();
-
-        void mark_alloc(void* addr, size_t size) {
-            version (sanitizer) {
-                import kernel.sanitizer;
-                if (addr)
-                    asan.mark_alloc(cast(uintptr) addr, size);
-            }
-        }
-
         version (sanitizer) {
-            import kernel.sanitizer;
             asan.disable();
             scope(exit) asan.enable();
         }
 
+        void mark_alloc(void* addr, size_t size) {
+            version (sanitizer) if (addr) asan.mark_alloc(cast(uintptr) addr, size);
+        }
+
         if (sz >= blocksize) {
             // size is big enough to go to the underlying allocator
-            return allocator.alloc(sz);
+            void* p = allocator.alloc(sz);
+            mark_alloc(p, sz);
+            return p;
         }
+
+        lock.lock();
+        scope(exit) lock.unlock();
+
         auto nblk = log2ceil(sz);
         // find a block for this size that has space.
         Header* block = partial_blocks[nblk];
@@ -121,15 +121,9 @@ struct BlockAllocator(A) {
         if (val == null) {
             return;
         }
-        lock.lock();
-        scope(exit) lock.unlock();
 
         void mark_free(void* addr, size_t size) {
-            version (sanitizer) {
-                import kernel.sanitizer;
-                if (addr)
-                    asan.mark_free(cast(uintptr) addr, size);
-            }
+            version (sanitizer) if (addr) asan.mark_free(cast(uintptr) addr, size);
         }
         version (sanitizer) {
             import kernel.sanitizer;
@@ -137,10 +131,19 @@ struct BlockAllocator(A) {
             scope(exit) asan.enable();
         }
 
+        if (cast(uintptr) val % sys.pagesize == 0) {
+            // Page-aligned value must have been allocated by the underlying
+            // allocator, so free it there.
+            size_t size = allocator.free(val);
+            mark_free(val, size);
+            return;
+        }
+
+        lock.lock();
+        scope(exit) lock.unlock();
+
         // round down to nearest page boundary to get the header for the block
         Header* hdr = cast(Header*) (cast(uintptr) val & (~0 << (bits.msb(sys.pagesize) - 1)));
-
-        mark_free(val, hdr.size);
 
         hdr.alloc_slots--;
         if (hdr.alloc_slots == 0) {

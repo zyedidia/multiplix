@@ -102,11 +102,14 @@ noreturn scheduler() {
     while (1) {
         // Allow devices to interrupt in case all processes are sleeping.
         Irq.on();
+        import ulib.print;
 
         Proc* p = null;
         while (!p) {
             p = runq.schedule();
             // wait in low power state if there are no processes
+            if (!Irq.is_on())
+                printf("on: %d\n", Irq.is_on());
             if (!p)
                 wfi();
         }

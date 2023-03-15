@@ -142,10 +142,8 @@ struct Asan {
     ubyte[] pagemap;
     uintptr mem_base;
 
-    void setup(uintptr mem_base, size_t mem_size) shared {
-        auto pages = knew_array!(ubyte)(mem_size);
-        assert(pages, "failed to initialize ASAN");
-        this.pagemap = cast(shared(ubyte[])) pages;
+    void setup(ubyte[] pagemap, uintptr mem_base, size_t mem_size) shared {
+        this.pagemap = cast(shared(ubyte[])) pagemap;
         this.mem_base = mem_base;
     }
 
@@ -181,9 +179,10 @@ struct Asan {
         }
         bool prev_asan = cpu.asan_active;
         cpu.asan_active = false;
+        scope(exit) cpu.asan_active = prev_asan;
 
-        lock.lock();
-        scope(exit) lock.unlock();
+        // lock.lock();
+        // scope(exit) lock.unlock();
 
         if (pagemap == null) {
             return;
@@ -208,12 +207,10 @@ struct Asan {
         if (in_range(addr, size, mem_base, mem_base + pagemap.length)) {
             for (int i = 0; i < size; i++) {
                 if (!pagemap[addr - mem_base + i]) {
-                    panicf("access of size %ld to unallocated heap data: %lx (at %p)\n", size, addr, retaddr);
+                    panicf("%s of size %ld in unallocated heap data: %lx (at %p)\n", write ? "write".ptr : "read".ptr,  size, addr, retaddr);
                 }
             }
         }
-
-        cpu.asan_active = prev_asan;
     }
 }
 

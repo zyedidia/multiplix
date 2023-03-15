@@ -182,25 +182,26 @@ public:
         return null;
     }
 
-    void free(void* ptr) {
+    size_t free(void* ptr) {
         if (!ptr) {
-            return;
+            return 0;
         }
 
-        uintptr pa = vm.ka2pa(cast(uintptr) ptr);
+        uintptr pa = vm.ka2pa(cast(uintptr) ptr) - mem_base;
         uintptr pn = pagenum(pa);
-
-        if (pages[pn].free) {
-            // page is already free
-            return;
-        }
 
         lock.lock();
         scope(exit) lock.unlock();
 
+        if (pages[pn].free) {
+            // page is already free
+            return 0;
+        }
+
         pages[pn].free = true;
         uintptr bpn = getbuddy(pn);
         uint order = pages[pn].order;
+        size_t size = 1 << order;
 
         while (bpn != cast(uintptr)-1 && pages[bpn].free && pages[bpn].order == pages[pn].order) {
             // coalesce
@@ -219,5 +220,7 @@ public:
         }
 
         free_insert(pn_to_free(pn), order);
+
+        return size;
     }
 }
