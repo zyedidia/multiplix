@@ -181,8 +181,8 @@ struct Asan {
         cpu.asan_active = false;
         scope(exit) cpu.asan_active = prev_asan;
 
-        // lock.lock();
-        // scope(exit) lock.unlock();
+        lock.lock();
+        scope(exit) lock.unlock();
 
         if (pagemap == null) {
             return;

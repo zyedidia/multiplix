@@ -145,6 +145,8 @@ struct BlockAllocator(A) {
         // round down to nearest page boundary to get the header for the block
         Header* hdr = cast(Header*) (cast(uintptr) val & (~0 << (bits.msb(sys.pagesize) - 1)));
 
+        mark_free(val, hdr.size);
+
         hdr.alloc_slots--;
         if (hdr.alloc_slots == 0) {
             // TODO: we could free the whole block. Currently the block

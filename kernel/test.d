@@ -34,8 +34,9 @@ version (sanitizer) {
 
         ubyte* f = cast(ubyte*) kalloc(11);
         assert(f);
+        kfree(f);
         printf("should cause panic:\n");
-        vld(&f[12]);
+        vld(&f[10]);
     }
 }
 
