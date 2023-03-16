@@ -20,7 +20,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.ArchTrap.setup();
 
     if (cpu.primary) {
-        enum monitor_heap = sys.mb!(64);
+        enum monitor_heap = sys.mb!(1);
 
         version (sanitizer) {
             import kernel.board;
@@ -28,12 +28,13 @@ extern (C) void kmain(int coreid, ubyte* heap) {
             ubyte[] asan_pages = heap[0 .. Machine.main_memory.sz / 2];
             heap += Machine.main_memory.sz / 2;
             asan.setup(asan_pages, cast(uintptr) heap + monitor_heap, Machine.main_memory.sz / 2);
+
+            arch.Debug.alloc_heap(heap, monitor_heap);
+            heap += monitor_heap;
         }
 
         // Allocate a heap for the monitor (the monitor checkers allocate
         // memory).
-        arch.Debug.alloc_heap(heap, monitor_heap);
-        heap += monitor_heap;
 
         // Initialize the system allocator.
         sys.allocator.construct(cast(uintptr) heap);
@@ -44,6 +45,7 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
         // Reallocate the hello ELF to make sure it is aligned properly.
         import kernel.alloc;
+
         ubyte* hello = cast(ubyte*) kalloc(hello_elf.length);
         assert(hello);
         import libc;

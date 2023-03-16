@@ -59,6 +59,16 @@ function build.machine(board, monitor)
             mcmodel = "medany",
             qemu = "-M visionfive2 -bios none -smp 4 -m 2G", -- doesn't exist
         },
+        ox64 = {
+            board = "ox64",
+            mabi = "lp64",
+            march = "rv64imac_zicsr_zifencei",
+            mattr = "+m,+a,+c,+relax",
+            mflags = "",
+            arch = "riscv64",
+            mcmodel = "medany",
+            qemu = "-M ox64 -bios none -smp 1 -m 2G", -- doesn't exist
+        },
         virt_riscv64 = {
             board = "virt_riscv64",
             mabi = "lp64",

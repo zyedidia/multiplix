@@ -17,7 +17,7 @@ struct ArchTimer {
     }
 
     static ulong time() {
-        return vld(Clint.mtime);
+        return Clint.time;
     }
 
     enum interval = 10000;

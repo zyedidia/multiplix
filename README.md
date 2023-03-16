@@ -26,9 +26,11 @@ Multiplix supports RISC-V and Armv8, specifically on the following hardware:
 * VisionFive 2: 4-core SiFive U74 1.5 GHz (plus a 5th SiFive S7 monitor core).
 * Raspberry Pi 3: 4-core ARM Cortex A53 1.4 GHz.
 * Raspberry Pi 4: 4-core ARM Cortex A72 1.5-1.8 GHz.
+* Ox64: 1-core T-Head C906 480 MHz (plus two 32-bit MCUs, an RV32I T-Head E907
+  320 MHz and an RV32E T-Head E902 150 MHz).
 
-Support for more boards is likely to be added in the future (Ox64, and more of
-the Raspberry Pi family).
+Support for more boards is likely to be added in the future (e.g., more of the
+Raspberry Pi family).
 
 # Building
 

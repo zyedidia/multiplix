@@ -95,6 +95,17 @@ struct Pte {
         max = giga,
     }
 
+    static size_t pg_sz(Pg pg) {
+        final switch (pg) {
+            case Pg.normal:
+                return sys.kb!(4);
+            case Pg.mega:
+                return sys.mb!(2);
+            case Pg.giga:
+                return sys.gb!(1);
+        }
+    }
+
     static Pg down(Pg type) {
         assert(type != Pg.min);
         return cast(Pg) (cast(int) type - 1);
@@ -168,6 +179,9 @@ struct Pagetable {
         }
         pte.pa = pa;
         pte.perm = perm;
+        static if (is(typeof(Machine.fixup_pte))) {
+            Machine.fixup_pte(va, pa, Pte.pg_sz(pgtyp), &pte);
+        }
         pte.validate();
         return true;
     }
@@ -179,6 +193,10 @@ struct Pagetable {
         auto vpn = vpn(2, va);
         ptes[vpn].perm = perm;
         ptes[vpn].pa = pa;
+        import kernel.board : Machine;
+        static if (is(typeof(Machine.fixup_pte))) {
+            Machine.fixup_pte(va, pa, Pte.pg_sz(Pte.Pg.giga), &ptes[vpn]);
+        }
         ptes[vpn].validate();
     }
 

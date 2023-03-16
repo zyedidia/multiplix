@@ -28,6 +28,7 @@ _primary_boot:
 	la t1, primary
 	lw a1, 0(t1)
 	sw zero, 0(t1)
+spam:
 	call dstart
 .globl _halt
 _halt:

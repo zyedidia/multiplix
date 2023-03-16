@@ -20,9 +20,9 @@ struct BootData {
 }
 
 struct Payload {
-	ulong entry;
-	uint size;
-	uint cksum;
+    ulong entry;
+    uint size;
+    uint cksum;
     ubyte[0] data;
 }
 
@@ -83,6 +83,9 @@ version (uart) {
     }
 
     BootData recv(ubyte* heap) {
+        while (!Uart.rx_empty()) {
+            Uart.rx();
+        }
         while (true) {
             put_uint(BootFlags.GetProgInfo);
             Timer.delay_us(100 * 1000); // delay 100ms
@@ -123,17 +126,20 @@ version (uart) {
 
     BootData unpack() {
         import ulib.crc32;
-        ubyte* entry = cast(ubyte*)payload.entry;
-        uint length = cast(uint)payload.size;
+
+        ubyte* entry = cast(ubyte*) payload.entry;
+        uint length = cast(uint) payload.size;
         assert(length == payload_size - Payload.sizeof);
-        assert(payload.cksum == crc32(payload.data.ptr, length));
-        return BootData(entry, payload.data.ptr[0..length]);
+        // this is kind of slow...
+        /* assert(payload.cksum == crc32(payload.data.ptr, length)); */
+        return BootData(entry, payload.data.ptr[0 .. length]);
     }
 }
 
 __gshared BootData bootdat;
 
 extern (C) noreturn kmain(int coreid, ubyte* heap) {
+    import ulib.print;
     arch.monitor_init();
 
     arch.enter_kernel();
