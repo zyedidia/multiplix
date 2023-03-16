@@ -52,3 +52,11 @@ size_t strlen(const(char)* s) {
     }
     return n;
 }
+
+void puts(scope const(char)* s) {
+    import sys = ulib.sys;
+    if (!s)
+        s = "(null)".ptr;
+    for (; *s; s++)
+        sys.stdout.putc(*s);
+}
