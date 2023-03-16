@@ -63,7 +63,6 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         test.run_all();
 
         // Initialize all cores.
-        printf("starting secondary cores\n");
         arch.Cpu.start_all_cores();
     } else {
         version (check) {
