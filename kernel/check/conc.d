@@ -12,6 +12,7 @@ private bool overlaps(uintptr a1, size_t sz1, uintptr a2, size_t sz2) {
 
 struct ConcChecker {
     struct Watchpoint {
+        int core;
         uintptr addr;
         size_t size;
     }
@@ -20,23 +21,28 @@ struct ConcChecker {
     Vector!(Watchpoint) watchpoints;
     shared Spinlock lock;
 
-    void on_access(uintptr addr, size_t size, uintptr epc) shared {
+    void on_access(uintptr addr, size_t size, uintptr epc) {
         lock.lock();
-        foreach (ref watched; (cast()watchpoints)) {
+        foreach (ref watched; watchpoints) {
             if (overlaps(addr, size, watched.addr, watched.size)) {
                 // Lock is still held into the panic.
-                panicf("core: %d, data race: simultaneous access to %p (at %p)\n", cpu.coreid, cast(void*) addr, cast(void*) epc);
+                panicf("core: %d, data race: simultaneous access to %p (at %p) (watchpoint: %d, %p, %lx)\n", cpu.coreid, cast(void*) addr, cast(void*) epc, watched.core, cast(void*) watched.addr, watched.size);
             }
         }
+        // import ulib.print;
         // printf("core: %d, access: %p\n", cpu.coreid, cast(void*) addr);
-        auto idx = (cast()watchpoints).length;
-        assert((cast()watchpoints).append(Watchpoint(addr, size)));
+        assert(watchpoints.append(Watchpoint(cpu.coreid, addr, size)));
         lock.unlock();
         Timer.delay_us(10);
 
         // Done waiting for data race to occur.
         lock.lock();
-        (cast()watchpoints).unordered_remove(idx);
+        for (int i = 0; i < watchpoints.length; i++) {
+            if (watchpoints[i].core == cpu.coreid) {
+                watchpoints.unordered_remove(i);
+                break;
+            }
+        }
         lock.unlock();
     }
 }

@@ -60,6 +60,7 @@ struct Vector(T) {
     }
 
     void unordered_remove(size_t idx) {
+        assert(idx < length, "vector index out of bounds");
         data[idx] = data[length - 1];
         length--;
     }

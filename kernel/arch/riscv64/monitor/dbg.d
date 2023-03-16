@@ -15,7 +15,7 @@ import kernel.check.fence;
 import kernel.check.conc;
 
 shared FenceChecker[Machine.ncores] fence_cks;
-shared ConcChecker conc_ck;
+__gshared ConcChecker conc_ck;
 __gshared bool[Machine.ncores] enabled;
 
 struct ExtDebug {

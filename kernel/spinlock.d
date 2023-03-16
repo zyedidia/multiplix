@@ -13,6 +13,7 @@ struct Spinlock {
 
     // Acquire the lock.
     shared void lock() {
+        mixin(DisableCheck!());
         Irq.push_off(); // disable interrupts to avoid deadlock
         assert(!holding());
 
@@ -25,6 +26,7 @@ struct Spinlock {
 
     // Release the lock.
     shared void unlock() in (holding()) {
+        mixin(DisableCheck!());
         (cast() this).mycpu = null;
         memory_fence();
         lock_release(&locked);
@@ -33,6 +35,7 @@ struct Spinlock {
     }
 
     shared bool holding() {
+        mixin(DisableCheck!());
         // TODO: fix data race here
         return atomic_load(&locked) && cast(void*) mycpu == cast(void*) &cpu();
     }
