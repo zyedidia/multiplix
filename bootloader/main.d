@@ -19,6 +19,13 @@ struct BootData {
     ubyte[] data;
 }
 
+struct Payload {
+	ulong entry;
+	uint size;
+	uint cksum;
+    ubyte[0] data;
+}
+
 version (uart) {
     enum BootFlags {
         BootStart = 0xFFFF0000,
@@ -111,12 +118,16 @@ version (uart) {
         return BootData(cast(ubyte*) entry, base[0 .. nbytes]);
     }
 } else {
-    extern (C) extern __gshared ulong payload;
+    extern (C) extern __gshared Payload payload;
     extern (C) extern __gshared int payload_size;
 
     BootData unpack() {
-        ubyte* entry = (cast(ubyte**) &payload)[0];
-        return BootData(entry, (cast(ubyte*) &payload)[8 .. payload_size]);
+        import ulib.crc32;
+        ubyte* entry = cast(ubyte*)payload.entry;
+        uint length = cast(uint)payload.size;
+        assert(length == payload_size - Payload.sizeof);
+        assert(payload.cksum == crc32(payload.data.ptr, length));
+        return BootData(entry, payload.data.ptr[0..length]);
     }
 }
 

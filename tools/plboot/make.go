@@ -11,6 +11,12 @@ import (
 	"github.com/google/subcommands"
 )
 
+type BootHeader struct {
+	Entry uint64
+	Size  uint32
+	Cksum uint32
+}
+
 type makeCmd struct {
 	outname string
 }
@@ -60,7 +66,12 @@ func (p *makeCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	} else {
 		out = os.Stdout
 	}
-	err = binary.Write(out, binary.LittleEndian, entry)
+	header := BootHeader{
+		Entry: uint64(entry),
+		Size:  uint32(len(segs[0].data)),
+		Cksum: crc32(segs[0].data),
+	}
+	err = binary.Write(out, binary.LittleEndian, &header)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return subcommands.ExitFailure
