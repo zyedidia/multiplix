@@ -39,6 +39,11 @@ end
 local tools = build.tools(machine)
 local flags = build.flags(machine, conf.lto, conf.release, monitor)
 
+local plboot = {
+    bin = "tools/plboot/plboot",
+    src = knit.glob("tools/plboot/*.go"),
+}
+
 local meta = r{
     $ .kobj/libd/libc.o:D[.kobj/deps/libd/libc.dep]: libd/libc.d
         $(tools.dc) $(flags.dc_libc) -Ilibd $input -c -$of $output $(makedeps(f".kobj/deps/libd/libc.dep", output))
@@ -50,8 +55,8 @@ local meta = r{
         $(tools.objcopy) $input -O binary $output
     $ %.bin.out: %.bin
         ./firmware/visionfive/fsz.sh $input $output
-    $ %.payload: %.elf
-        plboot make -o $output $input
+    $ %.payload: %.elf $(plboot.bin)[I]
+        ./$(plboot.bin) make -o $output $input
     $ %.list: %.elf
         $(tools.objdump) -D $input > $output
     $ %.img: %.bin
@@ -169,8 +174,11 @@ return b{
         knit :all -t clean
         rm -rf *.list *.bin *.bin.out
 
-    $ prog:VB: kernel.elf
-        plboot prog $input
+    $ prog:VB: kernel.elf $(plboot.bin)[I]
+        ./$(plboot.bin) prog $input
+
+    $ $(plboot.bin): $(plboot.src)
+        cd tools/plboot && go build
 
     $ lint:VB:
         dscanner --styleCheck $allsrc --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'

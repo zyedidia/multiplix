@@ -36,11 +36,6 @@ To build multiplix you must have a GNU bare-metal toolchain and either LDC or
 GDC. You can get everything you need (prebuilt) from
 [`multiplix-toolchain-linux-amd64.tar.gz`](https://github.com/zyedidia/build-gdc/releases/latest).
 
-You must also install the `plboot` program from the `tools` directory (this
-program is used to create kernel payloads for the bootloader, and to send the
-kernel over UART): `cd tools/plboot; go install` (or use `go build` and install
-the binary manually).
-
 Multiplix uses the [Knit](https://github.com/zyedidia/knit) build tool. The
 Knitfile has the following targets:
 
