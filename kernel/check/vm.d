@@ -8,11 +8,6 @@ import ulib.hashmap;
 struct VmChecker {
     Hashmap!(uintptr, Pte, hash, eq) shadow_tlb;
 
-    private Pagetable* get_pt() {
-        import kernel.arch.riscv64.csr;
-        return cast(Pagetable*) ((Csr.satp & 0xfffffffffffUL) << 12);
-    }
-
     void setup() {
         check(typeof(shadow_tlb).alloc(&shadow_tlb, 1024));
     }
@@ -20,7 +15,7 @@ struct VmChecker {
     // Checks that the shadow TLB is consistent with the in-memory pagetable.
     void check_consistency() {
         size_t mappings = 0;
-        Pagetable* pt = get_pt();
+        Pagetable* pt = current_pt();
         import kernel.vm;
         foreach (ref vamap; VmRange(pt)) {
             mappings++;

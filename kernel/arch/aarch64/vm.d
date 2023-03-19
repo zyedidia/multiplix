@@ -205,6 +205,11 @@ struct Pagetable {
     }
 }
 
+Pagetable* current_pt() {
+    import kernel.arch.aarch64.sysreg;
+    return cast(Pagetable*) pa2kpa((SysReg.ttbr0_el1) & 0xfffffffffffe);
+}
+
 void kernel_ptswitch(Pagetable* pt) {
     // don't need to do anything on aarch64 because TTBR1_EL1 is separate from
     // TTBR0_EL1

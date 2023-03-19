@@ -203,6 +203,11 @@ struct Pagetable {
     }
 }
 
+Pagetable* current_pt() {
+    import kernel.arch.riscv64.csr;
+    return cast(Pagetable*) pa2kpa(((Csr.satp & 0xfffffffffffUL) << 12));
+}
+
 void kernel_ptswitch(Pagetable* pt) {
     import kernel.arch.riscv64.csr;
     import core.sync;
