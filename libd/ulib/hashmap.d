@@ -27,10 +27,10 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
 
     Entry* entries;
     size_t cap;
-    size_t len;
+    size_t length;
 
     static bool alloc(Hashmap* map, size_t caphint) {
-        map.len = 0;
+        map.length = 0;
         map.cap = pow2ceil(caphint);
 
         map.entries = cast(Entry*) kalloc(map.cap * Entry.sizeof);
@@ -79,7 +79,7 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
         Hashmap newmap = {
             entries: entries,
             cap: newcap,
-            len: this.len,
+            length: this.length,
         };
 
         for (size_t i = 0; i < this.cap; i++) {
@@ -98,7 +98,7 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
     }
 
     bool put(K key, V val) {
-        if (this.len >= this.cap / 2) {
+        if (this.length >= this.cap / 2) {
             bool ok = resize(this.cap * 2);
             if (!ok) {
                 return false;
@@ -122,14 +122,14 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
         this.entries[idx].key = key;
         this.entries[idx].val = val;
         this.entries[idx].filled = true;
-        this.len++;
+        this.length++;
 
         return true;
     }
 
     private void rmidx(size_t idx) {
         this.entries[idx].filled = false;
-        this.len--;
+        this.length--;
     }
 
     bool remove(K key) {
@@ -157,7 +157,7 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
         }
 
         // halves the array if it is 12.5% full or less
-        if (this.len > 0 && this.len <= this.cap / 8) {
+        if (this.length > 0 && this.length <= this.cap / 8) {
             return resize(this.cap / 2);
         }
         return true;
@@ -165,6 +165,6 @@ struct Hashmap(K, V, alias hashfn, alias eqfn) {
 
     void clear() {
         memset(entries, 0, cap * Entry.sizeof);
-        len = 0;
+        length = 0;
     }
 }

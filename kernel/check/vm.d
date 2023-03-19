@@ -17,33 +17,34 @@ struct VmChecker {
         check(typeof(shadow_tlb).alloc(&shadow_tlb, 1024));
     }
 
-    void on_translate(uintptr va) {
+    // Checks that the shadow TLB is consistent with the in-memory pagetable.
+    void check_consistency() {
+        size_t mappings = 0;
         Pagetable* pt = get_pt();
+        import kernel.vm;
+        foreach (ref vamap; VmRange(pt)) {
+            mappings++;
 
-        auto lvl = Pte.Pg.normal;
-        Pte* pte = pt.walk(va, lvl);
+            bool found = void;
+            Pte tlb_pte = shadow_tlb.get(vamap.va, &found);
 
-        bool found = void;
-        Pte tlb_pte = shadow_tlb.get(va, &found);
+            if (!found) {
+                // not cached in TLB -- insert it
+                check(shadow_tlb.put(vamap.va, *vamap.pte));
+                continue;
+            }
 
-        if (!pte) {
-            if (!found)
-                return; // OK
-            panicf("vm checker: PTE for va %p is no longer valid, but still cached\n", cast(void*) va);
+            if (tlb_pte.data != vamap.pte.data) {
+                panicf("vm checker: for va %p: %lx is cached in TLB, but stored in the pagetable as %lx\n", cast(void*) vamap.va, tlb_pte.data, vamap.pte.data);
+            }
         }
 
-        if (!found) {
-            // Shadow TLB doesn't have an entry for this PTE, so insert it.
-            check(shadow_tlb.put(va, *pte));
-            return;
-        }
-
-        if (tlb_pte.data != pte.data) {
-            // PTEs don't match -- error.
-            panicf("vm checker: attempt to use unflushed PTE for va %p: %lx != %lx\n", cast(void*) va, tlb_pte.data, pte.data);
+        if (mappings != shadow_tlb.length) {
+            panicf("vm checker: count mismatch: TLB mappings (%lx) != Pagetable mappings (%lx)\n", mappings, shadow_tlb.length);
         }
     }
 
+    // Clears all entries from the shadow TLB.
     void on_vmfence() {
         shadow_tlb.clear();
     }
