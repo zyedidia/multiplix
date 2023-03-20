@@ -13,10 +13,12 @@ import bits = ulib.bits;
 
 import kernel.check.fence;
 import kernel.check.conc;
+import kernel.check.vm;
 
 shared FenceChecker[Machine.ncores] fence_cks;
 __gshared ConcChecker conc_ck;
 __gshared bool[Machine.ncores] enabled;
+__gshared VmChecker[Machine.ncores] vm_cks;
 
 struct ExtDebug {
     enum nbrk = 2; // number of hardware breakpoints per hart
@@ -51,9 +53,16 @@ struct ExtDebug {
             case sbi.Debug.Fid.alloc_heap:
                 import sys = kernel.sys;
                 sys.allocator.__ctor(cast(ubyte*) regs.a0, regs.a1);
-                for (int i = 0; i < fence_cks.length; i++) {
+                for (int i = 0; i < Machine.ncores; i++) {
                     assert((cast()fence_cks[i]).setup());
+                    vm_cks[i].setup();
                 }
+                break;
+            case sbi.Debug.Fid.vm_check:
+                vm_cks[cpu.coreid].check_consistency();
+                break;
+            case sbi.Debug.Fid.vm_fence:
+                vm_cks[cpu.coreid].on_vmfence();
                 break;
             default:
                 return false;
@@ -114,12 +123,9 @@ struct ExtDebug {
     static uintptr va2pa(uintptr va) {
         import kernel.vm;
         import kernel.arch.riscv64.vm;
-        Pagetable* pt = cast(Pagetable*) ((Csr.satp & 0xfffffffffff) << 12);
-        assert(pt);
+        Pagetable* pt = current_pt();
         auto map = pt.lookup(va);
-        if (!map.has()) {
-            return -1;
-        }
+        assert(map.has());
         return map.get().pa;
     }
 }

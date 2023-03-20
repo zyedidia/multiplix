@@ -144,6 +144,8 @@ struct Debug {
         enable_at = 1,
         disable = 2,
         alloc_heap = 3,
+        vm_check = 4,
+        vm_fence = 5,
     }
 
     // start checkers now
@@ -163,5 +165,13 @@ struct Debug {
     static void alloc_heap(void* start, size_t size) {
         import kernel.vm;
         cast() ecall(ext, Fid.alloc_heap, ka2pa(cast(uintptr) start), size);
+    }
+
+    static void vm_check() {
+        cast() ecall(ext, Fid.vm_check);
+    }
+
+    static void vm_fence() {
+        cast() ecall(ext, Fid.vm_fence);
     }
 }

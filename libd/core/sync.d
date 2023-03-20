@@ -98,6 +98,9 @@ void sync_fence() {
 pragma(inline, true)
 void vm_fence() {
     version (RISCV64) {
+        import kernel.arch;
+        version (kernel) version (check) Debug.vm_fence();
+        version (kernel) version (check) Debug.vm_check();
         asm {
             "sfence.vma" ::: "memory";
         }
