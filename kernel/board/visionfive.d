@@ -33,8 +33,8 @@ struct Machine {
     static void setup() {}
 }
 
-alias Uart = Dw8250!(pa2kpa(0x12440000));
-alias Gpio = Jh7100Gpio!(pa2kpa(0x11910000));
+alias Uart = Dw8250!(pa2ka(0x12440000));
+alias Gpio = Jh7100Gpio!(pa2ka(0x11910000));
 alias Reboot = Unsupported;
-alias Clint = SifiveClint!(pa2kpa(0x200_0000));
+alias Clint = SifiveClint!(pa2ka(0x200_0000));
 alias Emmc = UnsupportedEmmc;

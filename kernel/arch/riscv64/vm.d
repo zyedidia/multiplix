@@ -120,7 +120,7 @@ struct Pagetable {
                 endlevel = level;
                 return pte;
             } else if (pte.valid) {
-                pt = cast(Pagetable*) pa2kpa(pte.pa);
+                pt = cast(Pagetable*) pa2ka(pte.pa);
             } else {
                 static if (!alloc) {
                     endlevel = level;
@@ -151,7 +151,7 @@ struct Pagetable {
             if (pte.valid && pte.leaf(level)) {
                 pte.data = 0;
             } else if (pte.valid) {
-                Pagetable* child = cast(Pagetable*) pa2kpa(pte.pa);
+                Pagetable* child = cast(Pagetable*) pa2ka(pte.pa);
                 child.free(Pte.down(level));
                 pte.data = 0;
             }
@@ -205,7 +205,7 @@ struct Pagetable {
 
 Pagetable* current_pt() {
     import kernel.arch.riscv64.csr;
-    return cast(Pagetable*) pa2kpa(((Csr.satp & 0xfffffffffffUL) << 12));
+    return cast(Pagetable*) pa2ka(((Csr.satp & 0xfffffffffffUL) << 12));
 }
 
 void kernel_ptswitch(Pagetable* pt) {

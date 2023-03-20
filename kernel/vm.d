@@ -12,8 +12,8 @@ uintptr ka2pa(uintptr ka) {
     return ka - sys.highmem_base;
 }
 
-// Converts physical address to kernel address.
-uintptr pa2ka(uintptr pa) {
+// Converts a physical address to a high kernel address.
+uintptr pa2hka(uintptr pa) {
     return pa + sys.highmem_base;
 }
 
@@ -30,11 +30,11 @@ uintptr kpa2pa(uintptr kpa) {
 
 // Converts a physical address to a kernel address if in the kernel, or a
 // physical address if in the monitor (where kernel addresses don't exist).
-uintptr pa2kpa(uintptr pa) {
+uintptr pa2ka(uintptr pa) {
     version (monitor) {
         return pa;
     } else {
-        return pa2ka(pa);
+        return pa2hka(pa);
     }
 }
 
@@ -239,7 +239,7 @@ struct LevelRange(Pte.Pg level) {
 
     void popFront() {
         static if (!lastlevel) {
-            if (!next.empty()) {
+            if (next.pt != null && !next.empty()) {
                 next.popFront();
             } else {
                 idx++;

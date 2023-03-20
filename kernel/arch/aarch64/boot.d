@@ -31,7 +31,7 @@ void kernel_setup(bool primary) {
         void map_region (Machine.MemRange range, Pagetable* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
                 assert(pt.map(addr, addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &pgalloc));
-                assert(pt.map(pa2ka(addr), addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &pgalloc));
+                assert(pt.map(pa2hka(addr), addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &pgalloc));
             }
         }
 

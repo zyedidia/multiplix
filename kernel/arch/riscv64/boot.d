@@ -17,7 +17,7 @@ __gshared Pagetable kpagetable;
 void kernel_procmap(Pagetable* pt) {
     foreach (range; Machine.mem_ranges) {
         for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
-            pt.map_giga(pa2ka(addr), addr, Perm.r | Perm.w | Perm.x);
+            pt.map_giga(pa2hka(addr), addr, Perm.r | Perm.w | Perm.x);
         }
     }
 }
@@ -32,7 +32,7 @@ void kernel_setup(bool primary) {
         void map_region (Machine.MemRange range, Pagetable* pt) {
             for (size_t addr = range.start; addr < range.start + range.sz; addr += sys.gb!(1)) {
                 pt.map_giga(addr, addr, Perm.rwx);
-                pt.map_giga(pa2ka(addr), addr, Perm.rwx);
+                pt.map_giga(pa2hka(addr), addr, Perm.rwx);
             }
         }
 

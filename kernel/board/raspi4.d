@@ -62,9 +62,9 @@ struct Machine {
     }
 }
 
-alias Uart = BcmMiniUart!(pa2kpa(Machine.device_base + 0x215000));
-alias Gpio = BcmGpio!(pa2kpa(Machine.device_base + 0x200000));
-alias Reboot = BcmReboot!(pa2kpa(Machine.device_base + 0x10001c), pa2kpa(Machine.device_base + 0x100024));
-alias CoreTimer = BcmCoreTimer!(pa2kpa(0xff80_0000));
-alias Mailbox = BcmMailbox!(pa2kpa(Machine.device_base + 0xb880));
-alias Emmc = BcmEmmc!(pa2kpa(Machine.device_base + 0x00340000));
+alias Uart = BcmMiniUart!(pa2ka(Machine.device_base + 0x215000));
+alias Gpio = BcmGpio!(pa2ka(Machine.device_base + 0x200000));
+alias Reboot = BcmReboot!(pa2ka(Machine.device_base + 0x10001c), pa2ka(Machine.device_base + 0x100024));
+alias CoreTimer = BcmCoreTimer!(pa2ka(0xff80_0000));
+alias Mailbox = BcmMailbox!(pa2ka(Machine.device_base + 0xb880));
+alias Emmc = BcmEmmc!(pa2ka(Machine.device_base + 0x00340000));

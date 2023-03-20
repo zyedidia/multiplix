@@ -109,6 +109,9 @@ noreturn usertrapret(Proc* p) {
     Csr.satp = p.pt.satp(0);
     vm_fence();
 
+    import kernel.arch.riscv64.sbi;
+    version (kernel) version (check) Debug.vm_check();
+
     userret(p);
 }
 

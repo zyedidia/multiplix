@@ -59,4 +59,5 @@ void puts(scope const(char)* s) {
         s = "(null)".ptr;
     for (; *s; s++)
         sys.stdout.putc(*s);
+    sys.stdout.putc('\n');
 }

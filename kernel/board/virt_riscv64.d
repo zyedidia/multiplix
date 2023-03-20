@@ -32,7 +32,7 @@ struct Machine {
     static void setup() {}
 }
 
-alias Uart = Ns16550!(pa2kpa(0x10000000));
-alias Reboot = QemuSyscon!(pa2kpa(0x100000));
-alias Clint = SifiveClint!(pa2kpa(0x200_0000));
+alias Uart = Ns16550!(pa2ka(0x10000000));
+alias Reboot = QemuSyscon!(pa2ka(0x100000));
+alias Clint = SifiveClint!(pa2ka(0x200_0000));
 alias Emmc = UnsupportedEmmc;

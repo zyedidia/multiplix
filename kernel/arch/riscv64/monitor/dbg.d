@@ -59,10 +59,10 @@ struct ExtDebug {
                 }
                 break;
             case sbi.Debug.Fid.vm_check:
-                vm_cks[cpu.coreid].check_consistency();
+                if (enabled[cpu.coreid]) vm_cks[cpu.coreid].check_consistency();
                 break;
             case sbi.Debug.Fid.vm_fence:
-                vm_cks[cpu.coreid].on_vmfence();
+                if (enabled[cpu.coreid]) vm_cks[cpu.coreid].on_vmfence();
                 break;
             default:
                 return false;

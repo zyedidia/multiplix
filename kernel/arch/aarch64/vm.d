@@ -118,7 +118,7 @@ struct Pagetable {
                 endlevel = level;
                 return pte;
             } else if (pte.valid) {
-                pt = cast(Pagetable*) pa2kpa(pte.pa);
+                pt = cast(Pagetable*) pa2ka(pte.pa);
             } else {
                 static if (!alloc) {
                     endlevel = level;
@@ -207,7 +207,7 @@ struct Pagetable {
 
 Pagetable* current_pt() {
     import kernel.arch.aarch64.sysreg;
-    return cast(Pagetable*) pa2kpa((SysReg.ttbr0_el1) & 0xfffffffffffe);
+    return cast(Pagetable*) pa2ka((SysReg.ttbr0_el1) & 0xfffffffffffe);
 }
 
 void kernel_ptswitch(Pagetable* pt) {

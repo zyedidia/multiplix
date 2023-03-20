@@ -17,7 +17,7 @@ struct VmChecker {
         size_t mappings = 0;
         Pagetable* pt = current_pt();
         import kernel.vm;
-        foreach (ref vamap; VmRange(pt)) {
+        foreach (vamap; VmRange(pt)) {
             mappings++;
 
             bool found = void;
