@@ -170,7 +170,6 @@ return b{
         dfmt -i --brace_style=otbs $allsrc
 
     $ clean:VB:
-        knit -f build/bootloader.knit :all -t clean
         knit :all -t clean
         rm -rf *.list *.bin *.bin.out
 
