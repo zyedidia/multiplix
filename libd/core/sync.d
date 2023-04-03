@@ -294,12 +294,12 @@ version (LDC) {
 
     uint lock_test_and_set(shared(uint*) lock, uint val) {
         mixin(DisableCheck!());
-        return _atomic_cmp_xchg(lock, 0, 1).previousValue;
+        return _atomic_cmp_xchg(lock, 0, 1, AtomicOrdering.Acquire, AtomicOrdering.Relaxed, true).previousValue;
     }
 
     void lock_release(shared(uint*) lock) {
         mixin(DisableCheck!());
-        _atomic_store(0, lock);
+        _atomic_store(0, lock, AtomicOrdering.Release);
     }
 
     /// Atomically sets *ptr += val and returns the previous *ptr value.
