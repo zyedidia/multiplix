@@ -232,7 +232,7 @@ version (LDC) {
     enum AtomicOrdering {
         NotAtomic = 0,
         Unordered = 1,
-        Monotonic = 2,
+        Monotonic = 2, // relaxed
         Consume = 3,
         Acquire = 4,
         Release = 5,
@@ -294,7 +294,7 @@ version (LDC) {
 
     uint lock_test_and_set(shared(uint*) lock, uint val) {
         mixin(DisableCheck!());
-        return _atomic_cmp_xchg(lock, 0, 1, AtomicOrdering.Acquire, AtomicOrdering.Relaxed, true).previousValue;
+        return _atomic_cmp_xchg(lock, 0, 1, AtomicOrdering.Acquire, AtomicOrdering.Monotonic, true).previousValue;
     }
 
     void lock_release(shared(uint*) lock) {
