@@ -40,3 +40,24 @@ struct Spinlock {
         return atomic_load(&locked) && cast(void*) mycpu == cast(void*) &cpu();
     }
 }
+
+struct Locked(T) {
+    private T val;
+    private Spinlock lock_;
+
+    struct Guard {
+        private shared Locked!(T)* locked;
+        ref T get() {
+            return cast(T) locked.val;
+        }
+        ~this() {
+            locked.lock_.unlock();
+        }
+        alias get this;
+    }
+
+    Guard lock() shared {
+        lock_.lock();
+        return Guard(&this);
+    }
+}
