@@ -106,7 +106,6 @@ bool load(int W)(Pagetable* pt, ubyte* elfdat, out uintptr entry, out uintptr br
                 return false;
             }
             memset(mem, 0, pad);
-            mem += pad;
             size_t written = pad;
             pad = 0;
             size_t soff = va - ph.vaddr;

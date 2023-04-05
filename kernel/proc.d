@@ -132,9 +132,10 @@ struct Proc {
         pt.free();
     }
 
+    import kernel.schedule;
+
     // Switch to another kernel thread.
     void yield() {
-        import kernel.schedule;
         import kernel.irq;
         assert(!Irq.is_on());
         assert(canary == Proc.canary_magic);
@@ -146,7 +147,6 @@ struct Proc {
     }
 
     import kernel.wait;
-    import kernel.schedule;
 
     // Mark this process as blocked and yield on the given waitqueue.
     void block(void* wq) in (lock.holding()) {
