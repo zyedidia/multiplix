@@ -28,7 +28,7 @@ function build.machine(board, monitor)
             mattr = f"$align_attr,-sve,-fp-armv8",
             mflags = f"-mgeneral-regs-only $malign",
             arch = "aarch64",
-            qemu = "-M raspi4b -serial null -serial mon:stdio" -- doesn't exist
+            qemu = "-M raspi4b -serial null -serial mon:stdio" --- doesn't exist
         },
         virt_aarch64 = {
             board = "virt_aarch64",
@@ -47,7 +47,7 @@ function build.machine(board, monitor)
             mflags = "",
             arch = "riscv64",
             mcmodel = "medany",
-            qemu = "-M visionfive -bios none -smp 2 -m 2G", -- doesn't exist
+            qemu = "-M visionfive -bios none -smp 2 -m 2G", --- doesn't exist
         },
         visionfive2 = {
             board = "visionfive2",
@@ -57,7 +57,7 @@ function build.machine(board, monitor)
             mflags = "",
             arch = "riscv64",
             mcmodel = "medany",
-            qemu = "-M visionfive2 -bios none -smp 4 -m 2G", -- doesn't exist
+            qemu = "-M visionfive2 -bios none -smp 4 -m 2G", --- doesn't exist
         },
         virt_riscv64 = {
             board = "virt_riscv64",
