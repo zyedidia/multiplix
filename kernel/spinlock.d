@@ -41,6 +41,17 @@ struct Spinlock {
     }
 }
 
+struct Protected(T) {
+    private T val;
+    private shared Spinlock lock_;
+
+    void use(void function(ref T) fn) shared {
+        lock_.lock();
+        fn(cast(T) val);
+        lock_.unlock();
+    }
+}
+
 struct Locked(T) {
     private T val;
     private Spinlock lock_;
