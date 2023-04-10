@@ -20,10 +20,14 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     arch.ArchTrap.setup();
 
     if (cpu.primary) {
-        enum monitor_heap = sys.mb!(64);
+        import kernel.board;
+        version (check) {
+            enum monitor_heap = Machine.main_memory.sz / 2;
+        } else {
+            enum monitor_heap = sys.mb!(64);
+        }
 
         version (sanitizer) {
-            import kernel.board;
             import kernel.sanitizer;
             ubyte[] asan_pages = heap[0 .. Machine.main_memory.sz / 2];
             heap += Machine.main_memory.sz / 2;

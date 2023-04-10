@@ -69,6 +69,11 @@ struct BlockAllocator(A) {
 
         void mark_alloc(void* addr, size_t size) {
             version (sanitizer) if (addr) asan.mark_alloc(cast(uintptr) addr, size);
+            version (check) {
+                import kernel.arch.riscv64.sbi;
+                if (addr)
+                    Debug.mark_alloc(cast(uintptr) addr, size);
+            }
         }
 
         if (sz >= blocksize) {
@@ -124,6 +129,10 @@ struct BlockAllocator(A) {
 
         void mark_free(void* addr, size_t size) {
             version (sanitizer) if (addr) asan.mark_free(cast(uintptr) addr, size);
+            version (check) {
+                import kernel.arch.riscv64.sbi;
+                if (addr) Debug.mark_free(cast(uintptr) addr, size);
+            }
         }
         version (sanitizer) {
             import kernel.sanitizer;

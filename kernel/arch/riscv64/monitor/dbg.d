@@ -64,6 +64,10 @@ struct ExtDebug {
             case sbi.Debug.Fid.vm_fence:
                 if (enabled[cpu.coreid]) vm_cks[cpu.coreid].on_vmfence();
                 break;
+            case sbi.Debug.Fid.mark_alloc:
+                break;
+            case sbi.Debug.Fid.mark_free:
+                break;
             default:
                 return false;
         }

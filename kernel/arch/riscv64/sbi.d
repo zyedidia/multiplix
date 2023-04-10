@@ -146,6 +146,8 @@ struct Debug {
         alloc_heap = 3,
         vm_check = 4,
         vm_fence = 5,
+        mark_alloc = 6,
+        mark_free = 7,
     }
 
     // start checkers now
@@ -173,5 +175,13 @@ struct Debug {
 
     static void vm_fence() {
         cast() ecall(ext, Fid.vm_fence);
+    }
+
+    static void mark_alloc(uintptr addr, size_t size) {
+        cast() ecall(ext, Fid.mark_alloc, addr, size);
+    }
+
+    static void mark_free(uintptr addr, size_t size) {
+        cast() ecall(ext, Fid.mark_free, addr, size);
     }
 }
