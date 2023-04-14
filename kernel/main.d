@@ -4,6 +4,8 @@ import kernel.spinlock;
 
 immutable ubyte[] hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
 
+extern (C) extern void main();
+
 shared Spinlock lock;
 
 import arch = kernel.arch;
@@ -67,33 +69,49 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         test.run_all();
 
         // Initialize all cores.
-        arch.Cpu.start_all_cores();
+        // arch.Cpu.start_all_cores();
     } else {
         version (check) {
             arch.Debug.enable();
         }
     }
 
-    // Switch to the kernel pagetable (from the early boot pagetable). The main
-    // difference between this pagetable and the boot pagetable is that in this
-    // pagetable, nothing is mapped in the lower half of the address space.
-    arch.kernel_ptswitch(&kernel_pagetable);
-
     // Any architecture-specific setup, such as enabling VM/caches in the
     // monitor and enabling the cycle counter (aarch64).
     arch.setup();
 
-    lock.lock();
-    println("entered kmain at: ", &kmain, " core: ", cpu.coreid);
-    lock.unlock();
+    main();
 
-    import kernel.timer;
-    Timer.delay_ms(50);
+    return;
 
-    import kernel.arch;
-    // Start generating timer interrupts.
-    ArchTimer.intr();
+    // // Switch to the kernel pagetable (from the early boot pagetable). The main
+    // // difference between this pagetable and the boot pagetable is that in this
+    // // pagetable, nothing is mapped in the lower half of the address space.
+    // arch.kernel_ptswitch(&kernel_pagetable);
+    //
+    // lock.lock();
+    // println("entered kmain at: ", &kmain, " core: ", cpu.coreid);
+    // lock.unlock();
+    //
+    // import kernel.timer;
+    // Timer.delay_ms(50);
+    //
+    // import kernel.arch;
+    // // Start generating timer interrupts.
+    // ArchTimer.intr();
+    //
+    // // Enter the scheduler.
+    // scheduler();
+}
 
-    // Enter the scheduler.
-    scheduler();
+extern (C) {
+    void uart_send_char(ubyte c) {
+        import kernel.board;
+        Uart.tx(c);
+    }
+
+    ulong barebones_clock() {
+        import kernel.timer;
+        return Timer.time();
+    }
 }
