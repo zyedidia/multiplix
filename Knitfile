@@ -167,7 +167,7 @@ return b{
         $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
 
     $ coremark/libcoremark.a:VB:
-        make -C coremark PORT_DIR=multiplix TIMER_FREQ=100000 -B
+        make -B -C coremark PORT_DIR=multiplix PORT_CFLAGS="$(flags.cc) -DTIMER_FREQ=$(machine.timer)" CC=$(tools.cc)
 
     $ format:VB:
         dfmt -i --brace_style=otbs $allsrc
