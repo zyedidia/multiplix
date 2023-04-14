@@ -20,9 +20,9 @@ _halt:
 
 .section ".data.primary"
 .globl primary
-.align 4
+.align 8
 primary:
-	.int 1
+	.quad 1
 
 // Kernel trap prologue and epilogue
 

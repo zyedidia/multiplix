@@ -2,8 +2,6 @@ module kernel.main;
 
 import kernel.spinlock;
 
-immutable ubyte[] hello_elf = cast(immutable ubyte[]) import("user/hello/hello.elf");
-
 extern (C) extern void main();
 
 shared Spinlock lock;
@@ -49,24 +47,24 @@ extern (C) void kmain(int coreid, ubyte* heap) {
         }
 
         // Reallocate the hello ELF to make sure it is aligned properly.
-        import kernel.alloc;
-        ubyte* hello = cast(ubyte*) kalloc(hello_elf.length);
-        assert(hello);
-        import libc;
-        memcpy(hello, hello_elf.ptr, hello_elf.length);
-
-        // Initialize the hello process.
-        if (!runq.start(hello[0 .. hello_elf.length])) {
-            println("could not initialize hello.elf");
-            return;
-        }
+        // import kernel.alloc;
+        // ubyte* hello = cast(ubyte*) kalloc(hello_elf.length);
+        // assert(hello);
+        // import libc;
+        // memcpy(hello, hello_elf.ptr, hello_elf.length);
+        //
+        // // Initialize the hello process.
+        // if (!runq.start(hello[0 .. hello_elf.length])) {
+        //     println("could not initialize hello.elf");
+        //     return;
+        // }
 
         // Map the kernel into the kernel pagetable.
         arch.kernel_procmap(&kernel_pagetable);
 
         // Run unit tests if they exist.
-        import test = kernel.test;
-        test.run_all();
+        // import test = kernel.test;
+        // test.run_all();
 
         // Initialize all cores.
         // arch.Cpu.start_all_cores();
@@ -80,7 +78,9 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     // monitor and enabling the cycle counter (aarch64).
     arch.setup();
 
+    arch.Debug.enable();
     main();
+    arch.Debug.disable();
 
     return;
 

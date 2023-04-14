@@ -13,6 +13,7 @@ conf = {
     analyzer = choose(tobool(cli.analyzer), uconf.analyzer, false),
     test = choose(tobool(cli.test), uconf.test, false),
     check = choose(tobool(cli.check), uconf.check, false),
+    cmarkdbg = choose(tobool(cli.cmarkdbg), uconf.cmarkdbg, false),
 }
 
 of = sel(conf.dc == "gdc", "o", "of")
@@ -167,7 +168,7 @@ return b{
         $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
 
     $ coremark/libcoremark.a:VB:
-        make -B -C coremark PORT_DIR=multiplix PORT_CFLAGS="$(flags.cc) -DTIMER_FREQ=$(machine.timer)" CC=$(tools.cc)
+        make -B -C coremark PORT_DIR=multiplix PORT_CFLAGS="$(flags.cc) $(sel(conf.cmarkdbg, "-DCORE_DEBUG=1", "")) -DTIMER_FREQ=$(machine.timer)" CC=$(tools.cc)
 
     $ format:VB:
         dfmt -i --brace_style=otbs $allsrc

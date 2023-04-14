@@ -33,15 +33,15 @@ _reset_sp:
 
 .section ".data.primary"
 .globl primary
-.align 4
+.align 8
 primary:
-	.int 1
+	.quad 1
 
 .section ".data.wakeup"
 .globl wakeup
-.align 4
+.align 8
 wakeup:
-	.int 0
+	.quad 0
 
 .section ".text.enter_el2"
 .globl _enter_el2
