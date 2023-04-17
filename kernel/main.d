@@ -36,8 +36,8 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
         // Allocate a heap for the monitor (the monitor checkers allocate
         // memory).
-        arch.Debug.alloc_heap(heap, monitor_heap);
-        heap += monitor_heap;
+        // arch.Debug.alloc_heap(heap, monitor_heap);
+        // heap += monitor_heap;
 
         // Initialize the system allocator.
         sys.allocator.construct(cast(uintptr) heap);

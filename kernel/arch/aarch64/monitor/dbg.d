@@ -4,6 +4,7 @@ import kernel.arch.aarch64.regs;
 import kernel.arch.aarch64.sysreg;
 
 import fwi = kernel.arch.aarch64.fwi;
+import vm = kernel.vm;
 
 import bits = ulib.bits;
 
@@ -19,16 +20,17 @@ struct ExtDebug {
     static bool handler(uint fid, Regs* regs, uint* out_val) {
         switch (fid) {
             case fwi.Debug.Fid.enable:
-                SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
-                place_breakpoint(SysReg.elr_el2);
-                place_watchpoint(0, DbgLsc.rdwr);
-                enabled[cpu.coreid] = true;
+                // SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
+                place_watchpoint(DbgLsc.rdwr);
+                // place_breakpoint(SysReg.elr_el2);
+                // place_watchpoint(0, DbgLsc.rdwr);
+                // enabled[cpu.coreid] = true;
                 break;
             case fwi.Debug.Fid.disable:
                 clear_breakpoints();
                 clear_ss();
-                *out_val = enabled[cpu.coreid];
-                enabled[cpu.coreid] = false;
+                // *out_val = enabled[cpu.coreid];
+                // enabled[cpu.coreid] = false;
                 break;
             case fwi.Debug.Fid.alloc_heap:
                 import sys = kernel.sys;
@@ -49,17 +51,27 @@ struct ExtDebug {
     }
 
     static void handle_watchpoint(uintptr epc, uintptr addr, Regs* regs) {
-        toggle_watchpoints();
+        clear_watchpoint();
+        single_step();
     }
 
     static void handle_ss(uintptr epc, Regs* regs) {
-        import ulib.print;
-        single_step();
+        clear_ss();
+        place_watchpoint(DbgLsc.rdwr);
     }
 
     static void place_breakpoint(uintptr addr) {
         SysReg.dbgbvr0_el1 = addr;
         SysReg.dbgbcr0_el1 = bits.write(0, 23, 20, Dbgbcr.unlinked_insn) | Dbgbcr.aarch64 | Dbgbcr.el1_el0 | Dbgbcr.e;
+    }
+
+    static void clear_watchpoint() {
+        SysReg.dbgwcr0_el1 = 0;
+    }
+
+    static void place_watchpoint(uint lsc) {
+        SysReg.dbgwvr0_el1 = vm.pa2hka(0);
+        SysReg.dbgwcr0_el1 = lsc << 3 | 0b11111111 << 5 | Dbgbcr.el1_el0 | Dbgbcr.e | (0b11111 << 24);
     }
 
     static void place_watchpoint(uintptr addr, uint lsc) {
@@ -69,6 +81,7 @@ struct ExtDebug {
 
     static void single_step() {
         SysReg.spsr_el2 = bits.set(SysReg.spsr_el2, Spsr.ss_bit);
+        SysReg.mdscr_el1 = bits.set(SysReg.mdscr_el1, Mdscr.ss_bit);
     }
 
     static void clear_breakpoints() {
