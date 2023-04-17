@@ -49,8 +49,6 @@ struct ExtDebug {
     }
 
     static void handle_watchpoint(uintptr epc, uintptr addr, Regs* regs) {
-        import ulib.print;
-        printf("watch event on address: %lx\n", addr);
         toggle_watchpoints();
     }
 

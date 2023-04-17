@@ -78,6 +78,8 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     // monitor and enabling the cycle counter (aarch64).
     arch.setup();
 
+    println("booted");
+
     arch.Debug.enable();
     main();
     arch.Debug.disable();

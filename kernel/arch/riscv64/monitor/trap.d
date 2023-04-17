@@ -23,7 +23,7 @@ extern (C) void monitortrap(Regs* regs) {
             Csr.mip = Csr.mip | (1 << Mip.stip);
             break;
         case Cause.breakpoint:
-            auto mtval = Csr.mtval;
+            auto mtval = bits.sext!(long, ulong)(Csr.mtval, 39);
             if (mepc == mtval) {
                 ExtDebug.handle_breakpoint(mepc, regs);
             } else {

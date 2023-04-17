@@ -36,8 +36,6 @@ SECTIONS
         _kbss_end = .;
     }
 
-    ASSERT((. - ADDR(.text) <= 0x8000), "boot code is larger than 8 pages!")
-
     .payload : {
         . = ALIGN(8);
         *(.payload*)

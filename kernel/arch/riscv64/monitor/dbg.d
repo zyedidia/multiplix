@@ -42,13 +42,14 @@ struct ExtDebug {
         switch (fid) {
             import ulib.print;
             case sbi.Debug.Fid.enable:
-                place_mismatch_breakpoint(Csr.mepc, BrkType.rw);
-                enabled[cpu.coreid] = true;
+                place_watchpoint();
+                // place_mismatch_breakpoint(Csr.mepc, BrkType.rw);
+                // enabled[cpu.coreid] = true;
                 break;
             case sbi.Debug.Fid.disable:
                 clear_breakpoints();
-                *out_val = enabled[cpu.coreid];
-                enabled[cpu.coreid] = false;
+                // *out_val = enabled[cpu.coreid];
+                // enabled[cpu.coreid] = false;
                 break;
             case sbi.Debug.Fid.alloc_heap:
                 import sys = kernel.sys;
@@ -75,21 +76,22 @@ struct ExtDebug {
     }
 
     static void handle_breakpoint(uintptr epc, Regs* regs) {
-        place_mismatch_breakpoint(epc, BrkType.wx);
-        auto epcpa = va2pa(epc);
-        fence_cks[cpu.coreid].on_exec(epc, epcpa);
-        if (load_insn(epcpa) == Insn.fencei) {
-            fence_cks[cpu.coreid].on_fence();
-        }
+        place_watchpoint();
+    }
+
+    static void place_watchpoint() {
+        // break on >= 0
+        Csr.tselect = 0;
+        Csr.tdata1 = bits.write(0b011000 | BrkType.rw, 10, 7, 2);
+        Csr.tdata2 = 0;
+
+        Csr.tselect = 1;
+        Csr.tdata1 = 0;
     }
 
     static void handle_watchpoint(uintptr epc, uintptr va, Regs* regs) {
+        import ulib.print;
         place_mismatch_breakpoint(epc, BrkType.x);
-        conc_ck.on_access(va, 1, epc);
-        // auto pa = va2pa(va);
-        // for (int i = 0; i < fence_cks.length; i++) {
-        //     fence_cks[i].on_store(pa, epc);
-        // }
     }
 
     static void place_breakpoint(uintptr addr, BrkType flags) {
