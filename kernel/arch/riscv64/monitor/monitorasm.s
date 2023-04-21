@@ -62,6 +62,12 @@ _enter_smode:
 entry:
 	ret
 
+emptyvec:
+	csrr t0, mepc
+	addi t0, t0, 4
+	csrw mepc, t0
+	mret
+
 .section ".text.monitorvec"
 .globl monitorvec
 .align 4

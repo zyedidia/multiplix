@@ -78,9 +78,19 @@ extern (C) void kmain(int coreid, ubyte* heap) {
     // monitor and enabling the cycle counter (aarch64).
     arch.setup();
 
-    arch.Debug.enable();
+    println("booted");
+
+    import kernel.timer;
+    auto cycles = Timer.time_fn!(1000)(() {
+        asm {
+            "ecall";
+        }
+    });
+    println("cycles: ", cycles);
+
+    // arch.Debug.enable();
     main();
-    arch.Debug.disable();
+    // arch.Debug.disable();
 
     return;
 

@@ -75,12 +75,12 @@ struct ExtDebug {
     }
 
     static void handle_breakpoint(uintptr epc, Regs* regs) {
-        place_mismatch_breakpoint(epc, BrkType.wx);
-        auto epcpa = va2pa(epc);
-        fence_cks[cpu.coreid].on_exec(epc, epcpa);
-        if (load_insn(epcpa) == Insn.fencei) {
-            fence_cks[cpu.coreid].on_fence();
-        }
+        place_mismatch_breakpoint(epc, BrkType.x);
+        // auto epcpa = va2pa(epc);
+        // fence_cks[cpu.coreid].on_exec(epc, epcpa);
+        // if (load_insn(epcpa) == Insn.fencei) {
+        //     fence_cks[cpu.coreid].on_fence();
+        // }
     }
 
     static void handle_watchpoint(uintptr epc, uintptr va, Regs* regs) {

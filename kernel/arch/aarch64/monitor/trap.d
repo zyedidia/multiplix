@@ -18,7 +18,7 @@ extern (C) void monitor_exception(Regs* regs) {
 
     switch (exc_class) {
         case Exception.hvc:
-            fwi_handler(regs);
+            // fwi_handler(regs);
             break;
         case Exception.brkpt:
             ExtDebug.handle_breakpoint(SysReg.elr_el2, regs);

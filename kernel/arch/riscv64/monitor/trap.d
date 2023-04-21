@@ -15,7 +15,7 @@ extern (C) void monitortrap(Regs* regs) {
 
     switch (mcause) {
         case Cause.ecall_s, Cause.ecall_m:
-            sbi_handler(regs);
+            // sbi_handler(regs);
             Csr.mepc = mepc + 4;
             break;
         case Cause.mti:
@@ -23,12 +23,12 @@ extern (C) void monitortrap(Regs* regs) {
             Csr.mip = Csr.mip | (1 << Mip.stip);
             break;
         case Cause.breakpoint:
-            auto mtval = Csr.mtval;
-            if (mepc == mtval) {
-                ExtDebug.handle_breakpoint(mepc, regs);
-            } else {
-                ExtDebug.handle_watchpoint(mepc, mtval, regs);
-            }
+            // auto mtval = Csr.mtval;
+            // if (mepc == mtval) {
+            ExtDebug.handle_breakpoint(mepc, regs);
+            // } else {
+            //     ExtDebug.handle_watchpoint(mepc, mtval, regs);
+            // }
             break;
         default:
             import core.exception;
