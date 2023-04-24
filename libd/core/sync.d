@@ -177,9 +177,9 @@ version (GNU) {
         __atomic_store_4(ptr, val, order);
     }
 
-    uint atomic_load(shared const uint* ptr, MemoryOrder order = MemoryOrder.seq) {
+    uint atomic_load(shared const ubyte* ptr, MemoryOrder order = MemoryOrder.seq) {
         mixin(DisableCheck!());
-        return __atomic_load_4(ptr, order);
+        return __atomic_load_1(ptr, order);
     }
 
     bool atomic_cmp_xchg(shared uint* ptr, uint cmp, uint val) {
@@ -187,14 +187,14 @@ version (GNU) {
         return __atomic_compare_exchange_4(ptr, &cmp, val, false, MemoryOrder.seq, MemoryOrder.seq);
     }
 
-    uint lock_test_and_set(shared(uint*) lock, uint val) {
+    ubyte lock_test_and_set(shared(ubyte*) lock) {
         mixin(DisableCheck!());
-        return __sync_lock_test_and_set_4(lock, val);
+        return __atomic_test_and_set(lock, MemoryOrder.acq);
     }
 
-    void lock_release(shared(uint*) lock) {
+    void lock_release(shared(ubyte*) lock) {
         mixin(DisableCheck!());
-        __sync_lock_release_4(lock);
+        __atomic_clear(lock, MemoryOrder.rel);
     }
 
     T atomic_rmw_add(T)(in shared T* ptr, T val, MemoryOrder order = MemoryOrder.seq) {
@@ -292,14 +292,14 @@ version (LDC) {
         return _atomic_cmp_xchg(ptr, cmp, val).exchanged;
     }
 
-    uint lock_test_and_set(shared(uint*) lock, uint val) {
+    ubyte lock_test_and_set(shared(ubyte*) lock) {
         mixin(DisableCheck!());
         return _atomic_cmp_xchg(lock, 0, 1, AtomicOrdering.Acquire, AtomicOrdering.Monotonic, true).previousValue;
     }
 
-    void lock_release(shared(uint*) lock) {
+    void lock_release(shared(ubyte*) lock) {
         mixin(DisableCheck!());
-        _atomic_store(0, lock, AtomicOrdering.Release);
+        _atomic_store(false, lock, AtomicOrdering.Release);
     }
 
     /// Atomically sets *ptr += val and returns the previous *ptr value.

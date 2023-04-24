@@ -8,7 +8,7 @@ import kernel.irq;
 
 // Basic mutual exclusion lock.
 struct Spinlock {
-    shared uint locked = 0;
+    shared ubyte locked = false;
     Cpu* mycpu = null; // used to determine if this core is holding the lock
 
     // Acquire the lock.
@@ -18,7 +18,7 @@ struct Spinlock {
         assert(!holding());
 
         import kernel.board;
-        while (lock_test_and_set(&locked, 1) != 0) {
+        while (lock_test_and_set(&locked) != false) {
         }
         memory_fence();
         (cast() this).mycpu = &cpu();
