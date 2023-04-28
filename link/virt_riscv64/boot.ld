@@ -2,28 +2,22 @@ ENTRY(_start)
 
 SECTIONS
 {
-    /* kernel is located at high canonical addresses */
-    . = 0xFFFFFFC044000000;
-    .text : {
-        _text_start = .;
+    .text 0x80000000 : {
         KEEP(*(.text.boot))  
         *(.text*) 
-        _text_end = .;
-        . = ALIGN(8);
     }
     .rodata : {
-        _rodata_start = .;
+        . = ALIGN(8);
         __global_pointer$ = . + 0x800;
         *(.rodata*)
         *(.srodata*)
-        _rodata_end = .;
+        . = ALIGN(8);
     }
     .data : { 
-        _data_start = .;
+        . = ALIGN(8);
         *(.sdata*)
         *(.data*)
         . = ALIGN(8);
-        _data_end = .;
     } 
     .bss : {
         . = ALIGN(8);
@@ -38,7 +32,13 @@ SECTIONS
     .stack : {
         . = ALIGN(16);
         _stack_start = .;
-        . += 20K; /* enough for 5 cores */
+        . += 16K; /* enough for 4 cores */
+    }
+
+    .payload : {
+        . = ALIGN(8);
+        *(.payload*)
+        . = ALIGN(8);
     }
 
     .heap : {
@@ -48,4 +48,3 @@ SECTIONS
 
     /DISCARD/ : { *(.comment .note .eh_frame) }
 }
-

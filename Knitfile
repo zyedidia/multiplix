@@ -1,198 +1,281 @@
-knit = require("knit")
+local knit = require("knit")
 
-local _, uconf = pcall(include, "build/conf.knit")
-
-conf = {
-    board = choose(cli.board, uconf.board, "virt_riscv64"),
-    lto = choose(tobool(cli.lto), uconf.lto, false),
-    release = choose(tobool(cli.release), uconf.release, false),
-    unified = choose(tobool(cli.unified), uconf.unified, true),
-    dc = choose(cli.dc, uconf.dc, "ldc2"),
-    sanitize = choose(tobool(cli.san), tobool(cli.sanitize), uconf.sanitize, false),
-    stackprot = choose(tobool(cli.stackprot), uconf.stackprot, false),
-    analyzer = choose(tobool(cli.analyzer), uconf.analyzer, false),
-    test = choose(tobool(cli.test), uconf.test, false),
-    check = choose(tobool(cli.check), uconf.check, false),
-}
-
-of = sel(conf.dc == "gdc", "o", "of")
-
-build = include("build/build.knit")
-
-function dversion(s)
-    local vflag = sel(conf.dc == "gdc", "-fversion", "-d-version")
-    return f"$vflag=$s"
+function getopt(profile)
+    if profile == "dev" then
+        return {
+            level = "O1",
+            lto = false,
+        }
+    elseif profile == "debug" then
+        return {
+            level = "Og",
+            lto = false,
+        }
+    elseif profile == "unopt" then
+        return {
+            level = "O0",
+            lto = false,
+        }
+    elseif profile == "release" then
+        return {
+            level = "O3",
+            lto = true,
+        }
+    elseif profile == "small" then
+        return {
+            level = "Os",
+            lto = true,
+        }
+    end
 end
 
-function makedeps(s, output)
+local machines = {
+    raspi3 = {
+        arch = "aarch64",
+        triple = "aarch64-none-elf",
+        board = "raspi3",
+        march = "armv8-a+crc",
+        mcpu = "cortex-a53",
+        mattr = "-sve,-fp-armv8",
+        mflags = "-mgeneral-regs-only",
+        qemu = "qemu-system-aarch64 -M raspi3ap -serial null -serial mon:stdio",
+    },
+    virt_riscv64 = {
+        arch = "riscv64",
+        triple = "riscv64-unknown-elf",
+        board = "virt_riscv64",
+        mabi = "lp64",
+        march = "rv64imac_zicsr_zifencei",
+        mattr = "+m,+a,+c,+relax",
+        mflags = "",
+        mcmodel = "medany",
+        cmodel = "medium",
+        qemu = "qemu-system-riscv64 -M virt -bios none -smp 4 -m 2G",
+    },
+    visionfive2 = {
+        arch = "riscv64",
+        triple = "riscv64-unknown-elf",
+        board = "visionfive2",
+        mabi = "lp64",
+        march = "rv64imac_zicsr_zifencei",
+        mattr = "+m,+a,+c,+relax",
+        mflags = "",
+        mcmodel = "medany",
+        cmodel = "medium",
+        qemu = "qemu-system-riscv64 -M visionfive2 -bios none -smp 4 -m 2G",
+    }
+}
+
+local _, uconf = pcall(include, "build/conf.knit")
+conf = {
+    board = choose(cli.board, uconf.board, "virt_riscv64"),
+    profile = choose(cli.profile, uconf.profile, "dev"),
+    unified = choose(cli.unified, uconf.unified, false),
+    dc = choose(cli.dc, uconf.dc, "ldc"),
+}
+
+function makedep(s, output)
     return sel(conf.dc == "gdc", f"-M -MF $s -MT $output", f"-makedeps=$s")
 end
 
-build = include("build/build.knit")
-
-local monitor = false
-local machine = build.machine(conf.board, monitor)
-if machine == nil then
-    return "could not find machine for board " .. conf.board
+function version(s)
+    return sel(conf.dc == "gdc", f"-fversion=$s", f"-d-version=$s")
 end
 
-local tools = build.tools(machine)
-local flags = build.flags(machine, conf.lto, conf.release, monitor)
+function noobj()
+    return sel(conf.dc == "gdc", "-fsyntax-only", "-c -o-")
+end
+
+function nopattern()
+    return sel(conf.dc == "gdc", "-fno-tree-loop-distribute-patterns", "-disable-simplify-libcalls")
+end
+
+local opt = getopt(conf.profile)
+
+local machine = machines[conf.board]
+if machine == nil then
+    error("invalid board: " .. conf.board)
+end
+
+local objdir = f".build/$(machine.board)/obj"
+local depdir = f".build/$(machine.board)/dep"
+
+local prefix = machine.triple
+
+tools = {
+    ldc := ldc2
+    gdc := $prefix-gdc
+    cc := $prefix-gcc
+    as := $prefix-as
+    ld := $prefix-ld
+    objcopy := $prefix-objcopy
+    objdump := $prefix-objdump
+    ar := $prefix-ar
+    strip := $prefix-strip
+    gdb := gdb-multiarch
+    qemu = machine.qemu,
+}
+
+tools.dc = sel(conf.dc == "gdc", tools.gdc, tools.ldc)
+
+function gnu(machine)
+    local f = {
+        aarch64 := -march=$(machine.march) -mcpu=$(machine.mcpu) $(machine.mflags)
+        riscv64 := -march=$(machine.march) -mcmodel=$(machine.mcmodel) -mabi=$(machine.mabi) $(machine.mflags)
+    }
+    return f[machine.arch]
+end
+
+function llvm(machine)
+    local f = {
+        aarch64 := -mtriple=$(machine.triple) -mcpu=$(machine.mcpu) -mattr=$(machine.mattr)
+        riscv64 := -mtriple=$(machine.triple) -mattr=$(machine.mattr) -code-model=$(machine.cmodel) -mabi=$(machine.mabi)
+    }
+    return f[machine.arch]
+end
+
+function gdc(machine)
+    return f"$(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch"
+end
+
+function ldc(machine)
+    return f"$(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version(machine.board))"
+end
+
+local incdi := -I$depdir/src -I$depdir/lib
+local inc := -Isrc -Ilib
+
+local flags = {
+    gnu := $(gnu(machine))
+    llvm := $(llvm(machine))
+    gdc := $(gdc(machine)) $(inc)
+    ldc := $(ldc(machine)) $(inc)
+    cc := $(gnu(machine)) -$(opt.level)
+    as := $(gnu(machine))
+    qemu := -nographic -no-reboot
+    objdump := -j .text -j .data -j .rodata -j .bss -j .stack -j .heap -j .payload -d
+}
+flags.dc = sel(conf.dc == "gdc", flags.gdc, flags.ldc)
+
+local src = {}
+
+function src.kernplix()
+    return knit.join(
+        knit.glob(f"src/plix/arch/$(machine.arch)/*.d"),
+        knit.glob(f"src/plix/arch/*.d"),
+        knit.rglob("src/plix/dev", "*.d"),
+        knit.rglob("src/plix/alloc", "*.d"),
+        knit.glob("src/plix/*.d"),
+        {
+            f"src/plix/board/$(machine.board).d",
+            "src/plix/board/package.d",
+        }
+    )
+end
+
+function src.core()
+    return knit.rglob("lib/core", "*.d")
+end
+
+function src.boot()
+    return knit.glob("src/boot/*.d")
+end
+
+local asm = {}
+
+function asm.kernplix()
+    return knit.join(
+        knit.glob(f"src/plix/arch/$(machine.arch)/*.s")
+    )
+end
+
+function asm.boot()
+    return knit.glob(f"src/boot/arch/$(machine.arch)/*.s")
+end
+
+function di(srcs)
+    return knit.prefix(knit.extrepl(srcs, ".d", ".di"), depdir .. "/")
+end
+
+function getobj(src, asm, pkg)
+    if not conf.unified then
+        return knit.join(
+            knit.prefix(knit.extrepl(src, ".d", ".o"), objdir .. "/"),
+            knit.prefix(knit.extrepl(asm, ".s", ".asm.o"), objdir .. "/")
+        )
+    else
+        return knit.join(
+            {objdir .. "/" .. pkg .. ".o"},
+            knit.prefix(knit.extrepl(asm, ".s", ".asm.o"), objdir .. "/")
+        )
+    end
+end
+
+local obj = {
+    kernplix = getobj(src.kernplix(), asm.kernplix(), "plix"),
+    boot = getobj(src.boot(), asm.boot(), "boot"),
+    core = getobj(src.core(), {}, "core"),
+}
+
+local extraobj := $objdir/lib/builtins.o $objdir/lib/object.o
+
+local link = {
+    kernel = f"link/$(conf.board)/kernel.ld",
+    boot = f"link/$(conf.board)/boot.ld",
+}
 
 local plboot = {
     bin = "tools/plboot/plboot",
     src = knit.glob("tools/plboot/*.go"),
 }
 
-local meta = r{
-    $ .kobj/libd/libc.o:D[.kobj/deps/libd/libc.dep]: libd/libc.d
-        $(tools.dc) $(flags.dc_libc) -Ilibd $input -c -$of $output $(makedeps(f".kobj/deps/libd/libc.dep", output))
-    $ .kobj/%.o: %.s
-        $(tools.cc) $(flags.as) $input -c -o $output
-    $ .kobj/%.o:D[.kobj/deps/%.dep]: %.d
-        $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -$of $output $(makedeps(f".kobj/deps/$match.dep", output))
-    $ %.bin: %.elf
-        $(tools.objcopy) $input -O binary $output
-    $ %.bin.out: %.bin
-        ./firmware/visionfive/fsz.sh $input $output
-    $ %.payload: %.elf $(plboot.bin)[I]
-        ./$(plboot.bin) make -o $output $input
-    $ %.list: %.elf
-        $(tools.objdump) -D $input > $output
-    $ %.img: %.bin
-        vf2-imager -i $input -o $output
-}
-
-local src = {}
-local obj = {}
-
-function src.libd()
-    return knit.filterout(knit.rglob("libd", "*.d"), {"libd/libc.d"})
-end
-
-function src.libkern()
-    return knit.join(
-        knit.glob(f"kernel/arch/$(machine.arch)/*.d"),
-        knit.rglob("kernel/dev", "*.d"),
-        knit.rglob("kernel/alloc", "*.d"),
-        knit.rglob("kernel/fs", "*.d"),
-        knit.rglob("kernel/check", "*.d"),
-        knit.filterout(knit.glob("kernel/*.d"), {"kernel/main.d"}),
-        {
-            "kernel/arch/package.d",
-            "kernel/board/package.d",
-            f"kernel/board/$(machine.board).d",
-        }
-    )
-end
-
-function src.kernel()
-    return knit.join(src.libd(), src.libkern(), {"kernel/main.d"})
-end
-
-function src.libmonitor()
-    return knit.join(
-        knit.glob(f"kernel/arch/$(machine.arch)/monitor/*.d"),
-        src.libkern(),
-        src.libd()
-    )
-end
-
-function src.monitor()
-    return knit.join(src.libd(), src.libmonitor, {"bootloader/main.d"})
-end
-
-function obj.kasm()
-    return knit.prefix({
-        f"kernel/arch/$(machine.arch)/kernelasm.o",
-        f"kernel/arch/$(machine.arch)/userasm.o",
-        "libd/libc.o",
-    }, ".kobj/")
-end
-
-function obj.masm()
-    return knit.prefix({
-        f"kernel/arch/$(machine.arch)/monitor/monitorasm.o",
-        "libd/libc.o",
-    }, ".bootobj/")
-end
-
-function obj.kernel()
-    return knit.join(
-        knit.prefix(knit.extrepl(src.kernel(), ".d", ".o"), ".kobj/"),
-        obj.kasm()
-    )
-end
-
-function obj.libmonitor()
-    return knit.join(
-        knit.prefix(knit.extrepl(src.libmonitor(), ".d", ".o"), ".bootobj/"),
-        obj.masm()
-    )
-end
-
-local link = {
-    kernel = f"link/$(machine.board)/kernel.ld",
-}
-
-local kernel
-if conf.unified then
-    kernel = r{
-        $ .kobj/kernel.o: $(src.kernel()) user/hello/hello.elf[I]
-            $(tools.dc) $(flags.dc) -I. -Ilibd $input -c -$of $output
-        $ kernel.elf: .kobj/kernel.o $(obj.kasm()) $(link.kernel)[I]
-            $(tools.ld) -T$(link.kernel) $input -o $output $(flags.ld)
-    }
-else
-    kernel = r{
-        $ kernel.elf: $(obj.kernel()) $(link.kernel)[I]
-            $(tools.ld) -T$(link.kernel) $input -o $output $(flags.ld)
-        $ .kobj/kernel/main.o: user/hello/hello.elf
-    }
-end
-
-local allsrc = knit.rglob(".", "*.d")
-
-local bootloader = dofile("build/bootloader.knit")
+local o = sel(conf.dc == "gdc", "o", "of")
 
 return b{
-    $ all:V: kernel.boot.elf
+    $ all:VB: kernel.boot.elf
 
-    $ comp:V: kernel.boot.bin $(knit.prefix(allsrc, "lint-"))
+    $ libplix.a: $objdir/libplix.a
+        mv $input $output
 
+    $ kernel.boot.elf: $(obj.boot) $objdir/libplix.a $(link.boot)[I]
+        $(tools.cc) $(flags.gnu) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
+
+    $ $objdir/libplix.a: $(obj.kernplix) $(obj.core) $extraobj
+        rm -f $output
+        $(tools.ar) -rc $output $input
+    $ $objdir/libboot.a: $(obj.boot)
+        rm -f $output
+        $(tools.ar) -rc $output $input
+
+    $ $depdir/%.di: %.d
+        $(tools.dc) $(flags.dc) $(noobj()) -Hf $output $input
+
+    $ $objdir/core.o: $(src.core())
+        $(tools.dc) $(flags.dc) -c $input -$o $output
+    $ $objdir/plix.o: $(src.kernplix()) [[$(src.core())]][I]
+        $(tools.dc) $(flags.dc) -c $input -$o $output
+    $ $objdir/boot.o: $(src.boot()) [[$(src.core()) $(src.kernplix())]][I]
+        $(tools.dc) $(flags.dc) -c $input -$o $output
+    $ $objdir/lib/builtins.o: lib/builtins.d
+        $(tools.dc) $(flags.dc) -c $input -$o $output $(nopattern())
+
+    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.kernplix())) $(di(src.boot()))]][I]
+        $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
+    $ $objdir/%.asm.o: %.s
+        $(tools.cc) $(flags.as) $input -c -o $output
+
+    $ %.list: %.elf
+        $(tools.objdump) $(flags.objdump) $input > $output
+    $ %.bin: %.elf
+        $(tools.objcopy) $input -O binary $output
+    $ %.img: %.bin
+        vf2-imager -i $input -o $output
     $ qemu:VB: kernel.boot.elf
-        $(tools.qemu) $(flags.qemu) -no-reboot -kernel $input
-    $ qemu-gdb:VB: kernel.boot.elf
-        $(tools.qemu) $(flags.qemu) -no-reboot -s -S -kernel $input &
-        $(tools.gdb) -ex "file kernel.elf" -ex "target remote localhost:1234"
-
-    $ format:VB:
-        dfmt -i --brace_style=otbs $allsrc
-
-    $ clean:VB:
-        knit :all -t clean
-        rm -rf *.list *.bin *.bin.out
-
-    $ prog:VB: kernel.elf $(plboot.bin)[I]
-        ./$(plboot.bin) prog $input
-
-    $ $(plboot.bin): $(plboot.src)
-        cd tools/plboot && go build
+        $(tools.qemu) $(flags.qemu) -kernel $input
+    $ qemu-gdb:VB: kernel.boot.elf kernel.boot.elf
+        $(tools.qemu) $(flags.qemu) -kernel $(inputs[1]) -s -S &
+        $(tools.gdb) -ex "file $(inputs[2])" -ex "target remote localhost:1234"
 
     $ lint:VB:
-        dscanner --styleCheck $allsrc --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
-
-    $ lint-%:VB: %
-        dscanner --styleCheck $input --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
-
-    include("user/hello/build.knit"),
-
-    bootloader.meta(),
-    bootloader.rules("kernel.boot.elf", "kernel.payload", conf.unified),
-    bootloader.rules("bootloader.elf", nil, conf.unified),
-
-    include("firmware/raspi/build.knit"),
-
-    kernel,
-    meta
+        dscanner --styleCheck $(src.core()) $(src.kernplix()) $(src.boot()) --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 }

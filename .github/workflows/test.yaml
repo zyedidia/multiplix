@@ -12,30 +12,23 @@ jobs:
           - arch: aarch64-none-elf
             board: raspi3
           - compiler: gdc
-            analyzer: analyzer=1
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: dlang-community/setup-dlang@v1
       with:
-        compiler: ldc-1.32.0
+        compiler: ldc-1.32.1
     - uses: zyedidia/setup-knit@v1
 
     # set up gnu toolchain
     - name: Install GNU toolchain
       run: |
-        wget -q https://github.com/zyedidia/build-gdc/releases/download/multiplix-toolchain-2023-3-2/gnu-${{ matrix.arch }}-linux-amd64.tar.gz -O /opt/gnu.tar.gz
+        wget -q https://github.com/zyedidia/build-gdc/releases/download/multiplix-toolchain-2023-4-27/gnu-${{ matrix.arch }}-linux-amd64.tar.gz -O /opt/gnu.tar.gz
         mkdir /opt/gnu-toolchain && tar -xf /opt/gnu.tar.gz -C /opt/gnu-toolchain --strip-components=1
         echo "/opt/gnu-toolchain/bin" >> $GITHUB_PATH
 
-    - name: Build (unified, no lto)
-      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} ${{ matrix.analyzer }} lto=false unified=true
+    - name: Build (unified)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} unified=true
 
-    - name: Build (not unified, no lto)
-      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} ${{ matrix.analyzer }} lto=false unified=false
-
-    - name: Build (unified, with lto)
-      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=true unified=true
-
-    - name: Build (not unified, with lto)
-      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} lto=true unified=false
+    - name: Build (not unified)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} unified=false
