@@ -31,7 +31,7 @@ static void ` ~ name ~ `_clear(ubyte bit)() if (bit < 32) {
 `;
 // dfmt on
 
-struct csr {
+struct Csr {
     mixin(GenCsr!("mstatus"));
     mixin(GenCsr!("mvendorid"));
     mixin(GenCsr!("marchid"));

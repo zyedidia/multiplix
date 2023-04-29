@@ -2,24 +2,24 @@ module plix.arch.riscv64.trap;
 
 import bits = core.bits;
 
-import plix.arch.riscv64.csr : csr, Sstatus;
+import plix.arch.riscv64.csr : Csr, Sstatus;
 import plix.proc : Proc;
 
 struct irq {
     static void set_handler(void function() handler) {
-        csr.stvec = cast(uintptr) &handler;
+        Csr.stvec = cast(uintptr) &handler;
     }
 
     static void on() {
-        csr.sstatus_set!(Sstatus.sie)();
+        Csr.sstatus_set!(Sstatus.sie)();
     }
 
     static void off() {
-        csr.sstatus_clear!(Sstatus.sie)();
+        Csr.sstatus_clear!(Sstatus.sie)();
     }
 
     static bool enabled() {
-        return bits.get(csr.sstatus, Sstatus.sie) == 1;
+        return bits.get(Csr.sstatus, Sstatus.sie) == 1;
     }
 }
 

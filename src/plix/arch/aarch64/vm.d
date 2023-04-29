@@ -4,7 +4,7 @@ import bits = core.bits;
 import sys = plix.sys;
 
 import plix.vm : pa2ka, Perm, kpa2pa;
-import plix.board : machine;
+import plix.board : Machine;
 import plix.arch.aarch64.sysreg : SysReg;
 
 // AArch64 MMU configuration with 39-bit virtual addresses and a granule of 4KB.
@@ -166,7 +166,7 @@ struct Pagetable {
         pte.sh = 0b11;
         pte.af = 1;
 
-        pte.index = machine.mem_type(pa);
+        pte.index = Machine.mem_type(pa);
         return true;
     }
 
@@ -179,7 +179,7 @@ struct Pagetable {
         ptes[idx].af = 1;
         ptes[idx].sh = 0b11;
 
-        ptes[idx].index = machine.mem_type(pa);
+        ptes[idx].index = Machine.mem_type(pa);
     }
 
     static size_t level2size(Pte.Pg type) {

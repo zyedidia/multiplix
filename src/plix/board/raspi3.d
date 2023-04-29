@@ -4,7 +4,7 @@ import plix.dev.uart.bcmmini : BcmMiniUart;
 import plix.dev.gpio.bcm : BcmGpio;
 import sys = plix.sys;
 
-struct machine {
+struct Machine {
     enum ncores = 4;
     enum gpu_freq = 250 * 1000 * 1000;
     enum device_base = 0x3f000000;
@@ -37,9 +37,9 @@ struct machine {
     }
 }
 
-__gshared BcmGpio gpio = BcmGpio(machine.device_base + 0x200000);
-__gshared BcmMiniUart uart = BcmMiniUart(machine.device_base + 0x215000);
+__gshared BcmGpio gpio = BcmGpio(Machine.device_base + 0x200000);
+__gshared BcmMiniUart uart = BcmMiniUart(Machine.device_base + 0x215000);
 
 void setup() {
-    uart.setup(115200, machine.gpu_freq, gpio);
+    uart.setup(115200, Machine.gpu_freq, gpio);
 }

@@ -1,10 +1,10 @@
 module plix.cpu;
 
-import plix.board : machine;
+import plix.board : Machine;
 import plix.arch.cpu : rdcpu, wrcpu;
 
 struct PerCpu(T) {
-    T[machine.ncores] vals;
+    T[Machine.ncores] vals;
 
     pragma(inline, true)
     ref T val() shared {

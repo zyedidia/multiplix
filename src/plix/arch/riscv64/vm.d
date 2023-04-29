@@ -4,7 +4,7 @@ import bits = core.bits;
 import sys = plix.sys;
 
 import plix.vm : pa2ka, Perm, kpa2pa;
-import plix.arch.riscv64.csr : csr;
+import plix.arch.riscv64.csr : Csr;
 
 private enum VmMode {
     off = 0,
@@ -185,5 +185,5 @@ struct Pagetable {
 }
 
 Pagetable* current_pt() {
-    return cast(Pagetable*) pa2ka(((csr.satp & 0xfffffffffffUL) << 12));
+    return cast(Pagetable*) pa2ka(((Csr.satp & 0xfffffffffffUL) << 12));
 }
