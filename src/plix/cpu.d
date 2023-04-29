@@ -26,3 +26,8 @@ void init_cpu(uint coreid, bool primary) {
     cpu.id = coreid;
     cpu.primary = primary;
 }
+
+pragma(inline, true)
+uint cpuid() {
+    return cast(uint) rdcpu();
+}

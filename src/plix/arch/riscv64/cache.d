@@ -5,3 +5,7 @@ void device_fence() {
         "fence" ::: "memory";
     }
 }
+
+void inv_dcache(ubyte* start, usize size) {
+    assert(0, "inv_dcache(riscv64): unimplemented");
+}

@@ -2,6 +2,8 @@ module plix.board.raspi3;
 
 import plix.dev.uart.bcmmini : BcmMiniUart;
 import plix.dev.gpio.bcm : BcmGpio;
+import plix.dev.timer.bcmcore : BcmCoreTimer;
+import plix.dev.mailbox.bcm : BcmMailbox;
 import sys = plix.sys;
 
 struct Machine {
@@ -39,7 +41,23 @@ struct Machine {
 
 __gshared BcmGpio gpio = BcmGpio(Machine.device_base + 0x200000);
 __gshared BcmMiniUart uart = BcmMiniUart(Machine.device_base + 0x215000);
+__gshared BcmCoreTimer timer = BcmCoreTimer(0x4000_0000);
+__gshared BcmMailbox mailbox = BcmMailbox(Machine.device_base + 0xb880);
 
 void setup() {
+    import plix.cpu : cpu;
+    import plix.print;
+
     uart.setup(115200, Machine.gpu_freq, gpio);
+
+    if (cpu.primary) {
+        // Raise clock speed to the max.
+        uint max = mailbox.get_max_clock_rate(BcmMailbox.ClockType.arm);
+        mailbox.set_clock_rate(BcmMailbox.ClockType.arm, max, false);
+
+        printf("arm clock: %d Hz\n", mailbox.get_clock_rate(BcmMailbox.ClockType.arm));
+        printf("temp: %d C\n", mailbox.get_temp());
+    }
+
+    timer.enable_irq();
 }
