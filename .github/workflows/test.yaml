@@ -27,8 +27,14 @@ jobs:
         mkdir /opt/gnu-toolchain && tar -xf /opt/gnu.tar.gz -C /opt/gnu-toolchain --strip-components=1
         echo "/opt/gnu-toolchain/bin" >> $GITHUB_PATH
 
-    - name: Build (unified)
-      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} unified=true
+    - name: Build (unified, dev)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} unified=true profile=dev
 
-    - name: Build (not unified)
-      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} unified=false
+    - name: Build (not unified, dev)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} unified=false profile=dev
+
+    - name: Build (unified, release)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} unified=true profile=release
+
+    - name: Build (not unified, release)
+      run: knit kernel.boot.bin board=${{ matrix.board }} dc=${{ matrix.compiler }} unified=false profile=release

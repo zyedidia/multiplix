@@ -70,7 +70,7 @@ local _, uconf = pcall(include, "build/conf.knit")
 conf = {
     board = choose(cli.board, uconf.board, "virt_riscv64"),
     profile = choose(cli.profile, uconf.profile, "dev"),
-    unified = choose(cli.unified, uconf.unified, false),
+    unified = choose(tobool(cli.unified), uconf.unified, false),
     dc = choose(cli.dc, uconf.dc, "ldc"),
 }
 
@@ -87,10 +87,10 @@ function noobj()
 end
 
 function nopattern()
-    return sel(conf.dc == "gdc", "-fno-tree-loop-distribute-patterns", "-disable-simplify-libcalls")
+    return sel(conf.dc == "gdc", "-fno-tree-loop-distribute-patterns -fno-lto", "-disable-simplify-libcalls")
 end
 
-local opt = getopt(conf.profile)
+opt = getopt(conf.profile)
 
 local machine = machines[conf.board]
 if machine == nil then
@@ -110,9 +110,10 @@ tools = {
     ld := $prefix-ld
     objcopy := $prefix-objcopy
     objdump := $prefix-objdump
-    ar := $prefix-ar
+    ar := $prefix-gcc-ar
     strip := $prefix-strip
     gdb := gdb-multiarch
+    ranlib := $prefix-gcc-ranlib
     qemu = machine.qemu,
 }
 
@@ -134,12 +135,40 @@ function llvm(machine)
     return f[machine.arch]
 end
 
+function getlto(machine)
+    if not opt.lto then
+        return {
+            plugin = "",
+            flags = "",
+        }
+    end
+    if conf.dc == "gdc" then
+        return {
+            plugin = "",
+            flags = "-flto",
+        }
+    end
+    local ltoplugin = knit.shell("dirname $(which ldc2)") .. "/../lib/LLVMgold-ldc.so"
+    ldlto := -Wl,-plugin=$ltoplugin -Wl,-plugin-opt=O2 -Xlinker -plugin-opt=-mattr=$(machine.mattr)
+    if machine.arch == "riscv64" then
+        ldlto = ldlto .. f" -Wl,-plugin-opt=-code-model=$(machine.cmodel)"
+    end
+    return {
+        plugin = f"--plugin=$ltoplugin",
+        flags = ldlto,
+    }
+end
+
+lto = getlto(machine)
+
 function gdc(machine)
-    return f"$(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch"
+    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", ""))
+    return f
 end
 
 function ldc(machine)
-    return f"$(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version(machine.board))"
+    local f := $(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version(machine.board)) $(sel(opt.lto, "-flto=full", ""))
+    return f
 end
 
 local incdi := -I$depdir/src -I$depdir/lib
@@ -241,14 +270,12 @@ return b{
         mv $input $output
 
     $ kernel.boot.elf: $(obj.boot) $objdir/libplix.a $(link.boot)[I]
-        $(tools.cc) $(flags.gnu) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
+        $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
 
     $ $objdir/libplix.a: $(obj.kernplix) $(obj.core) $extraobj
         rm -f $output
-        $(tools.ar) -rc $output $input
-    $ $objdir/libboot.a: $(obj.boot)
-        rm -f $output
-        $(tools.ar) -rc $output $input
+        $(tools.ar) -rcs $output $input
+        $(tools.ranlib) $(lto.plugin) $output
 
     $ $depdir/%.di: %.d
         $(tools.dc) $(flags.dc) $(noobj()) -Hf $output $input
