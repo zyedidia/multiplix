@@ -2,6 +2,7 @@ module plix.board.virt_riscv64;
 
 import plix.dev.uart.virt : Virt;
 import plix.dev.irq.clint : Clint;
+import plix.dev.reboot.qsyscon : QemuSyscon;
 
 struct Machine {
     enum ncores = 4;
@@ -10,5 +11,6 @@ struct Machine {
 
 __gshared Virt uart = Virt(cast(Virt.Regs*) 0x1000_0000);
 __gshared Clint clint = Clint(0x200_0000);
+__gshared QemuSyscon = QemuSyscon(0x10_0000);
 
 void setup() {}

@@ -4,6 +4,7 @@ import plix.dev.uart.bcmmini : BcmMiniUart;
 import plix.dev.gpio.bcm : BcmGpio;
 import plix.dev.timer.bcmcore : BcmCoreTimer;
 import plix.dev.mailbox.bcm : BcmMailbox;
+import plix.dev.reboot.bcm : BcmReboot;
 import sys = plix.sys;
 
 struct Machine {
@@ -43,6 +44,7 @@ __gshared BcmGpio gpio = BcmGpio(Machine.device_base + 0x200000);
 __gshared BcmMiniUart uart = BcmMiniUart(Machine.device_base + 0x215000);
 __gshared BcmCoreTimer timer = BcmCoreTimer(0x4000_0000);
 __gshared BcmMailbox mailbox = BcmMailbox(Machine.device_base + 0xb880);
+__gshared BcmReboot reboot = BcmReboot(Machine.device_base + 0x10001c, Machine.device_base + 0x100024);
 
 void setup() {
     import plix.cpu : cpu;

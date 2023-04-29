@@ -15,6 +15,8 @@ struct Virt {
         vst(&regs.thr, b);
     }
 
+    void tx_flush() {}
+
     ubyte rx() {
         return 0;
     }
