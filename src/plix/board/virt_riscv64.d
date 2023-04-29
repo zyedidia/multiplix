@@ -11,6 +11,6 @@ struct Machine {
 
 __gshared Virt uart = Virt(cast(Virt.Regs*) 0x1000_0000);
 __gshared Clint clint = Clint(0x200_0000);
-__gshared QemuSyscon = QemuSyscon(0x10_0000);
+__gshared QemuSyscon reboot = QemuSyscon(0x10_0000);
 
 void setup() {}

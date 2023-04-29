@@ -194,6 +194,9 @@ function asm.boot()
 end
 
 function di(srcs)
+    if conf.unified then
+        return {}
+    end
     return knit.prefix(knit.extrepl(srcs, ".d", ".di"), depdir .. "/")
 end
 
