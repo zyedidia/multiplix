@@ -1,7 +1,7 @@
 .section ".text.boot"
 
-.globl _start
-_start:
+.globl _monitor_start
+_monitor_start:
 	bl _reset_sp
 	mrs x0, mpidr_el1
 	and x0, x0, #0xff
@@ -16,8 +16,8 @@ _primary_boot:
 	ldr x1, [x2]
 	str xzr, [x2]
 	bl start
-.globl _halt
 _halt:
+	wfe
 	b _halt
 
 _reset_sp:
@@ -32,7 +32,6 @@ _reset_sp:
 	ret
 
 .section ".data.primary"
-.globl primary
 .align 8
 primary:
 	.quad 1

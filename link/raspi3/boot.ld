@@ -1,4 +1,4 @@
-ENTRY(_start)
+ENTRY(_monitor_start)
 
 SECTIONS
 {

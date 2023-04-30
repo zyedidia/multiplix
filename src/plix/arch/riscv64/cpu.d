@@ -1,5 +1,6 @@
 module plix.arch.riscv64.cpu;
 
+pragma(inline, true)
 void wfi() {
     asm {
         "wfi" ::: "memory";
@@ -18,5 +19,11 @@ usize rdcpu() {
 void wrcpu(usize cpu) {
     asm {
         "mv tp, %0" : : "r"(cpu);
+    }
+}
+
+extern (C) noreturn _halt() {
+    while (1) {
+        wfi();
     }
 }

@@ -1,7 +1,7 @@
 .section ".text.boot"
 
-.globl _start
-_start:
+.globl _monitor_start
+_monitor_start:
 	# Halt any cores that don't support S-mode.
 	csrr a1, misa
 	li t0, (1 << 18)
@@ -41,28 +41,25 @@ _primary_boot:
 	lw a1, 0(t1)
 	sw zero, 0(t1)
 	call start
-.globl _halt
 _halt:
 	wfi
 	j _halt
 
 .section ".data.primary"
-.globl primary
 .align 4
 primary:
 	.int 1
 
 .section ".data.boot_lock"
-.globl boot_lock
 .align 4
 boot_lock:
 	.int 0
 
 .section ".data.wakeup"
 .globl wakeup
-.align 4
+.align 8
 wakeup:
-	.int 0
+	.quad 0
 
 .section ".text.enter_smode"
 .globl _enter_smode

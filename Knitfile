@@ -188,7 +188,7 @@ flags.dc = sel(conf.dc == "gdc", flags.gdc, flags.ldc)
 
 local src = {}
 
-function src.libmonitor()
+function src.libplix()
     return knit.join(
         knit.glob(f"src/plix/arch/$(machine.arch)/*.d"),
         knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.d"),
@@ -213,9 +213,10 @@ end
 
 local asm = {}
 
-function asm.libmonitor()
+function asm.libplix()
     return knit.join(
-        knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.s")
+        knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.s"),
+        knit.glob(f"src/plix/arch/$(machine.arch)/*.s")
     )
 end
 
@@ -241,12 +242,13 @@ function getobj(src, asm, pkg)
 end
 
 local obj = {
-    libmonitor = getobj(src.libmonitor(), asm.libmonitor(), "plix"),
+    libplix = getobj(src.libplix(), asm.libplix(), "plix"),
     boot = getobj(src.boot(), {}, "boot"),
     core = getobj(src.core(), {}, "core"),
+    monitor = {f"$objdir/lib/config.monitor.o"},
 }
 
-local extraobj := $objdir/lib/builtins.o $objdir/lib/config.o $objdir/lib/object.o
+local extraobj := $objdir/lib/builtins.o $objdir/lib/object.o
 
 local link = {
     kernel = f"link/$(conf.board)/kernel.ld",
@@ -266,10 +268,10 @@ return b{
     $ libplix.a: $objdir/libplix.a
         mv $input $output
 
-    $ boot.elf: $(obj.boot) $objdir/libplix.a $(link.boot)[I]
+    $ boot.elf: $(obj.boot) $(obj.monitor) $objdir/libplix.a $(link.boot)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
 
-    $ $objdir/libplix.a: $(obj.libmonitor) $(obj.core) $extraobj
+    $ $objdir/libplix.a: $(obj.libplix) $(obj.core) $extraobj
         rm -f $output
         $(tools.ar) -rcs $output $input
         $(tools.ranlib) $(lto.plugin) $output
@@ -279,16 +281,18 @@ return b{
 
     $ $objdir/core.o: $(src.core())
         $(tools.dc) $(flags.dc) -c $input -$o $output
-    $ $objdir/plix.o: $(src.libmonitor()) [[$(src.core())]][I]
+    $ $objdir/plix.o: $(src.libplix()) [[$(src.core())]][I]
         $(tools.dc) $(flags.dc) -c $input -$o $output
-    $ $objdir/boot.o: $(src.boot()) [[$(src.core()) $(src.libmonitor())]][I]
+    $ $objdir/boot.o: $(src.boot()) [[$(src.core()) $(src.libplix())]][I]
         $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/lib/builtins.o: lib/builtins.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(nopattern())
-    $ $objdir/lib/config.o: lib/config.d
+    $ $objdir/lib/config.monitor.o: lib/config.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(version("monitor"))
+    $ $objdir/lib/config.kernel.o: lib/config.d
+        $(tools.dc) $(flags.dc) -c $input -$o $output $(version("kernel"))
 
-    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.libmonitor())) $(di(src.boot()))]][I]
+    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.libplix())) $(di(src.boot()))]][I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
     $ $objdir/%.asm.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
@@ -306,5 +310,5 @@ return b{
         $(tools.gdb) -ex "file $(inputs[2])" -ex "target remote localhost:1234"
 
     $ lint:VB:
-        dscanner --styleCheck $(src.core()) $(src.libmonitor()) $(src.boot()) --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
+        dscanner --styleCheck $(src.core()) $(src.libplix()) $(src.boot()) --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 }
