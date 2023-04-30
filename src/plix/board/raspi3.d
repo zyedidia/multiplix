@@ -5,6 +5,7 @@ import plix.dev.gpio.bcm : BcmGpio;
 import plix.dev.timer.bcmcore : BcmCoreTimer;
 import plix.dev.mailbox.bcm : BcmMailbox;
 import plix.dev.reboot.bcm : BcmReboot;
+import plix.vm : pa2ka;
 import sys = plix.sys;
 
 struct Machine {
@@ -40,18 +41,25 @@ struct Machine {
     }
 }
 
-__gshared BcmGpio gpio = BcmGpio(Machine.device_base + 0x200000);
-__gshared BcmMiniUart uart = BcmMiniUart(Machine.device_base + 0x215000);
-__gshared BcmCoreTimer timer = BcmCoreTimer(0x4000_0000);
-__gshared BcmMailbox mailbox = BcmMailbox(Machine.device_base + 0xb880);
-__gshared BcmReboot reboot = BcmReboot(Machine.device_base + 0x10001c, Machine.device_base + 0x100024);
+__gshared BcmGpio gpio;
+__gshared BcmMiniUart uart;
+__gshared BcmCoreTimer timer;
+__gshared BcmMailbox mailbox;
+__gshared BcmReboot reboot;
 
 void setup() {
     import plix.cpu : cpu;
     import plix.print;
+    import config : ismonitor;
+
+    gpio = BcmGpio(pa2ka(Machine.device_base + 0x200000));
+    uart = BcmMiniUart(pa2ka(Machine.device_base + 0x215000));
+    timer = BcmCoreTimer(pa2ka(0x4000_0000));
+    mailbox = BcmMailbox(pa2ka(Machine.device_base + 0xb880));
+    reboot = BcmReboot(pa2ka(Machine.device_base + 0x10001c), pa2ka(Machine.device_base + 0x100024));
 
     if (cpu.primary) {
-        version (monitor) {
+        if (ismonitor()) {
             uart.setup(115200, Machine.gpu_freq, gpio);
         } else {
             // Raise clock speed to the max.

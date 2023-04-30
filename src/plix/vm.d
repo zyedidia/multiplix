@@ -3,16 +3,19 @@ module plix.vm;
 import sys = plix.sys;
 
 // Returns true if va is a kernel address.
+pragma(inline, true)
 bool iska(uintptr va) {
     return va >= sys.highmem_base;
 }
 
 // Converts kernel address to physical address.
+pragma(inline, true)
 uintptr ka2pa(uintptr ka) {
     return ka - sys.highmem_base;
 }
 
 // Converts a physical address to a high kernel address.
+pragma(inline, true)
 uintptr pa2hka(uintptr pa) {
     return pa + sys.highmem_base;
 }
@@ -21,6 +24,7 @@ uintptr pa2hka(uintptr pa) {
 // higher than sys.highmem_base (a valid kernel address), otherwise returns the
 // address as-is (i.e., this converts kernel and physical addresses to physical
 // addresses).
+pragma(inline, true)
 uintptr kpa2pa(uintptr kpa) {
     if (kpa >= sys.highmem_base) {
         return ka2pa(kpa);
@@ -30,8 +34,10 @@ uintptr kpa2pa(uintptr kpa) {
 
 // Converts a physical address to a kernel address if in the kernel, or a
 // physical address if in the monitor (where kernel addresses don't exist).
+pragma(inline, true)
 uintptr pa2ka(uintptr pa) {
-    version (monitor) {
+    import config : ismonitor;
+    if (ismonitor()) {
         return pa;
     } else {
         return pa2hka(pa);

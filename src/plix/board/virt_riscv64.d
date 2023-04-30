@@ -3,6 +3,7 @@ module plix.board.virt_riscv64;
 import plix.dev.uart.virt : Virt;
 import plix.dev.irq.clint : Clint;
 import plix.dev.reboot.qsyscon : QemuSyscon;
+import plix.vm : pa2ka;
 import sys = plix.sys;
 
 struct Machine {
@@ -22,8 +23,12 @@ struct Machine {
     ];
 }
 
-__gshared Virt uart = Virt(cast(Virt.Regs*) 0x1000_0000);
-__gshared Clint clint = Clint(0x200_0000);
-__gshared QemuSyscon reboot = QemuSyscon(0x10_0000);
+__gshared Virt uart;
+__gshared Clint clint;
+__gshared QemuSyscon reboot;
 
-void setup() {}
+void setup() {
+    uart = Virt(cast(Virt.Regs*) pa2ka(0x1000_0000));
+    clint = Clint(pa2ka(0x200_0000));
+    reboot = QemuSyscon(pa2ka(0x10_0000));
+}

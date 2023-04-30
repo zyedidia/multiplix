@@ -162,12 +162,12 @@ end
 lto = getlto(machine)
 
 function gdc(machine)
-    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version("monitor")) $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", ""))
+    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", ""))
     return f
 end
 
 function ldc(machine)
-    local f := $(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version("monitor")) $(version(machine.board)) $(sel(opt.lto, "-flto=full", ""))
+    local f := $(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version(machine.board)) $(sel(opt.lto, "-flto=full", ""))
     return f
 end
 
@@ -246,7 +246,7 @@ local obj = {
     core = getobj(src.core(), {}, "core"),
 }
 
-local extraobj := $objdir/lib/builtins.o $objdir/lib/object.o
+local extraobj := $objdir/lib/builtins.o $objdir/lib/config.o $objdir/lib/object.o
 
 local link = {
     kernel = f"link/$(conf.board)/kernel.ld",
@@ -285,6 +285,8 @@ return b{
         $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/lib/builtins.o: lib/builtins.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(nopattern())
+    $ $objdir/lib/config.o: lib/config.d
+        $(tools.dc) $(flags.dc) -c $input -$o $output $(version("monitor"))
 
     $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.libmonitor())) $(di(src.boot()))]][I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
