@@ -182,7 +182,7 @@ struct Pagetable {
         ptes[idx].index = Machine.mem_type(pa);
     }
 
-    static size_t level2size(Pte.Pg type) {
+    static usize level2size(Pte.Pg type) {
         final switch (type) {
             case Pte.Pg.normal: return 4096;
             case Pte.Pg.mega: return sys.mb!(2);

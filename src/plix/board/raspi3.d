@@ -19,7 +19,7 @@ struct Machine {
 
     struct MemRange {
         uintptr start;
-        size_t sz;
+        usize sz;
         MemType type;
     }
 
@@ -50,15 +50,17 @@ void setup() {
     import plix.cpu : cpu;
     import plix.print;
 
-    uart.setup(115200, Machine.gpu_freq, gpio);
-
     if (cpu.primary) {
-        // Raise clock speed to the max.
-        uint max = mailbox.get_max_clock_rate(BcmMailbox.ClockType.arm);
-        mailbox.set_clock_rate(BcmMailbox.ClockType.arm, max, false);
+        version (monitor) {
+            uart.setup(115200, Machine.gpu_freq, gpio);
+        } else {
+            // Raise clock speed to the max.
+            uint max = mailbox.get_max_clock_rate(BcmMailbox.ClockType.arm);
+            mailbox.set_clock_rate(BcmMailbox.ClockType.arm, max, false);
 
-        printf("arm clock: %d Hz\n", mailbox.get_clock_rate(BcmMailbox.ClockType.arm));
-        printf("temp: %d C\n", mailbox.get_temp());
+            printf("arm clock: %d Hz\n", mailbox.get_clock_rate(BcmMailbox.ClockType.arm));
+            printf("temp: %d C\n", mailbox.get_temp());
+        }
     }
 
     timer.enable_irq();

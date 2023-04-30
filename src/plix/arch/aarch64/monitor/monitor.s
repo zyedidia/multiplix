@@ -70,3 +70,58 @@ _enter_el1:
 	eret
 entry_el1:
 	ret
+
+.section ".text.monitorvec"
+.globl monitorvec
+.balign 2048
+monitorvec:
+cur_el_sp0_sync:
+	b .
+.balign 0x80
+cur_el_sp0_irq:
+	b .
+.balign 0x80
+cur_el_sp0_fiq:
+	b .
+.balign 0x80
+cur_el_sp0_serror:
+	b .
+.balign 0x80
+cur_el_spx_sync:
+	b exception_entry
+.balign 0x80
+cur_el_spx_irq:
+	b interrupt_entry
+.balign 0x80
+cur_el_spx_fiq:
+	b interrupt_entry
+.balign 0x80
+cur_el_spx_serror:
+	b exception_entry
+.balign 0x80
+lower_el_aarch64_sync:
+	b exception_entry
+.balign 0x80
+lower_el_aarch64_irq:
+	b interrupt_entry
+.balign 0x80
+lower_el_aarch64_fiq:
+	b interrupt_entry
+.balign 0x80
+lower_el_aarch64_serror:
+	b exception_entry
+// aarch32 stuff, just infinite loop
+.balign 0x80
+	b .
+.balign 0x80
+	b .
+.balign 0x80
+	b .
+.balign 0x80
+	b .
+
+exception_entry:
+	eret
+
+interrupt_entry:
+	eret

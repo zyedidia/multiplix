@@ -73,3 +73,9 @@ _enter_smode:
 .align 4
 entry:
 	ret
+
+.section ".text.monitorvec"
+.globl monitorvec
+.align 4
+monitorvec:
+	mret

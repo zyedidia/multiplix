@@ -7,7 +7,7 @@ import core.emplace : emplace_init, HasDtor;
 
 private shared SpinGuard!(KrAlloc!(16)) kr;
 
-void kinit(ubyte* heap_start, usize size) {
+void kallocinit(ubyte* heap_start, usize size) {
     auto kr = kr.lock();
     kr.val.__ctor(heap_start, size);
 }

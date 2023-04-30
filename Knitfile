@@ -162,12 +162,12 @@ end
 lto = getlto(machine)
 
 function gdc(machine)
-    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", ""))
+    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version("monitor")) $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", ""))
     return f
 end
 
 function ldc(machine)
-    local f := $(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version(machine.board)) $(sel(opt.lto, "-flto=full", ""))
+    local f := $(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version("monitor")) $(version(machine.board)) $(sel(opt.lto, "-flto=full", ""))
     return f
 end
 
@@ -188,9 +188,10 @@ flags.dc = sel(conf.dc == "gdc", flags.gdc, flags.ldc)
 
 local src = {}
 
-function src.kernplix()
+function src.libmonitor()
     return knit.join(
         knit.glob(f"src/plix/arch/$(machine.arch)/*.d"),
+        knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.d"),
         knit.glob(f"src/plix/arch/*.d"),
         knit.rglob("src/plix/dev", "*.d"),
         knit.rglob("src/plix/alloc", "*.d"),
@@ -212,14 +213,10 @@ end
 
 local asm = {}
 
-function asm.kernplix()
+function asm.libmonitor()
     return knit.join(
-        knit.glob(f"src/plix/arch/$(machine.arch)/*.s")
+        knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.s")
     )
-end
-
-function asm.boot()
-    return knit.glob(f"src/boot/arch/$(machine.arch)/*.s")
 end
 
 function di(srcs)
@@ -244,8 +241,8 @@ function getobj(src, asm, pkg)
 end
 
 local obj = {
-    kernplix = getobj(src.kernplix(), asm.kernplix(), "plix"),
-    boot = getobj(src.boot(), asm.boot(), "boot"),
+    libmonitor = getobj(src.libmonitor(), asm.libmonitor(), "plix"),
+    boot = getobj(src.boot(), {}, "boot"),
     core = getobj(src.core(), {}, "core"),
 }
 
@@ -264,15 +261,15 @@ local plboot = {
 local o = sel(conf.dc == "gdc", "o", "of")
 
 return b{
-    $ all:VB: kernel.boot.elf
+    $ all:VB: boot.elf
 
     $ libplix.a: $objdir/libplix.a
         mv $input $output
 
-    $ kernel.boot.elf: $(obj.boot) $objdir/libplix.a $(link.boot)[I]
+    $ boot.elf: $(obj.boot) $objdir/libplix.a $(link.boot)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
 
-    $ $objdir/libplix.a: $(obj.kernplix) $(obj.core) $extraobj
+    $ $objdir/libplix.a: $(obj.libmonitor) $(obj.core) $extraobj
         rm -f $output
         $(tools.ar) -rcs $output $input
         $(tools.ranlib) $(lto.plugin) $output
@@ -282,14 +279,14 @@ return b{
 
     $ $objdir/core.o: $(src.core())
         $(tools.dc) $(flags.dc) -c $input -$o $output
-    $ $objdir/plix.o: $(src.kernplix()) [[$(src.core())]][I]
+    $ $objdir/plix.o: $(src.libmonitor()) [[$(src.core())]][I]
         $(tools.dc) $(flags.dc) -c $input -$o $output
-    $ $objdir/boot.o: $(src.boot()) [[$(src.core()) $(src.kernplix())]][I]
+    $ $objdir/boot.o: $(src.boot()) [[$(src.core()) $(src.libmonitor())]][I]
         $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/lib/builtins.o: lib/builtins.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(nopattern())
 
-    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.kernplix())) $(di(src.boot()))]][I]
+    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.libmonitor())) $(di(src.boot()))]][I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
     $ $objdir/%.asm.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
@@ -300,12 +297,12 @@ return b{
         $(tools.objcopy) $input -O binary $output
     $ %.img: %.bin
         vf2-imager -i $input -o $output
-    $ qemu:VB: kernel.boot.elf
+    $ qemu:VB: boot.elf
         $(tools.qemu) $(flags.qemu) -kernel $input
-    $ qemu-gdb:VB: kernel.boot.elf kernel.boot.elf
+    $ qemu-gdb:VB: boot.elf boot.elf
         $(tools.qemu) $(flags.qemu) -kernel $(inputs[1]) -s -S &
         $(tools.gdb) -ex "file $(inputs[2])" -ex "target remote localhost:1234"
 
     $ lint:VB:
-        dscanner --styleCheck $(src.core()) $(src.kernplix()) $(src.boot()) --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
+        dscanner --styleCheck $(src.core()) $(src.libmonitor()) $(src.boot()) --config .dscanner.ini -I. -Ilibd --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 }
