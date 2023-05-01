@@ -270,7 +270,7 @@ struct BcmMailbox {
             TagHeader(Property.set_clock_rate, Data.sizeof, 0),
             Data(clock, rate, cast(uint) skipturbo)
         );
-        assert(process(cast(uint*) &t, t.sizeof));
+        must(process(cast(uint*) &t, t.sizeof));
         // let the clock settle
         Timer.delay_us(500);
     }
@@ -285,7 +285,7 @@ struct BcmMailbox {
             TagHeader(Property.get_max_clock_rate, Data.sizeof, 0),
             Data(clock, 0),
         );
-        assert(process(cast(uint*) &t, t.sizeof));
+        must(process(cast(uint*) &t, t.sizeof));
         return t.rate;
     }
 
@@ -298,25 +298,25 @@ struct BcmMailbox {
 
     uint get_clock_rate(ClockType ct) {
         uint rate;
-        assert(exec_cmd2(Property.get_clock_rate, ct, rate));
+        must(exec_cmd2(Property.get_clock_rate, ct, rate));
         return rate;
     }
 
     uint get_max_temp() {
         uint max_temp = 0;
-        assert(exec_cmd2(Property.get_max_temperature, 0, max_temp));
+        must(exec_cmd2(Property.get_max_temperature, 0, max_temp));
         return max_temp / 1000;
     }
 
     uint get_temp() {
         uint temp = 0;
-        assert(exec_cmd2(Property.get_temperature, 0, temp));
+        must(exec_cmd2(Property.get_temperature, 0, temp));
         return temp / 1000;
     }
 
     bool get_domain_state(uint domain) {
         uint state = ~0;
-        assert(exec_cmd2(Property.get_domain_state, domain, state));
+        must(exec_cmd2(Property.get_domain_state, domain, state));
         return state != 0 && state != ~0;
     }
 }

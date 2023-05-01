@@ -1,7 +1,6 @@
 module core.emplace;
 
 import builtins : memcpy, memset;
-import core.bits;
 
 enum HasCtor(T) = __traits(hasMember, T, "__ctor");
 enum HasDtor(T) = __traits(hasMember, T, "__xdtor");

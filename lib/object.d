@@ -33,6 +33,23 @@ ref string _d_arrayappendT(return ref scope string x, scope string y) @trusted;
 bool __equals(scope const string lhs, scope const string rhs);
 
 void __switch_error()(string file = __FILE__, usize line = __LINE__) {
-    import core.exception;
+    import core.exception : __switch_errorT;
     __switch_errorT(file, line);
+}
+
+// Like assert but allows side effects in the assertion expression. Does not
+// perform a check if assertion expressions are disabled (-release flag).
+void must(bool cond, string msg = "must failure", string file = __FILE__, int line = __LINE__) {
+    version (assert) {
+        verify(cond, msg, file, line);
+    }
+}
+
+// Like assert but allows side effects in the assertion expression and is not
+// removed even if assertions are removed due to compiler flags.
+void verify(bool cond, string msg = "verify failure", string file = __FILE__, int line = __LINE__) {
+    import core.exception : panic;
+    if (!cond) {
+        panic(file, line, msg);
+    }
 }

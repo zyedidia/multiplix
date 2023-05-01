@@ -1,7 +1,6 @@
 module core.exception;
 
 import core.stdc.stdarg;
-import core.fmt;
 
 extern (C) {
     noreturn _halt();

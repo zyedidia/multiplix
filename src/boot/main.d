@@ -119,7 +119,7 @@
 //         ubyte* entry = cast(ubyte*) payload.entry;
 //         uint length = cast(uint) payload.size;
 //         assert(length == payload_size - Payload.sizeof);
-//         assert(payload.cksum == crc32(payload.data.ptr[0 .. length]));
+//         must(payload.cksum == crc32(payload.data.ptr[0 .. length]));
 //         return BootData(entry, payload.data.ptr[0 .. length]);
 //     }
 // }

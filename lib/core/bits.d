@@ -1,6 +1,6 @@
 module core.bits;
 
-import core.trait;
+import core.trait : isint;
 
 pragma(inline, true)
 T mask(T)(uint nbits) if (isint!T) {
