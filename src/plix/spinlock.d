@@ -35,13 +35,18 @@ struct SpinGuard(T) {
     struct Guard {
         private shared SpinGuard!(T)* locked;
         bool irqen;
+        bool moved;
+        this(ref return scope Guard g) {
+            g.moved = true;
+        }
         pragma(inline, true)
         ref T val() {
             // Cast away the shared.
             return *cast(T*) &locked.val;
         }
         ~this() {
-            locked.lock_.unlock(irqen);
+            if (!moved)
+                locked.lock_.unlock(irqen);
         }
         alias val this;
     }
