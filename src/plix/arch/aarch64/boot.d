@@ -10,8 +10,16 @@ import plix.board : Machine;
 import sys = plix.sys;
 
 __gshared Pagetable tbl;
+__gshared Pagetable[4] l2pts;
+__gshared usize pt;
 
-align(4096) __gshared ubyte[4096 * 4] ptheap;
+Pagetable* ptalloc() {
+    if (pt >= l2pts.length) {
+        return null;
+    }
+    Pagetable* pt = &l2pts[pt++];
+    return pt;
+}
 
 // Map the kernel into the high region of the address space. Called during initialization.
 void kernel_procmap(Pagetable* pt) {
@@ -23,11 +31,10 @@ void kernel_setup(bool primary) {
     SysReg.mair_el1 = (Mair.device_ngnrne << Mair.device_idx * 8) | (Mair.normal_cacheable << Mair.normal_idx * 8);
 
     if (primary) {
-        auto pgalloc = BumpAlloc!(4096)(&ptheap[0], ptheap.length);
         void map_region(Machine.MemRange range, Pagetable* pt) {
             for (usize addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
-                // assert(pt.map(addr, addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &pgalloc));
-                // assert(pt.map(pa2hka(addr), addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &pgalloc));
+                ensure(pt.map(addr, addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &ptalloc));
+                ensure(pt.map(pa2hka(addr), addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &ptalloc));
             }
         }
 

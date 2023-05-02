@@ -170,10 +170,11 @@ shared Unguard!(int) x;
 
 extern (C) void kmain(uint coreid, bool primary) {
     monitor_init();
+    enter_kmode();
 
     kallocinit(&_heap_start, 4096 * 4096);
 
-    printf("%d: hello world\n", cpu.id);
+    printf("hello world\n");
 
     for (int i = 0; i < 5; i++) {
         ubyte[] x = kalloc(1024);

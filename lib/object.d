@@ -41,13 +41,13 @@ void __switch_error()(string file = __FILE__, usize line = __LINE__) {
 // perform a check if assertion expressions are disabled (-release flag).
 void must(bool cond, string msg = "must failure", string file = __FILE__, int line = __LINE__) {
     version (assert) {
-        verify(cond, msg, file, line);
+        ensure(cond, msg, file, line);
     }
 }
 
 // Like assert but allows side effects in the assertion expression and is not
 // removed even if assertions are removed due to compiler flags.
-void verify(bool cond, string msg = "verify failure", string file = __FILE__, int line = __LINE__) {
+void ensure(bool cond, string msg = "ensure failure", string file = __FILE__, int line = __LINE__) {
     import core.exception : panic;
     if (!cond) {
         panic(file, line, msg);
