@@ -3,7 +3,8 @@ module plix.arch.riscv64.vm;
 import bits = core.bits;
 import sys = plix.sys;
 
-import plix.vm : pa2ka, Perm, kpa2pa;
+import plix.alloc : knew;
+import plix.vm : pa2ka, Perm, kpa2pa, ka2pa;
 import plix.arch.riscv64.csr : Csr;
 
 private enum VmMode {
@@ -103,7 +104,7 @@ struct Pagetable {
     // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary using
     // the specified allocator.
-    Pte* walk(bool alloc)(uintptr va, ref PtLevel endlevel) {
+    Pte* walk(uintptr va, ref PtLevel endlevel, Pagetable* function() ptalloc) {
         Pagetable* pt = &this;
 
         for (PtLevel level = PtLevel.max; level > endlevel; level--) {
@@ -114,16 +115,15 @@ struct Pagetable {
             } else if (pte.valid) {
                 pt = cast(Pagetable*) pa2ka(pte.pa);
             } else {
-                static if (!alloc) {
+                if (!ptalloc) {
                     endlevel = level;
                     return null;
                 } else {
-                    pt = knew_custom!(Pagetable)(allocator);
+                    pt = ptalloc();
                     if (!pt) {
                         endlevel = level;
                         return null;
                     }
-                    memset(pt, 0, Pagetable.sizeof);
                     pte.pa = ka2pa(cast(uintptr) pt);
                     pte.valid = 1;
                 }
@@ -133,17 +133,21 @@ struct Pagetable {
     }
 
     Pte* walk(uintptr va, ref PtLevel endlevel) {
-        return walk!(false)(va, endlevel);
+        return walk(va, endlevel, null);
     }
 
     // Recursively free all pagetable pages.
     void free(PtLevel level = PtLevel.max) {
     }
 
+    bool map(uintptr va, uintptr pa, PtLevel pgtyp, Perm perm) {
+        return map(va, pa, pgtyp, perm, &knew!(Pagetable));
+    }
+
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
-    bool map(A)(uintptr va, uintptr pa, PtLevel pgtyp, Perm perm, A* allocator) {
-        Pte* pte = walk!(A, true)(va, pgtyp, allocator);
+    bool map(uintptr va, uintptr pa, PtLevel pgtyp, Perm perm, Pagetable* function() ptalloc) {
+        Pte* pte = walk(va, pgtyp, ptalloc);
         if (!pte) {
             return false;
         }

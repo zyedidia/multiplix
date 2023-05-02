@@ -140,7 +140,7 @@ struct Pagetable {
     }
 
     Pte* walk(uintptr va, ref Pte.Pg endlevel) {
-        return walk(va, endlevel, &knew!(Pagetable));
+        return walk(va, endlevel, null);
     }
 
     // Recursively free all pagetable pages.
