@@ -33,3 +33,12 @@ extern (C) void vprintf(const char* fmt, va_list ap) {
     auto p = printer.lock();
     p.vwritef(fmt, ap);
 }
+
+extern (C) void puts(const(char)* s) {
+    auto p = printer.lock();
+    if (!s)
+        s = "(null)".ptr;
+    for (; *s; s++)
+        p.write(*s);
+    p.write('\n');
+}
