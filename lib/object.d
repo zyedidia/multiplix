@@ -53,3 +53,8 @@ void ensure(bool cond, string msg = "ensure failure", string file = __FILE__, in
         panic(file, line, msg);
     }
 }
+
+pragma(inline, false)
+extern (C) void _mark() {
+    asm { "nop"; }
+}

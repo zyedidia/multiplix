@@ -4,6 +4,8 @@ import plix.board : uart;
 import plix.crc : crc32;
 import plix.timer : Timer;
 import plix.arch.cache : sync_idmem, insn_fence;
+import plix.arch.monitor.boot : monitor_init, enter_kmode;
+import plix.arch.boot : kernel_setup;
 
 import core.exception : _halt;
 import core.volatile : vst;
@@ -129,10 +131,14 @@ __gshared BootData boot;
 extern (C) extern __gshared ubyte _heap_start;
 
 extern (C) void kmain(uint coreid, bool primary) {
+    monitor_init();
+    enter_kmode();
+    kernel_setup(primary);
+
     if (!primary) {
         insn_fence();
-        auto main = cast(noreturn function()) boot.entry;
-        main();
+        auto main = cast(noreturn function(uint)) boot.entry;
+        main(coreid);
     }
 
     ubyte* heap = &_heap_start;
@@ -148,7 +154,8 @@ extern (C) void kmain(uint coreid, bool primary) {
     for (long i = cast(long) boot.data.length - 1; i >= 0; i--) {
         vst(boot.entry + i, boot.data[i]);
     }
+    _mark();
     sync_idmem(boot.entry, boot.data.length);
-    auto main = cast(noreturn function()) boot.entry;
-    main();
+    auto main = cast(noreturn function(uint)) boot.entry;
+    main(coreid);
 }

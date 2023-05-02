@@ -3,7 +3,7 @@ module plix.arch.aarch64.vm;
 import bits = core.bits;
 import sys = plix.sys;
 
-import plix.alloc : knew;
+import plix.alloc : knew, kfree;
 import plix.vm : pa2ka, Perm, kpa2pa;
 import plix.board : Machine;
 import plix.arch.aarch64.sysreg : SysReg;
@@ -94,11 +94,6 @@ struct Pte {
         min = normal,
         max = giga,
     }
-
-    static Pg down(Pg type) {
-        assert(type != Pg.min);
-        return cast(Pg) (cast(int) type - 1);
-    }
 }
 
 private uintptr vpn(uint level, uintptr va) {
@@ -113,7 +108,7 @@ struct Pagetable {
     Pte* walk(uintptr va, ref Pte.Pg endlevel, Pagetable* function() ptalloc) {
         Pagetable* pt = &this;
 
-        for (Pte.Pg level = Pte.Pg.max; level > endlevel; level = Pte.down(level)) {
+        for (Pte.Pg level = Pte.Pg.max; level > endlevel; level--) {
             Pte* pte = &pt.ptes[vpn(level, va)];
             if (pte.valid && !pte.table) {
                 endlevel = level;
@@ -145,6 +140,17 @@ struct Pagetable {
 
     // Recursively free all pagetable pages.
     void free(Pte.Pg level = Pte.Pg.max) {
+        for (int i = 0; i < ptes.length; i++) {
+            Pte* pte = &ptes[i];
+            if (pte.valid && pte.leaf(level)) {
+                pte.data = 0;
+            } else if (pte.valid) {
+                Pagetable* child = cast(Pagetable*) pa2ka(pte.pa);
+                child.free(cast(Pte.Pg) (level - 1));
+                kfree(child);
+                pte.data = 0;
+            }
+        }
     }
 
     bool map(uintptr va, uintptr pa, Pte.Pg pgtyp, Perm perm) {

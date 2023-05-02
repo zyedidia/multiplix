@@ -180,7 +180,7 @@ local flags = {
     gdc := $(gdc(machine)) $(inc)
     ldc := $(ldc(machine)) $(inc)
     cc := $(gnu(machine)) -$(opt.level)
-    as := $(gnu(machine))
+    as := $(gnu(machine)) -xassembler-with-cpp
     qemu := -nographic -no-reboot
     objdump := -j .text -j .data -j .rodata -j .bss -j .stack -j .heap -j .payload -d
 }
@@ -208,7 +208,7 @@ function src.core()
 end
 
 function src.boot()
-    return knit.glob("src/boot/*.d")
+    return {}
 end
 
 function src.kernel()
@@ -273,12 +273,14 @@ local plboot = {
 local o = sel(conf.dc == "gdc", "o", "of")
 
 return b{
-    $ all:VB: boot.elf
+    $ all:VB: kernel.boot.elf
 
     $ libplix.a: $objdir/libplix.a
         mv $input $output
 
-    $ boot.elf: $(obj.boot) $objdir/libplix.a $(link.boot)[I]
+    $ boot.elf: $objdir/src/boot/main-uart.o $(obj.boot) $objdir/libplix.a $(link.boot)[I]
+        $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
+    $ kernel.boot.elf: $objdir/src/boot/main-payload.o $objdir/src/boot/payload.o $(obj.boot) $objdir/libplix.a $(link.boot)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
     $ kernel.elf: $(obj.kernel) $objdir/libplix.a $(link.kernel)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.kernel) -nostdinc -nostdlib $input -lgcc -o $output
@@ -288,8 +290,12 @@ return b{
         $(tools.ar) -rcs $output $input
         $(tools.ranlib) $(lto.plugin) $output
 
-    $ $objdir/src/boot/main.o:D[$depdir/src/boot/main.dep]: src/boot/main.d
+    $ $objdir/src/boot/main-uart.o:D[$depdir/src/boot/main.dep]: src/boot/main.d
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) $(version("uart")) -c $input -$o $output
+    $ $objdir/src/boot/main-payload.o:D[$depdir/src/boot/main.dep]: src/boot/main.d
+        $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
+    $ $objdir/src/boot/payload.o: src/boot/payload.s kernel.payload
+        $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(inputs[2])
 
     $ $depdir/%.di: %.d
         $(tools.dc) $(flags.dc) $(noobj()) -Hf $output $input
@@ -326,9 +332,9 @@ return b{
         ./$(plboot.bin) prog $input
     $ $(plboot.bin): $(plboot.src)
         cd tools/plboot && go build
-    $ qemu:VB: boot.elf
+    $ qemu:VB: kernel.boot.elf
         $(tools.qemu) $(flags.qemu) -kernel $input
-    $ qemu-gdb:VB: boot.elf kernel.elf
+    $ qemu-gdb:VB: kernel.boot.elf kernel.boot.elf
         $(tools.qemu) $(flags.qemu) -kernel $(inputs[1]) -s -S &
         $(tools.gdb) -ex "file $(inputs[2])" -ex "target remote localhost:1234"
 

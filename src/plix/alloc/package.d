@@ -39,5 +39,5 @@ void kfree(T)(T* ptr) {
         ptr.__xdtor();
     }
     auto kr = kr.lock();
-    kr.free(cast(void*) p);
+    kr.free(cast(void*) ptr);
 }

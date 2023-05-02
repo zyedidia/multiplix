@@ -3,7 +3,7 @@ module plix.arch.riscv64.vm;
 import bits = core.bits;
 import sys = plix.sys;
 
-import plix.alloc : knew;
+import plix.alloc : knew, kfree;
 import plix.vm : pa2ka, Perm, kpa2pa, ka2pa;
 import plix.arch.riscv64.csr : Csr;
 
@@ -138,6 +138,17 @@ struct Pagetable {
 
     // Recursively free all pagetable pages.
     void free(PtLevel level = PtLevel.max) {
+        for (int i = 0; i < ptes.length; i++) {
+            Pte* pte = &ptes[i];
+            if (pte.valid && pte.leaf(level)) {
+                pte.data = 0;
+            } else if (pte.valid) {
+                Pagetable* child = cast(Pagetable*) pa2ka(pte.pa);
+                child.free(cast(PtLevel) (level - 1));
+                kfree(child);
+                pte.data = 0;
+            }
+        }
     }
 
     bool map(uintptr va, uintptr pa, PtLevel pgtyp, Perm perm) {
