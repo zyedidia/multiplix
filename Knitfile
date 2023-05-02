@@ -211,12 +211,22 @@ function src.boot()
     return knit.glob("src/boot/*.d")
 end
 
+function src.kernel()
+    return knit.glob("src/kernel/*.d")
+end
+
 local asm = {}
 
 function asm.libplix()
     return knit.join(
         knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.s"),
         knit.glob(f"src/plix/arch/$(machine.arch)/*.s")
+    )
+end
+
+function asm.boot()
+    return knit.join(
+        knit.glob(f"src/boot/*.s")
     )
 end
 
@@ -243,9 +253,9 @@ end
 
 local obj = {
     libplix = getobj(src.libplix(), asm.libplix(), "plix"),
-    boot = getobj(src.boot(), {}, "boot"),
     core = getobj(src.core(), {}, "core"),
-    monitor = {f"$objdir/lib/config.monitor.o"},
+    boot = knit.join(getobj(src.boot(), {}, "boot"), {f"$objdir/lib/config.monitor.o"}),
+    kernel = knit.join(getobj(src.kernel(), {}, "kernel"), {f"$objdir/lib/config.kernel.o"}),
 }
 
 local extraobj := $objdir/lib/builtins.o $objdir/lib/object.o
@@ -268,13 +278,18 @@ return b{
     $ libplix.a: $objdir/libplix.a
         mv $input $output
 
-    $ boot.elf: $(obj.boot) $(obj.monitor) $objdir/libplix.a $(link.boot)[I]
+    $ boot.elf: $(obj.boot) $objdir/libplix.a $(link.boot)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
+    $ kernel.elf: $(obj.kernel) $objdir/libplix.a $(link.kernel)[I]
+        $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.kernel) -nostdinc -nostdlib $input -lgcc -o $output
 
     $ $objdir/libplix.a: $(obj.libplix) $(obj.core) $extraobj
         rm -f $output
         $(tools.ar) -rcs $output $input
         $(tools.ranlib) $(lto.plugin) $output
+
+    $ $objdir/src/boot/main.o:D[$depdir/src/boot/main.dep]: src/boot/main.d
+        $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) $(version("uart")) -c $input -$o $output
 
     $ $depdir/%.di: %.d
         $(tools.dc) $(flags.dc) $(noobj()) -Hf $output $input
@@ -285,6 +300,8 @@ return b{
         $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/boot.o: $(src.boot()) [[$(src.core()) $(src.libplix())]][I]
         $(tools.dc) $(flags.dc) -c $input -$o $output
+    $ $objdir/kernel.o: $(src.kernel()) [[$(src.core()) $(src.libplix())]][I]
+        $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/lib/builtins.o: lib/builtins.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(nopattern())
     $ $objdir/lib/config.monitor.o: lib/config.d
@@ -292,7 +309,7 @@ return b{
     $ $objdir/lib/config.kernel.o: lib/config.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(version("kernel"))
 
-    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.libplix())) $(di(src.boot()))]][I]
+    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.libplix())) $(di(src.boot())) $(di(src.kernel()))]][I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
     $ $objdir/%.asm.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
@@ -303,9 +320,15 @@ return b{
         $(tools.objcopy) $input -O binary $output
     $ %.img: %.bin
         vf2-imager -i $input -o $output
+    $ %.payload: %.elf $(plboot.bin)[I]
+        ./$(plboot.bin) make -o $output $input
+    $ prog:VB: kernel.elf $(plboot.bin)[I]
+        ./$(plboot.bin) prog $input
+    $ $(plboot.bin): $(plboot.src)
+        cd tools/plboot && go build
     $ qemu:VB: boot.elf
         $(tools.qemu) $(flags.qemu) -kernel $input
-    $ qemu-gdb:VB: boot.elf boot.elf
+    $ qemu-gdb:VB: boot.elf kernel.elf
         $(tools.qemu) $(flags.qemu) -kernel $(inputs[1]) -s -S &
         $(tools.gdb) -ex "file $(inputs[2])" -ex "target remote localhost:1234"
 
