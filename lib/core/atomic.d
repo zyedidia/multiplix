@@ -122,7 +122,7 @@ version (LDC) {
     }
 
     ubyte atomic_test_and_set(shared(ubyte*) lock) {
-        return _atomic_cmp_xchg(lock, 0, 1, AtomicOrder.acquire, AtomicOrder.relaxed, true).previousValue;
+        return _atomic_cmp_xchg(lock, 0, 1, AtomicOrder.acquire, AtomicOrder.relaxed, false).previousValue;
     }
 
     void atomic_clear(shared(ubyte*) lock) {
