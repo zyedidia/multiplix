@@ -132,9 +132,8 @@ extern (C) extern __gshared ubyte _heap_start;
 
 extern (C) void kmain(uint coreid, bool primary) {
     monitor_init();
-    // enable_vm(); // enable el2 virtual memory
     enter_kmode();
-    kernel_setup(primary); // set up el1 pagetable
+    kernel_setup(primary);
 
     if (!primary) {
         insn_fence();
