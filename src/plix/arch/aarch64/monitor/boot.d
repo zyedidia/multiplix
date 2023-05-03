@@ -1,6 +1,6 @@
 module plix.arch.aarch64.monitor.boot;
 
-import plix.arch.aarch64.sysreg : SysReg, Scr, Spsr, Hcr, Sctlr, Mdscr, Mdcr;
+import plix.arch.aarch64.sysreg : SysReg, Scr, Spsr, Hcr, Sctlr, Mdscr, Mdcr, curel, El;
 
 import bits = core.bits;
 
@@ -27,13 +27,13 @@ void enter_el1() {
     // Configure EL1 to run in aarch64 mode.
     SysReg.hcr_el2 = Hcr.rw_aarch64;
     // Enable all debug exceptions in kernel mode.
-    SysReg.mdscr_el1 = SysReg.mdscr_el1 | Mdscr.mde;
+    // SysReg.mdscr_el1 = SysReg.mdscr_el1 | Mdscr.mde;
     // Route debug exceptions to EL2.
-    SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;
+    // SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;
     // Clear the OS lock.
-    SysReg.oslar_el1 = 0;
+    // SysReg.oslar_el1 = 0;
     // Enable SIMD/FP in kernel.
-    SysReg.cpacr_el1 = bits.write(SysReg.cpacr_el1, 21, 20, 0b11);
+    // SysReg.cpacr_el1 = bits.write(SysReg.cpacr_el1, 21, 20, 0b11);
 
     _enter_el1();
 }
@@ -45,7 +45,9 @@ void enter_kmode() {
 extern (C) extern void monitorvec();
 
 void monitor_init() {
-    enter_el2();
+    if (curel() == El.el3) {
+        enter_el2();
+    }
 
     // Install the trap handler.
     SysReg.vbar_el2 = cast(uintptr) &monitorvec;

@@ -6,4 +6,6 @@ version (virt_riscv64) {
     public import plix.board.raspi3;
 } else version (raspi4) {
     public import plix.board.raspi4;
+} else version (orpiz2) {
+    public import plix.board.orpiz2;
 }

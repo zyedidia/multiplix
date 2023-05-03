@@ -81,6 +81,17 @@ struct SysReg {
     mixin(GenSysReg!("S3_1_C15_C2_1"));
 }
 
+El curel() {
+    return cast(El) SysReg.currentel >> 2;
+}
+
+enum El {
+    el0 = 0b00,
+    el1 = 0b01,
+    el2 = 0b10,
+    el3 = 0b11,
+}
+
 enum Sctlr {
     reserved = (3 << 28) | (3 << 22) | (1 << 20) | (1 << 11),
     icache = (1 << 12),

@@ -131,9 +131,27 @@ __gshared BootData boot;
 extern (C) extern __gshared ubyte _heap_start;
 
 extern (C) void kmain(uint coreid, bool primary) {
+    import plix.board : uart;
+    import plix.print : printf;
+    import plix.arch.aarch64.sysreg : curel;
+
+    printf("curel: %d\n", curel());
+
+    uart.tx('0');
+    uart.tx('\n');
     monitor_init();
+
+    printf("curel: %d\n", curel());
+
+    uart.tx('a');
+    uart.tx('\n');
     enter_kmode();
+    uart.tx('b');
+    uart.tx('\n');
     kernel_setup(primary);
+
+    uart.tx('1');
+    uart.tx('\n');
 
     if (!primary) {
         insn_fence();
@@ -149,12 +167,19 @@ extern (C) void kmain(uint coreid, bool primary) {
         boot = unpack();
     }
 
+    uart.tx('2');
+    uart.tx('\n');
+
     assert(boot.entry >= boot.data.ptr && boot.data.length > 0);
     assert(boot.entry >= heap);
     for (long i = cast(long) boot.data.length - 1; i >= 0; i--) {
         vst(boot.entry + i, boot.data[i]);
     }
+    uart.tx('3');
+    uart.tx('\n');
     sync_idmem(boot.entry, boot.data.length);
     auto main = cast(noreturn function(uint)) boot.entry;
+    uart.tx('4');
+    uart.tx('\n');
     main(coreid);
 }
