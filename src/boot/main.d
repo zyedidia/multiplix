@@ -4,7 +4,7 @@ import plix.board : uart;
 import plix.crc : crc32;
 import plix.timer : Timer;
 import plix.arch.cache : sync_idmem, insn_fence;
-import plix.arch.monitor.boot : monitor_init, enter_kmode;
+import plix.arch.monitor.boot : monitor_init, enter_kmode, enable_vm;
 import plix.arch.boot : kernel_setup;
 
 import core.exception : _halt;
@@ -132,8 +132,9 @@ extern (C) extern __gshared ubyte _heap_start;
 
 extern (C) void kmain(uint coreid, bool primary) {
     monitor_init();
+    // enable_vm(); // enable el2 virtual memory
     enter_kmode();
-    kernel_setup(primary);
+    kernel_setup(primary); // set up el1 pagetable
 
     if (!primary) {
         insn_fence();

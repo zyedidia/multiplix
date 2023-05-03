@@ -7,12 +7,23 @@ void device_fence() {
     }
 }
 
-void inv_dcache(ubyte* start, usize size) {
-    assert(0, "inv_dcache(riscv64): unimplemented");
+pragma(inline, true)
+void inv_dcache(void* start, usize size) {
 }
 
 pragma(inline, true)
-void sync_idmem(ubyte* start, usize size) {
+void clean_dcache(void* start, usize size) {
+}
+
+pragma(inline, true)
+void sync_fence() {
+    asm {
+        "fence" ::: "memory";
+    }
+}
+
+pragma(inline, true)
+void sync_idmem(void* start, usize size) {
     insn_fence();
 }
 

@@ -52,3 +52,5 @@ void monitor_init() {
     frames[id] = ScratchFrame(cast(uintptr) &_heap_start + 4096 * (id + 1), rdtp(), rdgp(), 0);
     Csr.mscratch = cast(uintptr) &frames[id];
 }
+
+void enable_vm() {}

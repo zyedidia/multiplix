@@ -2,6 +2,7 @@ module plix.arch.aarch64.boot;
 
 import plix.arch.aarch64.sysreg : SysReg, Tcr, Sctlr, Mair;
 import plix.arch.aarch64.vm : Pagetable, Pte;
+import plix.arch.aarch64.cache : sysreg_fence;
 
 import plix.alloc.bump : BumpAlloc;
 import plix.vm : pa2hka, Perm;
@@ -47,16 +48,7 @@ void kernel_setup(bool primary) {
 
     SysReg.ttbr0_el1 = cast(uintptr) &tbl;
     SysReg.ttbr1_el1 = cast(uintptr) &tbl;
-
-    asm {
-        "dsb sy";
-        "isb";
-    }
-
-    SysReg.sctlr_el1 = SysReg.sctlr_el1 | Sctlr.mmu | Sctlr.icache | Sctlr.dcache; // enable mmu and caches
-
-    asm {
-        "dsb sy";
-        "isb";
-    }
+    sysreg_fence();
+    SysReg.sctlr_el1 = Sctlr.reserved | Sctlr.mmu | Sctlr.icache | Sctlr.dcache; // enable mmu and caches
+    sysreg_fence();
 }

@@ -13,7 +13,7 @@ extern (C) void monitor_exception(Regs* regs) {
 
     switch (exc_class) {
     case Exception.hvc:
-        fwi_handler(regs.x7);
+        cast(void) fwi_handler(regs.x7);
         break;
     case Exception.brkpt:
         println("TODO: brkpt");

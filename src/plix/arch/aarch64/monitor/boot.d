@@ -24,8 +24,6 @@ void enter_el2() {
 void enter_el1() {
     // Set spsr to return to EL1h.
     SysReg.spsr_el2 = Spsr.a | Spsr.i | Spsr.f | Spsr.el1h;
-    // Prepare EL1 with MMU and caches disabled.
-    SysReg.sctlr_el1 = Sctlr.nommu;
     // Configure EL1 to run in aarch64 mode.
     SysReg.hcr_el2 = Hcr.rw_aarch64;
     // Enable all debug exceptions in kernel mode.
@@ -51,4 +49,17 @@ void monitor_init() {
 
     // Install the trap handler.
     SysReg.vbar_el2 = cast(uintptr) &monitorvec;
+}
+
+// Should only be called after ttbr0_el1 is initialized.
+void enable_vm() {
+    import plix.arch.aarch64.sysreg : Mair, Tcr, SysReg;
+    import plix.arch.aarch64.cache : sysreg_fence;
+
+    SysReg.mair_el2 = (Mair.device_ngnrne << Mair.device_idx * 8) | (Mair.normal_cacheable << Mair.normal_idx * 8);
+    SysReg.tcr_el2 = Tcr.t0sz!(25) | Tcr.t1sz!(25) | Tcr.tg0_4kb | Tcr.tg1_4kb | Tcr.ips_36 | Tcr.irgn | Tcr.orgn | Tcr.sh;
+    SysReg.ttbr0_el2 = SysReg.ttbr0_el1;
+    sysreg_fence();
+    SysReg.sctlr_el2 = SysReg.sctlr_el2 | Sctlr.mmu | Sctlr.icache | Sctlr.dcache; // enable mmu and caches
+    sysreg_fence();
 }
