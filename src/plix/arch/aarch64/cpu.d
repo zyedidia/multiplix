@@ -10,6 +10,13 @@ void wfe() {
     }
 }
 
+pragma(inline, true)
+void sev() {
+    asm {
+        "sev";
+    }
+}
+
 usize rdcpu() {
     if (ismonitor()) {
         assert(SysReg.currentel >> 2 != 0b01);

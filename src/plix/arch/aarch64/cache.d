@@ -17,7 +17,7 @@ void inv_dcache(ubyte* start, usize size) {
 }
 
 pragma(inline, true)
-private void clean_dcache()(ubyte* start, usize size) {
+private void clean_dcache(ubyte* start, usize size) {
     for (usize i = 0; i < size; i++) {
         asm {
             "dc cvau, %0" :: "r"(start + i);
@@ -26,7 +26,7 @@ private void clean_dcache()(ubyte* start, usize size) {
 }
 
 pragma(inline, true)
-private void clean_icache()(ubyte* start, usize size) {
+private void clean_icache(ubyte* start, usize size) {
     for (usize i = 0; i < size; i++) {
         asm {
             "ic ivau, %0" :: "r"(start + i);

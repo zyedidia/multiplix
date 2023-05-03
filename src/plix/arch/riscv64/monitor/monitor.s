@@ -19,7 +19,7 @@ _monitor_start:
 	la sp, _stack_start
 	addi t0, a0, 1
 	slli t0, t0, 12 # t0 = (hartid + 1) * 4096
-	add sp, sp, t0  # sp = _heap_start + (hartid + 1) * 4096
+	add sp, sp, t0  # sp = _stack_start + (hartid + 1) * 4096
 
 	# Acquire the boot lock, which only allows one core to boot.
 	la t1, boot_lock

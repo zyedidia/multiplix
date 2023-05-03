@@ -51,7 +51,7 @@ private immutable uint[] crc32_tab = [
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 ];
 
-private uint crc32_inc(void* buf, usize size, uint crc) {
+uint crc32_inc(void* buf, usize size, uint crc) {
     ubyte* p = cast(ubyte*) buf;
 
     crc = crc ^ ~0U;

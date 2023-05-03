@@ -8,6 +8,11 @@ void wfi() {
 }
 
 pragma(inline, true)
+void sev() {
+    // riscv does not have sev
+}
+
+pragma(inline, true)
 usize rdcpu() {
     usize cpu;
     asm {

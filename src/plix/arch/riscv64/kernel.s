@@ -5,11 +5,11 @@ _kernel_start:
 	.option norelax
 	la gp, __global_pointer$
 	.option pop
-	la sp, _heap_start
+	la sp, _stack_start
 	# coreid is in a0
 	addi t0, a0, 1
 	slli t0, t0, 12 # t0 = (hartid + 1) * 4096
-	add sp, sp, t0  # sp = _heap_start + (hartid + 1) * 4096
+	add sp, sp, t0  # sp = _stack_start + (hartid + 1) * 4096
 	la t1, primary
 	lw a1, 0(t1)
 	sw zero, 0(t1)

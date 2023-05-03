@@ -298,7 +298,7 @@ return b{
         $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(inputs[2])
 
     $ $depdir/%.di: %.d
-        $(tools.dc) $(flags.dc) $(noobj()) -Hf $output $input
+        $(tools.dc) $(flags.dc) $(noobj()) -Hf $output $input -O0
 
     $ $objdir/core.o: $(src.core())
         $(tools.dc) $(flags.dc) -c $input -$o $output

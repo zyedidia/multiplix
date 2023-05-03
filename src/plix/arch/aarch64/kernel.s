@@ -2,9 +2,9 @@
 
 .globl _kernel_start
 _kernel_start:
-	// set stack = _heap_start + (coreid + 1) * 4096
+	// set stack = _stack_start + (coreid + 1) * 4096
 	// coreid is in x0
-	ldr x1, =_heap_start
+	ldr x1, =_stack_start
 	add x2, x0, #1
 	lsl x2, x2, #12
 	add x1, x1, x2

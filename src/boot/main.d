@@ -154,7 +154,6 @@ extern (C) void kmain(uint coreid, bool primary) {
     for (long i = cast(long) boot.data.length - 1; i >= 0; i--) {
         vst(boot.entry + i, boot.data[i]);
     }
-    _mark();
     sync_idmem(boot.entry, boot.data.length);
     auto main = cast(noreturn function(uint)) boot.entry;
     main(coreid);

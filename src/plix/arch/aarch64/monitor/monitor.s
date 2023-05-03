@@ -21,10 +21,10 @@ _halt:
 	b _halt
 
 _reset_sp:
-	// set stack = _heap_start + (coreid + 1) * 4096
+	// set stack = _stack_start + (coreid + 1) * 4096
 	mrs x0, mpidr_el1
 	and x0, x0, #0xff
-	ldr x1, =_heap_start
+	ldr x1, =_stack_start
 	add x2, x0, #1
 	lsl x2, x2, #12
 	add x1, x1, x2

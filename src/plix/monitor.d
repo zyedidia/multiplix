@@ -3,6 +3,7 @@ module plix.monitor;
 import core.volatile : vst;
 
 import plix.print : printf;
+import plix.arch.cpu : sev;
 
 extern (C) extern __gshared ulong wakeup;
 
@@ -13,6 +14,7 @@ enum monitor_func {
 usize fwi_handler(usize num) {
     switch (num) {
     case monitor_func.wakeup_cores:
+        import plix.print : printf;
         wakeup_cores();
         break;
     default:
@@ -25,5 +27,6 @@ usize fwi_handler(usize num) {
 void wakeup_cores() {
     import config : ismonitor;
     assert(ismonitor());
-    vst(&wakeup, 1);
+    vst(&wakeup, ulong.max);
+    sev();
 }
