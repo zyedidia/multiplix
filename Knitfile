@@ -40,6 +40,16 @@ local machines = {
         mflags = "-mgeneral-regs-only",
         qemu = "qemu-system-aarch64 -M raspi3ap -serial null -serial mon:stdio",
     },
+    raspi4 = {
+        arch = "aarch64",
+        triple = "aarch64-none-elf",
+        board = "raspi4",
+        march = "armv8-a+crc",
+        mcpu = "cortex-a72",
+        mattr = "-sve,-fp-armv8",
+        mflags = "-mgeneral-regs-only",
+        qemu = "qemu-system-aarch64 -M raspi4b -serial null -serial mon:stdio",
+    },
     virt_riscv64 = {
         arch = "riscv64",
         triple = "riscv64-unknown-elf",
