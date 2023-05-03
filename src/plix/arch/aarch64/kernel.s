@@ -1,4 +1,4 @@
-.section .text.boot
+.section .text.boot.kernel
 
 .globl _kernel_start
 _kernel_start:

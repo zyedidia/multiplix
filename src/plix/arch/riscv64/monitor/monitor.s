@@ -1,5 +1,4 @@
-.section ".text.boot"
-
+.section .text.boot.monitor
 .globl _monitor_start
 _monitor_start:
 	# Halt any cores that don't support S-mode.

@@ -4,7 +4,7 @@ SECTIONS
 {
     .text 0x80000 : {
         _code_start = .;
-        KEEP(*(.text.boot))  
+        KEEP(*(.text.boot.monitor))
         *(.text*) 
         . = ALIGN(8);
         _code_end = .;

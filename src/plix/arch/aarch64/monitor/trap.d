@@ -26,7 +26,7 @@ extern (C) void monitor_exception(Regs* regs) {
         break;
     default:
         import core.exception : panicf;
-        panicf("[unhandled exception] monitor_exception: core: %u, cause: %lx, elr: %lx", cpu.id, exc_class, SysReg.elr_el2);
+        panicf("[unhandled exception] monitor_exception: core: %u, cause: %lx, elr: %lx\n", cpu.id, exc_class, SysReg.elr_el2);
     }
 }
 

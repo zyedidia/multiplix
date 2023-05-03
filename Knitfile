@@ -254,7 +254,7 @@ end
 local obj = {
     libplix = getobj(src.libplix(), asm.libplix(), "plix"),
     core = getobj(src.core(), {}, "core"),
-    boot = knit.join(getobj(src.boot(), {}, "boot"), {f"$objdir/lib/config.monitor.o"}),
+    boot = {f"$objdir/lib/config.monitor.o"},
     kernel = knit.join(getobj(src.kernel(), {}, "kernel"), {f"$objdir/lib/config.kernel.o"}),
 }
 
@@ -304,8 +304,6 @@ return b{
         $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/plix.o: $(src.libplix()) [[$(src.core())]][I]
         $(tools.dc) $(flags.dc) -c $input -$o $output
-    $ $objdir/boot.o: $(src.boot()) [[$(src.core()) $(src.libplix())]][I]
-        $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/kernel.o: $(src.kernel()) [[$(src.core()) $(src.libplix())]][I]
         $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/lib/builtins.o: lib/builtins.d
@@ -334,7 +332,7 @@ return b{
         cd tools/plboot && go build
     $ qemu:VB: kernel.boot.elf
         $(tools.qemu) $(flags.qemu) -kernel $input
-    $ qemu-gdb:VB: kernel.boot.elf kernel.boot.elf
+    $ qemu-gdb:VB: kernel.boot.elf kernel.elf
         $(tools.qemu) $(flags.qemu) -kernel $(inputs[1]) -s -S &
         $(tools.gdb) -ex "file $(inputs[2])" -ex "target remote localhost:1234"
 
