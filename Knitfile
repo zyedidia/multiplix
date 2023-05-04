@@ -62,6 +62,18 @@ local machines = {
         cmodel = "medium",
         qemu = "qemu-system-riscv64 -M virt -bios none -smp 4 -m 2G",
     },
+    visionfive = {
+        arch = "riscv64",
+        triple = "riscv64-unknown-elf",
+        board = "visionfive",
+        mabi = "lp64",
+        march = "rv64imac_zicsr_zifencei",
+        mattr = "+m,+a,+c,+relax",
+        mflags = "",
+        mcmodel = "medany",
+        cmodel = "medium",
+        qemu = "qemu-system-riscv64 -M visionfive -bios none -smp 4 -m 2G",
+    },
     visionfive2 = {
         arch = "riscv64",
         triple = "riscv64-unknown-elf",

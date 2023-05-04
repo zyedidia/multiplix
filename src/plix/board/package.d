@@ -6,4 +6,8 @@ version (virt_riscv64) {
     public import plix.board.raspi3;
 } else version (raspi4) {
     public import plix.board.raspi4;
+} else version (visionfive) {
+    public import plix.board.visionfive;
+} else version (visionfive2) {
+    public import plix.board.visionfive2;
 }
