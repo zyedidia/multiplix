@@ -17,7 +17,6 @@ extern (C) void kmain(uint coreid, bool primary) {
 
     Timer.delay_ms(100);
     auto cycles = Timer.cycles();
-    printf("%ld\n", cycles);
     Timer.delay_ms(500);
     printf("%ld\n", Timer.cycles() - cycles);
 }

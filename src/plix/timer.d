@@ -3,8 +3,8 @@ module plix.timer;
 import arch = plix.arch.timer;
 
 struct Timer {
-    static void init() {
-        arch.Timer.init();
+    static void setup() {
+        arch.Timer.setup();
     }
 
     // Delay until `t` ticks have expired from `tfn`.

@@ -4,6 +4,8 @@ import plix.arch.riscv64.csr : Csr;
 import plix.board : Machine, clint;
 
 struct Timer {
+    static void setup() {}
+
     static ulong cycles() {
         return Csr.cycle;
     }

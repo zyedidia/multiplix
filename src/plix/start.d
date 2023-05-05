@@ -16,7 +16,7 @@ extern (C) {
 
         init_cpu(coreid, primary);
 
-        Timer.init();
+        Timer.setup();
 
         // board-specific setup
         setup();
