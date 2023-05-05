@@ -23,7 +23,7 @@ extern (C) void monitortrap(Regs* regs) {
         break;
     default:
         import core.exception : panicf;
-        panicf("[unhandled cause] monitortrap: core: %lu, cause: %lx, epc: %lx, mtval: %lx\n", Csr.mhartid, mcause, mepc, Csr.mtval);
+        panicf("[unhandled monitortrap]: core: %lu, cause: %lx, epc: %lx, mtval: %lx\n", Csr.mhartid, mcause, mepc, Csr.mtval);
     }
 }
 

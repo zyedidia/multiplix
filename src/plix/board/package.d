@@ -10,4 +10,6 @@ version (virt_riscv64) {
     public import plix.board.visionfive;
 } else version (visionfive2) {
     public import plix.board.visionfive2;
+} else version (orpiz2) {
+    public import plix.board.orpiz2;
 }
