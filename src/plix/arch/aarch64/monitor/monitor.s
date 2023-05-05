@@ -9,7 +9,7 @@ _monitor_start:
 	adr x1, wakeup
 _spin:
 	wfe
-	ldrsw x2, [x1]
+	ldr x2, [x1]
 	cbz x2, _spin
 _primary_boot:
 	adr x2, primary

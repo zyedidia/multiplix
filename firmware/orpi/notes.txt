@@ -25,6 +25,19 @@ Using default value 1
 First sector (2048-15523839, default 2048):             # Press Enter Key
 Using default value 2048
 Last sector, +sectors or +size{K,M,G} (2048-15523839, default 15523839): +20M      # Type +20M
+
+Command (m for help): n                                   # Type n    
+Partition type:                                           
+   p   primary (1 primary, 0 extended, 3 free)
+   e   extended
+Select (default p):                                       # Press Enter Key
+Using default response p
+Partition number (1-4, default 2):                        # Press Enter Key
+Using default value 2
+First sector (43008-15523839, default 43008):
+Using default value 43008
+Last sector, +sectors or +size{K,M,G} (43008-15523839, default 15523839): # Press Enter Key
+Using default value 15523839
 ```
 
 Make partition VFAT and initialize
@@ -35,3 +48,11 @@ sudo dd if=/dev/zero of=/dev/sda bs=1k count=1023 seek=1
 sudo dd if=u-boot-sunxi-with-spl.bin of=/dev/sda bs=1024 seek=8
 sync
 ```
+
+$ sudo mount /dev/mmcblk0p1 /mnt
+
+$ sudo cp -v <kernel_path>/arch/arm/boot/zImage /mnt
+
+$ sudo cp -v <kernel_path>/arch/arm/dts/<board>.dtb /mnt
+
+$ sudo umount /mnt

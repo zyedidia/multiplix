@@ -35,10 +35,14 @@ struct Machine {
     }
 }
 
+extern (C) extern __gshared ubyte _monitor_start, _heap_start;
+
 __gshared DwApbUart uart;
 
 void setup() {
     import plix.cpu : cpu;
+    import plix.arch.aarch64.smc : cpu_on, affinity_info;
+    import plix.arch.cache : sync_idmem;
     import config : ismonitor;
 
     uart = DwApbUart(pa2ka(0x500_0000));
@@ -46,6 +50,13 @@ void setup() {
     if (cpu.primary) {
         if (ismonitor()) {
             uart.setup(115200);
+
+            sync_idmem(&_monitor_start, &_heap_start - &_monitor_start);
+            for (int i = 1; i < Machine.ncores; i++) {
+                cpu_on(i, cast(uintptr) 0x4100_0000, 0);
+                while (affinity_info(i, 0) != 0) {
+                }
+            }
         }
     }
 }

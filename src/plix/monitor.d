@@ -29,6 +29,9 @@ void wakeup_cores() {
     import config : ismonitor;
     assert(ismonitor());
     vst(&wakeup, ulong.max);
+    clean_dcache(&wakeup, ulong.sizeof);
+    sync_fence();
+    insn_fence();
     sev();
 
     // enable_vm();

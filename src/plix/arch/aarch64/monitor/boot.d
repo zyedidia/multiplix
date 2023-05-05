@@ -26,11 +26,12 @@ void enter_el1() {
     SysReg.spsr_el2 = Spsr.a | Spsr.i | Spsr.f | Spsr.el1h;
     // Configure EL1 to run in aarch64 mode.
     SysReg.hcr_el2 = Hcr.rw_aarch64;
+    // Duplicate VM information from EL2
+    SysReg.sctlr_el1 = SysReg.sctlr_el2;
+    SysReg.ttbr0_el1 = SysReg.ttbr0_el2;
+    SysReg.mair_el1 = SysReg.mair_el2;
+    SysReg.tcr_el1 = SysReg.tcr_el2;
     // Enable all debug exceptions in kernel mode.
-    SysReg.sctlr_el1 = Sctlr.nommu;
-    // SysReg.ttbr0_el1 = SysReg.ttbr0_el2;
-    // SysReg.mair_el1 = SysReg.mair_el2;
-    // SysReg.tcr_el1 = SysReg.tcr_el2;
     // SysReg.mdscr_el1 = SysReg.mdscr_el1 | Mdscr.mde;
     // Route debug exceptions to EL2.
     // SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;

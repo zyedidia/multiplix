@@ -2,7 +2,7 @@ ENTRY(_monitor_start)
 
 SECTIONS
 {
-    .text 0x40000000 : {
+    .text 0x41000000 : {
         _code_start = .;
         KEEP(*(.text.boot.monitor))
         *(.text*) 
