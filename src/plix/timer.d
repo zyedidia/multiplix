@@ -3,6 +3,10 @@ module plix.timer;
 import arch = plix.arch.timer;
 
 struct Timer {
+    static void init() {
+        arch.Timer.init();
+    }
+
     // Delay until `t` ticks have expired from `tfn`.
     private static void delay(alias tfn)(ulong t) {
         ulong rb = tfn();

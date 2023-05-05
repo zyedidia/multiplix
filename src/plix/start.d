@@ -2,6 +2,7 @@ module plix.start;
 
 import plix.cpu : init_cpu;
 import plix.board : setup;
+import plix.timer : Timer;
 
 extern (C) {
     extern __gshared uint _bss_start, _bss_end;
@@ -15,6 +16,9 @@ extern (C) {
 
         init_cpu(coreid, primary);
 
+        Timer.init();
+
+        // board-specific setup
         setup();
 
         kmain(coreid, primary);

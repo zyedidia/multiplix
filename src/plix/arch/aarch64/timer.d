@@ -3,6 +3,12 @@ module plix.arch.aarch64.timer;
 import plix.arch.aarch64.sysreg : SysReg;
 
 struct Timer {
+    static void init() {
+        // Enable cycle counter.
+        SysReg.pmcr_el0 = 1;
+        SysReg.pmcntenset_el0 = 1 << 31;
+    }
+
     static ulong freq() {
         return SysReg.cntfrq_el0;
     }
