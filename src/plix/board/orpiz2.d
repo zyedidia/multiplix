@@ -21,7 +21,7 @@ struct Machine {
     enum MemRange main_memory = MemRange(0x4000_0000, sys.gb!(1), MemType.normal);
 
     enum MemRange[2] mem_ranges = [
-        MemRange(0x300_0000, 0x400_0000, MemType.device),
+        MemRange(0, sys.gb!(1), MemType.device),
         main_memory,
     ];
 
@@ -39,7 +39,6 @@ __gshared DwApbUart uart;
 
 void setup() {
     import plix.cpu : cpu;
-    import plix.print;
     import config : ismonitor;
 
     uart = DwApbUart(pa2ka(0x500_0000));

@@ -5,7 +5,6 @@ _monitor_start:
 	bl _reset_sp
 	mrs x0, mpidr_el1
 	and x0, x0, #0xff
-	b _primary_boot
 	cbz x0, _primary_boot
 	adr x1, wakeup
 _spin:

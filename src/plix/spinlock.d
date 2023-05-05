@@ -2,14 +2,15 @@ module plix.spinlock;
 
 import core.atomic : atomic_test_and_set, atomic_clear;
 
-import plix.arch.trap : irq;
+import plix.arch.trap : Irq;
 
 // Basic mutual exclusion spinlock.
 struct Spinlock {
     shared ubyte locked = 0;
 
     shared bool lock() {
-        bool irqen = irq.enabled();
+        bool irqen = Irq.enabled();
+        Irq.off();
         while (atomic_test_and_set(&locked) != false) {
         }
         return irqen;
@@ -18,7 +19,7 @@ struct Spinlock {
     shared void unlock(bool irqen) {
         atomic_clear(&locked);
         if (irqen)
-            irq.on();
+            Irq.on();
     }
 }
 
