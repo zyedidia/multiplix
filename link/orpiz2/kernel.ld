@@ -2,7 +2,7 @@ ENTRY(_kernel_start)
 
 SECTIONS
 {
-    .text 0xffffffc045000000 : {
+    .text 0xffffffc044000000 : {
         _code_start = .;
         KEEP(*(.text.boot.kernel))
         *(.text*) 

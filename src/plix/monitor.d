@@ -31,5 +31,5 @@ void wakeup_cores() {
     vst(&wakeup, ulong.max);
     sev();
 
-    enable_vm();
+    // enable_vm();
 }

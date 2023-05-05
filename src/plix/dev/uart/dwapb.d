@@ -18,6 +18,12 @@ struct DwApbUart {
         uint baud;
     }
 
+    enum Lsr {
+        dr = 0,   // data ready (receiver has data)
+        temt = 6, // transmitter empty
+        thre = 5, // transmit holding register empty
+    }
+
     Regs* uart;
 
     this(uintptr base) {
@@ -27,35 +33,24 @@ struct DwApbUart {
     void setup(uint baud) {}
 
     bool rx_empty() {
-        return bits.get(vld(&uart.stat), 0) == 0;
-    }
-
-    uint rx_sz() {
-        return bits.get(vld(&uart.stat), 19, 16);
-    }
-
-    bool can_tx() {
-        return bits.get(vld(&uart.stat), 1) != 0;
+        return !bits.get(vld(&uart.lsr), Lsr.dr);
     }
 
     ubyte rx() {
-        // device_fence();
         while (rx_empty()) {
         }
         ubyte c = vld(&uart.io) & 0xff;
-        // device_fence();
         return c;
     }
 
     void tx(ubyte c) {
-        // device_fence();
+        while (!tx_empty()) {
+        }
         vst(&uart.io, c);
-        // device_fence();
     }
 
     bool tx_empty() {
-        // device_fence();
-        return bits.get(vld(&uart.stat), 9) == 1;
+        return bits.get(vld(&uart.lsr), Lsr.thre) != 0;
     }
 
     void tx_flush() {
