@@ -10,11 +10,10 @@ void uart_putc(ubyte b) {
     uart.tx(b);
 }
 
-// private shared SpinGuard!(Formatter) printer = SpinGuard!(Formatter)(Formatter(&uart_putc));
-private __gshared Formatter printer = Formatter(&uart_putc);
+private shared SpinGuard!(Formatter) printer = SpinGuard!(Formatter)(Formatter(&uart_putc));
 
 void print(Args...)(Args args) {
-    auto p = printer;
+    auto p = printer.lock();
     p.write(args);
 }
 
@@ -31,12 +30,12 @@ extern (C) void printf(const char* fmt, ...) {
 }
 
 extern (C) void vprintf(const char* fmt, va_list ap) {
-    auto p = printer;
+    auto p = printer.lock();
     p.vwritef(fmt, ap);
 }
 
 extern (C) void puts(const(char)* s) {
-    auto p = printer;
+    auto p = printer.lock();
     if (!s)
         s = "(null)".ptr;
     for (; *s; s++)

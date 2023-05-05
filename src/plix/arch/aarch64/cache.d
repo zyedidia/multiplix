@@ -64,3 +64,13 @@ void sysreg_fence() {
         "isb";
     }
 }
+
+pragma(inline, true)
+void vm_fence() {
+    asm {
+        "dsb ish" ::: "memory";
+        "tlbi vmalle1" ::: "memory";
+        "dsb ish" ::: "memory";
+        "isb" ::: "memory";
+    }
+}
