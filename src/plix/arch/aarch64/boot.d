@@ -1,7 +1,7 @@
 module plix.arch.aarch64.boot;
 
 import plix.arch.aarch64.sysreg : SysReg, Tcr, Sctlr, Mair;
-import plix.arch.aarch64.vm : Pagetable, Pte;
+import plix.arch.aarch64.vm : Pagetable, PtLevel;
 import plix.arch.aarch64.cache : sysreg_fence;
 
 import plix.alloc.bump : BumpAlloc;
@@ -34,8 +34,8 @@ void kernel_setup(bool primary) {
     if (primary) {
         void map_region(Machine.MemRange range, Pagetable* pt) {
             for (usize addr = range.start; addr < range.start + range.sz; addr += sys.mb!(2)) {
-                ensure(pt.map(addr, addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &ptalloc));
-                ensure(pt.map(pa2hka(addr), addr, Pte.Pg.mega, Perm.r | Perm.w | Perm.x, &ptalloc));
+                ensure(pt.map(addr, addr, PtLevel.mega, Perm.r | Perm.w | Perm.x, &ptalloc));
+                ensure(pt.map(pa2hka(addr), addr, PtLevel.mega, Perm.r | Perm.w | Perm.x, &ptalloc));
             }
         }
 

@@ -1,5 +1,7 @@
 module plix.arch.riscv64.regs;
 
+import plix.arch.riscv64.vm : Pagetable;
+
 struct Regs {
     ulong ra;
     ulong sp;
@@ -57,6 +59,12 @@ struct Context {
     ulong s11;
 
     ulong satp;
+
+    this(ulong sp, ulong ra, Pagetable* pt) {
+        this.sp = sp;
+        this.ra = ra;
+        this.satp = pt.satp(0);
+    }
 }
 
 ulong rdgp() {

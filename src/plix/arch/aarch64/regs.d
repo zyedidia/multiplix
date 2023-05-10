@@ -1,5 +1,7 @@
 module plix.arch.aarch64.regs;
 
+import plix.arch.aarch64.vm : Pagetable;
+
 struct Regs {
     ulong x0;
     ulong x1;
@@ -56,7 +58,9 @@ struct Context {
     ulong x27;
     ulong x28;
 
-    void retaddr(uintptr addr) {
-        lr = addr;
+    this(ulong sp, ulong ra, Pagetable* pt) {
+        this.sp = sp;
+        this.lr = ra;
+        cast(void) pt;
     }
 }

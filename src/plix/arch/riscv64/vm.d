@@ -135,22 +135,7 @@ struct Pagetable {
     Pte* walk(uintptr va, ref PtLevel endlevel) {
         return walk(va, endlevel, null);
     }
-
-    // Recursively free all pagetable pages.
-    void free(PtLevel level = PtLevel.max) {
-        for (int i = 0; i < ptes.length; i++) {
-            Pte* pte = &ptes[i];
-            if (pte.valid && pte.leaf(level)) {
-                pte.data = 0;
-            } else if (pte.valid) {
-                Pagetable* child = cast(Pagetable*) pa2ka(pte.pa);
-                child.free(cast(PtLevel) (level - 1));
-                kfree(child);
-                pte.data = 0;
-            }
-        }
-    }
-
+    
     bool map(uintptr va, uintptr pa, PtLevel pgtyp, Perm perm) {
         return map(va, pa, pgtyp, perm, &knew!(Pagetable));
     }
@@ -187,6 +172,21 @@ struct Pagetable {
     uintptr satp(uint asid) {
         uintptr val = bits.write(pn(), 59, 44, asid);
         return bits.write(val, 63, 60, VmMode.sv39);
+    }
+
+    // Recursively free all pagetable pages.
+    void free(PtLevel level = PtLevel.max) {
+        for (int i = 0; i < ptes.length; i++) {
+            Pte* pte = &ptes[i];
+            if (pte.valid && pte.leaf(level)) {
+                pte.data = 0;
+            } else if (pte.valid) {
+                Pagetable* child = cast(Pagetable*) pa2ka(pte.pa);
+                child.free(cast(PtLevel) (level - 1));
+                kfree(child);
+                pte.data = 0;
+            }
+        }
     }
 
     // Converts a level type to the size of the region that the level maps.

@@ -58,3 +58,9 @@ enum Perm {
     urw  = u | rw,
     urwx = urw | x,
 }
+
+import plix.arch.vm : Pagetable, PtLevel;
+
+bool mappg(Pagetable* pt, usize va, ubyte* page, Perm perm) {
+    return pt.map(va, ka2pa(cast(uintptr) page), PtLevel.normal, perm);
+}

@@ -17,6 +17,15 @@ enum PtPerm {
     u,
 }
 
+enum PtLevel {
+    normal = 0,
+    mega = 1,
+    giga = 2,
+
+    min = normal,
+    max = giga,
+}
+
 struct Pte {
     ulong data;
 
@@ -50,8 +59,8 @@ struct Pte {
         addr = pa >> 12;
     }
 
-    bool leaf(Pte.Pg level) {
-        if (level == Pte.Pg.normal) {
+    bool leaf(PtLevel level) {
+        if (level == PtLevel.normal) {
             return true;
         }
         return !this.table;
@@ -85,15 +94,6 @@ struct Pte {
             p |= Perm.cow;
         return p;
     }
-
-    enum Pg {
-        normal = 0,
-        mega = 1,
-        giga = 2,
-
-        min = normal,
-        max = giga,
-    }
 }
 
 private uintptr vpn(uint level, uintptr va) {
@@ -105,10 +105,10 @@ struct Pagetable {
 
     // Lookup the pte corresponding to 'va'. Stops after the corresponding
     // level. If 'alloc' is true, allocates new pagetables as necessary.
-    Pte* walk(uintptr va, ref Pte.Pg endlevel, Pagetable* function() ptalloc) {
+    Pte* walk(uintptr va, ref PtLevel endlevel, Pagetable* function() ptalloc) {
         Pagetable* pt = &this;
 
-        for (Pte.Pg level = Pte.Pg.max; level > endlevel; level--) {
+        for (PtLevel level = PtLevel.max; level > endlevel; level--) {
             Pte* pte = &pt.ptes[vpn(level, va)];
             if (pte.valid && !pte.table) {
                 endlevel = level;
@@ -134,32 +134,32 @@ struct Pagetable {
         return &pt.ptes[vpn(endlevel, va)];
     }
 
-    Pte* walk(uintptr va, ref Pte.Pg endlevel) {
+    Pte* walk(uintptr va, ref PtLevel endlevel) {
         return walk(va, endlevel, null);
     }
 
     // Recursively free all pagetable pages.
-    void free(Pte.Pg level = Pte.Pg.max) {
+    void free(PtLevel level = PtLevel.max) {
         for (int i = 0; i < ptes.length; i++) {
             Pte* pte = &ptes[i];
             if (pte.valid && pte.leaf(level)) {
                 pte.data = 0;
             } else if (pte.valid) {
                 Pagetable* child = cast(Pagetable*) pa2ka(pte.pa);
-                child.free(cast(Pte.Pg) (level - 1));
+                child.free(cast(PtLevel) (level - 1));
                 kfree(child);
                 pte.data = 0;
             }
         }
     }
 
-    bool map(uintptr va, uintptr pa, Pte.Pg pgtyp, Perm perm) {
+    bool map(uintptr va, uintptr pa, PtLevel pgtyp, Perm perm) {
         return map(va, pa, pgtyp, perm, &knew!(Pagetable));
     }
 
     // Map 'va' to 'pa' with the given page size and permissions. Returns false
     // if allocation failed.
-    bool map(uintptr va, uintptr pa, Pte.Pg pgtyp, Perm perm, Pagetable* function() ptalloc) {
+    bool map(uintptr va, uintptr pa, PtLevel pgtyp, Perm perm, Pagetable* function() ptalloc) {
         Pte* pte = walk(va, pgtyp, ptalloc);
         if (!pte) {
             return false;
@@ -167,7 +167,7 @@ struct Pagetable {
         pte.pa = pa;
         pte.perm = perm;
         pte.valid = 1;
-        if (pgtyp == Pte.Pg.normal) {
+        if (pgtyp == PtLevel.normal) {
             // last level PTEs need this bit enabled (confusing)
             pte.table = 1;
         } else {
@@ -192,11 +192,11 @@ struct Pagetable {
         ptes[idx].index = Machine.mem_type(pa);
     }
 
-    static usize level2size(Pte.Pg type) {
+    static usize level2size(PtLevel type) {
         final switch (type) {
-            case Pte.Pg.normal: return 4096;
-            case Pte.Pg.mega: return sys.mb!(2);
-            case Pte.Pg.giga: return sys.gb!(1);
+            case PtLevel.normal: return 4096;
+            case PtLevel.mega: return sys.mb!(2);
+            case PtLevel.giga: return sys.gb!(1);
         }
     }
 }

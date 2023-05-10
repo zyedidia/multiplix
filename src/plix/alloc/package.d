@@ -21,6 +21,15 @@ ubyte[] kalloc(usize sz) {
     return p[0 .. sz];
 }
 
+ubyte[] kzalloc(usize sz) {
+    import builtins : memset;
+    ubyte[] mem = kalloc(sz);
+    if (!mem)
+        return null;
+    memset(mem.ptr, 0, mem.length);
+    return mem;
+}
+
 T* knew(T, Args...)(Args args) {
     auto kr = kr.lock();
     T* p = cast(T*) kr.alloc(T.sizeof);
