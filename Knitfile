@@ -369,5 +369,5 @@ return b{
         $(tools.gdb) -ex "file $(inputs[2])" -ex "target remote localhost:1234"
 
     $ lint:VB:
-        dscanner --styleCheck $(src.core()) $(src.libplix()) $(src.boot()) --config .dscanner.ini $(inc) --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
+        dscanner --styleCheck $(src.core()) $(src.libplix()) $(src.boot()) $(src.kernel()) --config .dscanner.ini $(inc) --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 }
