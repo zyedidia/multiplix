@@ -1,7 +1,7 @@
 module plix.syscall;
 
 import plix.proc : Proc;
-import plix.print : printf;
+import plix.print : printf, print;
 
 enum Sys {
     WRITE  = 0,
@@ -101,5 +101,31 @@ int read(Proc* p, int fd, uintptr addr, usize sz) {
 }
 
 long write(Proc* p, int fd, uintptr addr, usize sz) {
-    assert(false, "unimplemented");
+    if (sz == 0) {
+        return 0;
+    }
+
+    // Validate buffer.
+    usize overflow = addr + sz;
+    if (overflow < addr || addr >= Proc.MAX_VA) {
+        return Err.FAULT;
+    }
+
+    // TODO: validate
+    // for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
+    //     auto vmap = p.pt.lookup(va);
+    //     if (!vmap.has() || !vmap.get().user) {
+    //         return Err.E_FAULT;
+    //     }
+    // }
+
+    // TODO: We only support console stdout for now.
+    if (fd != 1) {
+        return Err.BADF;
+    }
+
+    string buf = cast(string) (cast(ubyte*) addr)[0 .. sz];
+    print(buf);
+
+    return sz;
 }
