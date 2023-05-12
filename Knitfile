@@ -345,7 +345,7 @@ return b{
     $ $objdir/lib/config.kernel.o: lib/config.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(version("kernel"))
 
-    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$(di(src.core())) $(di(src.libplix())) $(di(src.boot())) $(di(src.kernel()))]][I]
+    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
     $ $objdir/%.asm.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
