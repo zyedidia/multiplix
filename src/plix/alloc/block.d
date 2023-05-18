@@ -53,7 +53,6 @@ struct BlockAllocator(A) {
     Header*[nblocks] full_blocks;
 
     void* alloc(size_t sz) {
-        size_t objsz = sz;
         // make sure the size is at least as large as a Free pointer.
         sz = sz < (Free*).sizeof ? sz = (Free*).sizeof : sz;
         // make sure size is a power of 2.
@@ -110,7 +109,7 @@ struct BlockAllocator(A) {
         if (cast(uintptr) val % sys.pagesize == 0) {
             // Page-aligned value must have been allocated by the underlying
             // allocator, so free it there.
-            size_t size = allocator.free(val);
+            allocator.free(val);
             return;
         }
 
