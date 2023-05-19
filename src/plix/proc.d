@@ -7,6 +7,7 @@ import plix.arch.regs : Context;
 import plix.arch.trap : Trapframe, usertrapret;
 import plix.elf : loadelf;
 import plix.vm : mappg, Perm;
+import plix.schedule : Queue;
 
 import sys = plix.sys;
 
@@ -36,6 +37,9 @@ struct Proc {
     uint children;
 
     ProcState state;
+
+    Proc* next;
+    Proc* prev;
 
     uint canary;
     align(16) ubyte[3008] kstack;
@@ -95,6 +99,26 @@ struct Proc {
     // Returns the top of the kernel stack.
     uintptr kstackp() {
         return cast(uintptr) &kstack[$-16];
+    }
+
+    void yield() {
+
+    }
+
+    void block(Queue* queue) {
+
+    }
+
+    void exit(Queue* queue) {
+
+    }
+
+    void wait(Queue* queue, ProcState state) {
+
+    }
+
+    void unblock() {
+
     }
 
     static void forkret(Proc* p) {

@@ -1,8 +1,10 @@
 module kernel.main;
 
-import plix.print : printf;
+import plix.print : printf, println;
 import plix.fwi : wakeup_cores;
 import plix.timer : Timer;
+
+immutable ubyte[] hello = cast(immutable ubyte[]) import("user/hello/hello.elf");
 
 extern (C) void kmain(uint coreid, bool primary) {
     if (primary) {
@@ -14,9 +16,4 @@ extern (C) void kmain(uint coreid, bool primary) {
     if (!primary) {
         return;
     }
-
-    Timer.delay_ms(100);
-    auto cycles = Timer.cycles();
-    Timer.delay_ms(500);
-    printf("%ld\n", Timer.cycles() - cycles);
 }

@@ -1,0 +1,13 @@
+local darch = sel(machine.arch == "aarch64", "-DAARCH64", "-DRISCV64")
+
+return b{
+    $ hello.elf: hello.dbg.elf
+        cp $input $output
+        $(tools.strip) $output
+    $ hello.dbg.elf: hello.c ../syslib/syslib.c ../syslib/syscall.h[I] ../../link/user.ld[I]
+        $(tools.cc) $(flags.cc) $input -o $output -I../syslib -nostdlib -T../../link/user.ld $darch -ffunction-sections -fdata-sections -Wl,--gc-sections -lc -lgcc
+    $ hello.bin: hello.elf
+        $(tools.objcopy) $input -O binary $output
+    $ hello.list: hello.dbg.elf
+        $(tools.objdump) -D $input > $output
+}

@@ -11,6 +11,13 @@ void wfe() {
 }
 
 pragma(inline, true)
+void wfi() {
+    asm {
+        "wfi";
+    }
+}
+
+pragma(inline, true)
 void sev() {
     asm {
         "sev";

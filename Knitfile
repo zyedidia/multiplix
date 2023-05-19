@@ -124,7 +124,7 @@ end
 
 opt = getopt(conf.profile)
 
-local machine = machines[conf.board]
+machine = machines[conf.board]
 if machine == nil then
     error("invalid board: " .. conf.board)
 end
@@ -194,12 +194,12 @@ end
 lto = getlto(machine)
 
 function gdc(machine)
-    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", ""))
+    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", "")) -J.
     return f
 end
 
 function ldc(machine)
-    local f := $(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version(machine.board)) $(sel(opt.lto, "-flto=full", ""))
+    local f := $(llvm(machine)) -betterC -$(opt.level) -g -function-sections -data-sections -fvisibility=hidden $(version(machine.board)) $(sel(opt.lto, "-flto=full", "")) -J.
     return f
 end
 
@@ -370,4 +370,6 @@ return b{
 
     $ lint:VB:
         dscanner --styleCheck $(src.core()) $(src.libplix()) $(src.boot()) $(src.kernel()) --config .dscanner.ini $(inc) --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
+
+    include("user/hello/build.knit"),
 }
