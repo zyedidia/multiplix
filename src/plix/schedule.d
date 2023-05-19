@@ -78,14 +78,14 @@ Proc* runnable_proc() {
 extern (C) void kswitch(Proc* p, Context* oldctx, Context* newctx);
 
 __gshared Queue* runq;
-__gshared Context schedctx;
+__gshared Context scheduler;
 
-void scheduler() {
+void schedule() {
     while (true) {
         Proc* p = runnable_proc();
 
         Irq.off();
-        kswitch(p, &schedctx, &p.context);
+        kswitch(p, &scheduler, &p.context);
 
         if (p.state == ProcState.runnable) {
             runq.push_front(p);
