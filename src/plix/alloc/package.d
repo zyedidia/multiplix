@@ -56,7 +56,12 @@ void kfree(void* ptr, usize size) {
     alloc.free(ptr, size);
 }
 
-void kfree(T)(T[] arr) if (!is(T == struct)) {
+void kfree(T)(T[] arr) {
+    static if (HasDtor!(T)) {
+        foreach (ref val; arr) {
+            val.__xdtor();
+        }
+    }
     auto alloc = alloc.lock();
     alloc.free(cast(void*) arr.ptr, arr.length * T.sizeof);
 }

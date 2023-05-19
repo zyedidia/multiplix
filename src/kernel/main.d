@@ -20,8 +20,7 @@ extern (C) void kmain(uint coreid, bool primary) {
         return;
     }
 
-    printf("%p\n", &_heap_start);
-    kallocinit(&_heap_start, 8 * 4096);
+    kallocinit(&_heap_start, 8192 * 2);
     {
         ubyte[] x = kalloc(16);
         printf("%p\n", x.ptr);
@@ -29,22 +28,5 @@ extern (C) void kmain(uint coreid, bool primary) {
     {
         ubyte[] x = kalloc(16);
         printf("%p\n", x.ptr);
-    }
-    {
-        ubyte[] x = kalloc(4096);
-        printf("%p\n", x.ptr);
-        kfree(x);
-    }
-    {
-        ubyte[] x = kalloc(4096);
-        printf("%p\n", x.ptr);
-    }
-    {
-        ubyte[] x = kalloc(8192);
-        printf("8192: %p\n", x.ptr);
-    }
-    {
-        ubyte[] x = kalloc(8192);
-        printf("8192: %p\n", x.ptr);
     }
 }
