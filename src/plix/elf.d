@@ -99,7 +99,7 @@ bool loadelf(Pagetable* pt, ubyte* elfdat, out uintptr entry, out uintptr brk) {
             // Set the rest of the data to 0.
             memset(mem + written, 0, sys.pagesize - written);
             if (!pt.mappg(va, mem, Perm.urwx)) {
-                kfree(mem);
+                kfree(mem, sys.pagesize);
                 return false;
             }
 

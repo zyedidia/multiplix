@@ -1,20 +1,20 @@
 module plix.alloc;
 
-import plix.alloc.kr : KrAlloc;
+import plix.alloc.buddy : BuddyAlloc;
 import plix.spinlock : SpinGuard;
 
 import core.emplace : emplace_init, HasDtor;
 
-private shared SpinGuard!(KrAlloc!(16)) kr;
+private shared SpinGuard!(BuddyAlloc!(10)) alloc;
 
 void kallocinit(ubyte* heap_start, usize size) {
-    auto kr = kr.lock();
-    kr.val.__ctor(heap_start, size);
+    auto alloc = alloc.lock();
+    alloc.val.initialize(heap_start[0 .. size]);
 }
 
 ubyte[] kalloc(usize sz) {
-    auto kr = kr.lock();
-    ubyte* p = cast(ubyte*) kr.alloc(sz);
+    auto alloc = alloc.lock();
+    ubyte* p = cast(ubyte*) alloc.alloc(sz);
     if (!p) {
         return null;
     }
@@ -31,22 +31,32 @@ ubyte[] kzalloc(usize sz) {
 }
 
 T* knew(T, Args...)(Args args) {
-    auto kr = kr.lock();
-    T* p = cast(T*) kr.alloc(T.sizeof);
+    auto alloc = alloc.lock();
+    T* p = cast(T*) alloc.alloc(T.sizeof);
     if (!p) {
         return null;
     }
     if (!emplace_init(p, args)) {
-        kr.free(p);
+        alloc.free(cast(void*) p, T.sizeof);
         return null;
     }
     return p;
 }
 
-void kfree(T)(T* ptr) {
+void kfree(T)(T* ptr) if (is(T == struct)) {
     static if (HasDtor!(T)) {
         ptr.__xdtor();
     }
-    auto kr = kr.lock();
-    kr.free(cast(void*) ptr);
+    auto alloc = alloc.lock();
+    alloc.free(cast(void*) ptr, T.sizeof);
+}
+
+void kfree(void* ptr, usize size) {
+    auto alloc = alloc.lock();
+    alloc.free(ptr, size);
+}
+
+void kfree(T)(T[] arr) if (!is(T == struct)) {
+    auto alloc = alloc.lock();
+    alloc.free(cast(void*) arr.ptr, arr.length * T.sizeof);
 }

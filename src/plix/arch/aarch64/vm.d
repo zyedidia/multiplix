@@ -147,7 +147,7 @@ struct Pagetable {
             } else if (pte.valid) {
                 Pagetable* child = cast(Pagetable*) pa2ka(pte.pa);
                 child.free(cast(PtLevel) (level - 1));
-                kfree(child);
+                kfree(child, Pagetable.sizeof);
                 pte.data = 0;
             }
         }
