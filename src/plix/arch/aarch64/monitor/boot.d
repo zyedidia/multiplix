@@ -32,13 +32,13 @@ void enter_el1() {
     SysReg.mair_el1 = SysReg.mair_el2;
     SysReg.tcr_el1 = SysReg.tcr_el2;
     // Enable all debug exceptions in kernel mode.
-    // SysReg.mdscr_el1 = SysReg.mdscr_el1 | Mdscr.mde;
+    SysReg.mdscr_el1 = SysReg.mdscr_el1 | Mdscr.mde;
     // Route debug exceptions to EL2.
-    // SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;
+    SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;
     // Clear the OS lock.
-    // SysReg.oslar_el1 = 0;
+    SysReg.oslar_el1 = 0;
     // Enable SIMD/FP in kernel.
-    // SysReg.cpacr_el1 = bits.write(SysReg.cpacr_el1, 21, 20, 0b11);
+    SysReg.cpacr_el1 = bits.write(SysReg.cpacr_el1, 21, 20, 0b11);
 
     _enter_el1();
 }

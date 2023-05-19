@@ -45,7 +45,7 @@ struct Proc {
     align(16) ubyte[3008] kstack;
     static assert(kstack.length % 16 == 0);
 
-    static Proc* new_empty() {
+    static Proc* make_empty() {
         Pagetable* pgtbl = knew!(Pagetable)();
         if (!pgtbl)
             return null;
@@ -64,8 +64,8 @@ struct Proc {
         return p;
     }
 
-    static Proc* new_from_elf(ubyte[] bin) {
-        Proc* p = Proc.new_empty();
+    static Proc* make_from_elf(ubyte[] bin) {
+        Proc* p = Proc.make_empty();
         if (!p)
             return null;
 

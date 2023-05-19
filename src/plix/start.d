@@ -3,6 +3,7 @@ module plix.start;
 import plix.cpu : init_cpu;
 import plix.board : setup;
 import plix.timer : Timer;
+import plix.arch.trap : Irq;
 
 extern (C) {
     extern __gshared uint _bss_start, _bss_end;
@@ -20,6 +21,8 @@ extern (C) {
 
         // board-specific setup
         setup();
+        // setup trap handler
+        Irq.setup();
 
         kmain(coreid, primary);
     }

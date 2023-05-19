@@ -11,7 +11,7 @@ import plix.vm : ka2pa;
 import bits = core.bits;
 
 struct Irq {
-    static void set_handler(void function() handler) {
+    static void setup() {
         SysReg.vbar_el1 = cast(uintptr) &kernelvec;
     }
 

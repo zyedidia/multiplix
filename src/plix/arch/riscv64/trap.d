@@ -11,8 +11,8 @@ import plix.trap : irq_handler, pgflt_handler, unhandled, IrqType, FaultType;
 import plix.syscall : syscall_handler;
 
 struct Irq {
-    static void set_handler(void function() handler) {
-        Csr.stvec = cast(uintptr) &handler;
+    static void setup() {
+        Csr.stvec = cast(uintptr) &kernelvec;
     }
 
     static void on() {
