@@ -329,7 +329,7 @@ return b{
     $ $objdir/src/boot/payload.o: src/boot/payload.s kernel.payload
         $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(inputs[2])
 
-    $ $depdir/%.di: %.d
+    $ $depdir/%.di: %.d user/hello/hello.elf[I]
         $(tools.dc) $(flags.dc) $(noobj()) -Hf $output $input -O0
 
     $ $objdir/core.o: $(src.core())
@@ -345,7 +345,7 @@ return b{
     $ $objdir/lib/config.kernel.o: lib/config.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(version("kernel"))
 
-    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I]
+    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I] user/hello/hello.elf[I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
     $ $objdir/%.asm.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output

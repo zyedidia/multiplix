@@ -75,7 +75,7 @@ Proc* runnable_proc() {
     }
 }
 
-extern (C) Proc* kswitch(Proc* p, Context* oldctx, Context* newctx);
+extern (C) void kswitch(Proc* p, Context* oldctx, Context* newctx);
 
 __gshared Queue* runq;
 __gshared Context schedctx;
