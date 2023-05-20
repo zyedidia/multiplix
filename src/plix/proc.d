@@ -123,7 +123,11 @@ struct Proc {
     }
 
     ~this() {
-        // TODO
+        import plix.print;
+        printf("%d: destroyed\n", pid);
+        foreach (ref map; PtIter.get(pt)) {
+            kfree(map.pg());
+        }
     }
 
     // Returns the top of the kernel stack.

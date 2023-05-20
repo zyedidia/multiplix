@@ -56,7 +56,6 @@ extern (C) {
 
 extern (C) noreturn user_interrupt(Proc* p) {
     irq_handler(p, IrqType.timer);
-    // TODO: yield process
     usertrapret(p);
 }
 
