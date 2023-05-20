@@ -17,6 +17,9 @@ enum ProcState {
     exited,
 }
 
+// TODO: synchronization
+__gshared int next_pid;
+
 struct Proc {
     // Virtual address of the user stack.
     enum STACK_VA = 0x7fff0000;
@@ -59,6 +62,7 @@ struct Proc {
             return null;
         }
 
+        p.pid = next_pid++;
         p.pt = pgtbl;
         p.context = Context(p.kstackp(), cast(uintptr) &Proc.forkret, pgtbl);
 

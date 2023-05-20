@@ -64,3 +64,79 @@ import plix.arch.vm : Pagetable, PtLevel;
 bool mappg(Pagetable* pt, usize va, ubyte* page, Perm perm) {
     return pt.map(va, ka2pa(cast(uintptr) page), PtLevel.normal, perm);
 }
+
+import plix.arch.vm : Pagetable, Pte, PtLevel;
+import plix.proc : Proc;
+import core.option;
+
+struct VaMapping {
+    Pte* pte;
+    uintptr va_;
+
+    uintptr va() {
+        return va_;
+    }
+
+    uintptr pa() {
+        return pte.pa;
+    }
+
+    Perm perm() {
+        return pte.perm;
+    }
+
+    ubyte[] pg() {
+        return (cast(ubyte*) pa2ka(pte.pa))[0 .. sys.pagesize];
+    }
+
+    ubyte* pg_raw() {
+        return cast(ubyte*) pa2ka(pte.pa);
+    }
+}
+
+struct PtIter {
+    usize idx;
+    uintptr va;
+    Pte* pte;
+    Pagetable* pt;
+
+    static PtIter get(Pagetable* pt) {
+        return PtIter(0, 0, null, pt);
+    }
+
+    bool advance() {
+        if (va >= Proc.MAX_VA) {
+            return false;
+        }
+
+        PtLevel lvl = PtLevel.normal;
+        Pte* entry = pt.walk(va, lvl);
+        if (entry) {
+            if (lvl != PtLevel.normal || !entry.valid()) {
+                pte = null;
+            } else {
+                pte = entry;
+            }
+            va += Pagetable.level2size(lvl);
+        } else {
+            pte = null;
+            va = Pagetable.level2size(PtLevel.normal);
+        }
+        return true;
+    }
+
+    Option!(VaMapping) next() {
+        uintptr va = this.va;
+        if (!advance()) {
+            return Option!(VaMapping).none;
+        }
+
+        while (!pte) {
+            va = this.va;
+            if (!advance()) {
+                return Option!(VaMapping).none;
+            }
+        }
+        return Option!(VaMapping)(VaMapping(pte, va));
+    }
+}

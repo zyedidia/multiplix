@@ -32,9 +32,11 @@ extern (C) void kmain(uint coreid, bool primary) {
     import builtins : memcpy;
     memcpy(hello.ptr, hello_data.ptr, hello.length);
 
-    Proc* proc = Proc.make_from_elf(hello);
-    ensure(proc != null);
-    runq.push_front(proc);
+    for (int i = 0; i < 2; i++) {
+        Proc* proc = Proc.make_from_elf(hello);
+        ensure(proc != null);
+        runq.push_front(proc);
+    }
 
     Timer.intr(Timer.time_slice);
     Irq.on();
