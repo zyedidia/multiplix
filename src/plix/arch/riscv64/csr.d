@@ -19,13 +19,13 @@ static void ` ~ name ~ `(uintptr v) {
 pragma(inline, true)
 static void ` ~ name ~ `_set(ubyte bit)() if (bit < 32) {
     asm {
-        "csrrs zero, ` ~ name ~ `, %0" : : "i"(bit);
+        "csrrs zero, ` ~ name ~ `, %0" : : "r"(1 << bit);
     }
 }
 pragma(inline, true)
 static void ` ~ name ~ `_clear(ubyte bit)() if (bit < 32) {
     asm {
-        "csrrc zero, ` ~ name ~ `, %0" : : "i"(bit);
+        "csrrc zero, ` ~ name ~ `, %0" : : "r"(1 << bit);
     }
 }
 `;

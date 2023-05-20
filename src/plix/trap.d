@@ -1,7 +1,8 @@
 module plix.trap;
 
-import plix.arch.timer : Timer;
+import plix.timer : Timer;
 import plix.proc : Proc;
+import plix.schedule : ticks_queue;
 
 enum IrqType {
     timer,
@@ -9,12 +10,17 @@ enum IrqType {
 
 void irq_handler(IrqType irq) {
     if (irq == IrqType.timer) {
-        Timer.intr(Timer.time_slice_us);
+        ticks_queue.wake_all();
+        Timer.intr(Timer.time_slice);
     }
 }
 
 void irq_handler(Proc* p, IrqType irq) {
     irq_handler(irq);
+
+    if (irq == IrqType.timer) {
+        p.yield();
+    }
 }
 
 enum FaultType {

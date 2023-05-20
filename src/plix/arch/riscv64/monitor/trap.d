@@ -13,11 +13,11 @@ extern (C) void monitortrap(Regs* regs) {
     switch (mcause) {
     case Cause.ecall_s, Cause.ecall_m:
         Csr.mepc = mepc + 4;
-        cast(void) fwi_handler(regs.a7);
+        cast(void) fwi_handler(regs.a7, regs.a0);
         break;
     case Cause.mti:
-        Csr.mie = bits.clear(Csr.mie, Mie.mtie);
-        Csr.mip = Csr.mip | (1 << Mip.stip);
+        Csr.mie_clear!(Mie.mtie)();
+        Csr.mip_set!(Mip.stip)();
         break;
     case Cause.breakpoint:
         break;

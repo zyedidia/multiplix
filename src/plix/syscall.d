@@ -2,6 +2,7 @@ module plix.syscall;
 
 import plix.proc : Proc;
 import plix.print : printf, print;
+import plix.schedule : exit_queue, ticks_queue;
 
 enum Sys {
     WRITE  = 0,
@@ -85,7 +86,10 @@ int wait(Proc* p) {
 }
 
 noreturn exit(Proc* p) {
-    assert(false, "unimplemented");
+    printf("%d: exited\n", p.pid);
+    p.exit(&exit_queue);
+    p.yield();
+    assert(0, "exited process resumed");
 }
 
 uintptr sbrk(Proc* p, int incr) {
@@ -93,7 +97,17 @@ uintptr sbrk(Proc* p, int incr) {
 }
 
 void usleep(Proc* p, ulong us) {
-    assert(false, "unimplemented");
+    import plix.timer : Timer;
+
+    ulong start = Timer.time();
+
+    while (true) {
+        if (Timer.us_since(start) >= us) {
+            break;
+        }
+        p.block(&ticks_queue);
+        p.yield();
+    }
 }
 
 int read(Proc* p, int fd, uintptr addr, usize sz) {

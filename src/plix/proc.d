@@ -37,6 +37,7 @@ struct Proc {
     uint children;
 
     ProcState state;
+    void* wq;
 
     Proc* next;
     Proc* prev;
@@ -102,23 +103,29 @@ struct Proc {
     }
 
     void yield() {
+        import plix.arch.trap : Irq;
+        import plix.schedule : scheduler, kswitch;
 
+        assert(!Irq.enabled());
+        kswitch(null, &this.context, &scheduler);
     }
 
     void block(Queue* queue) {
-
+        wait(queue, ProcState.blocked);
     }
 
     void exit(Queue* queue) {
-
+        wait(queue, ProcState.exited);
     }
 
     void wait(Queue* queue, ProcState state) {
-
+        this.state = state;
+        this.wq = cast(void*) queue;
+        queue.push_front(&this);
     }
 
     void unblock() {
-
+        wq = null;
     }
 
     static void forkret(Proc* p) {

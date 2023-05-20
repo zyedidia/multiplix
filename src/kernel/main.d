@@ -6,6 +6,7 @@ import plix.timer : Timer;
 import plix.alloc : kallocinit, kalloc, kfree;
 import plix.proc : Proc;
 import plix.schedule : runq, schedule;
+import plix.arch.trap : Irq;
 
 import plix.sys : mb;
 
@@ -34,6 +35,9 @@ extern (C) void kmain(uint coreid, bool primary) {
     Proc* proc = Proc.make_from_elf(hello);
     ensure(proc != null);
     runq.push_front(proc);
+
+    Timer.intr(Timer.time_slice);
+    Irq.on();
 
     schedule();
 }

@@ -18,10 +18,20 @@ struct Timer {
         return clint.mtime;
     }
 
-    enum time_slice_us = 10000;
-
     static void intr(ulong us) {
-        // ulong next = time() + freq() / 1000000 * us;
-        // Timer.set_timer(next);
+        import plix.fwi : set_timer;
+
+        ulong next = time() + freq() / 1_000_000 * us;
+        set_timer(next);
     }
+}
+
+void monitor_set_timer(ulong stime) {
+    import plix.board : clint;
+    import plix.arch.riscv64.csr : Csr, Mip, Mie;
+    import bits = core.bits;
+
+    clint.wr_mtimecmp(Csr.mhartid, stime);
+    Csr.mip_clear!(Mip.stip)();
+    Csr.mie_set!(Mie.mtie)();
 }

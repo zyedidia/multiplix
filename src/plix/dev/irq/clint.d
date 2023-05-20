@@ -5,9 +5,9 @@ import core.volatile : vld, vst;
 struct Clint {
     uintptr base;
 
-    private enum msip_off = 0x0;
-    private enum mtimecmp_off = 0x4000;
-    private enum mtime_off = 0xbff8;
+    private enum usize msip_off = 0x0;
+    private enum usize mtimecmp_off = 0x4000;
+    private enum usize mtime_off = 0xbff8;
 
     ulong mtime() {
         return vld(cast(ulong*) (base + mtime_off));

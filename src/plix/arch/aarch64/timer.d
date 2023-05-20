@@ -21,10 +21,12 @@ struct Timer {
         return SysReg.pmccntr_el0;
     }
 
-    enum time_slice_us = 10000;
-
     static void intr(ulong us) {
         SysReg.cntp_tval_el0 = freq() / 1_000_000 * us;
         SysReg.cntp_ctl_el0 = 1;
     }
+}
+
+void monitor_set_timer(ulong stime) {
+    Timer.intr(stime);
 }

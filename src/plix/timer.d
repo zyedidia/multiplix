@@ -3,6 +3,8 @@ module plix.timer;
 import arch = plix.arch.timer;
 
 struct Timer {
+    enum time_slice = 10000;
+
     static void setup() {
         arch.Timer.setup();
     }
@@ -52,5 +54,9 @@ struct Timer {
                 "nop";
             }
         }
+    }
+
+    static void intr(ulong us) {
+        arch.Timer.intr(us);
     }
 }

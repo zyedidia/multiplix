@@ -78,6 +78,8 @@ Proc* runnable_proc() {
 extern (C) void kswitch(Proc* p, Context* oldctx, Context* newctx);
 
 __gshared Queue runq;
+__gshared Queue exit_queue;
+__gshared Queue ticks_queue;
 __gshared Context scheduler;
 
 void schedule() {
