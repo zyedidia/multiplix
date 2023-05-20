@@ -44,27 +44,27 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     uintptr ret;
     switch (sysno) {
     case Sys.WRITE:
-        ret = write(p, cast(int) args[0], args[1], args[2]);
+        ret = sys_write(p, cast(int) args[0], args[1], args[2]);
         break;
     case Sys.READ:
-        ret = read(p, cast(int) args[0], args[1], args[2]);
+        ret = sys_read(p, cast(int) args[0], args[1], args[2]);
         break;
     case Sys.GETPID:
-        ret = getpid(p);
+        ret = sys_getpid(p);
         break;
     case Sys.EXIT:
-        exit(p);
+        sys_exit(p);
     case Sys.FORK:
-        ret = fork(p);
+        ret = sys_fork(p);
         break;
     case Sys.WAIT:
-        ret = wait(p);
+        ret = sys_wait(p);
         break;
     case Sys.SBRK:
-        ret = sbrk(p, cast(int) args[0]);
+        ret = sys_sbrk(p, cast(int) args[0]);
         break;
     case Sys.USLEEP:
-        usleep(p, cast(ulong) args[0]);
+        sys_usleep(p, cast(ulong) args[0]);
         break;
     default:
         printf("invalid syscall: %lu\n", sysno);
@@ -73,30 +73,30 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     return ret;
 }
 
-int getpid(Proc* p) {
+int sys_getpid(Proc* p) {
     return p.pid;
 }
 
-int fork(Proc* p) {
+int sys_fork(Proc* p) {
     assert(false, "unimplemented");
 }
 
-int wait(Proc* p) {
+int sys_wait(Proc* p) {
     assert(false, "unimplemented");
 }
 
-noreturn exit(Proc* p) {
+noreturn sys_exit(Proc* p) {
     printf("%d: exited\n", p.pid);
     p.exit(&exit_queue);
     p.yield();
     assert(0, "exited process resumed");
 }
 
-uintptr sbrk(Proc* p, int incr) {
+uintptr sys_sbrk(Proc* p, int incr) {
     return -1;
 }
 
-void usleep(Proc* p, ulong us) {
+void sys_usleep(Proc* p, ulong us) {
     import plix.timer : Timer;
 
     ulong start = Timer.time();
@@ -110,11 +110,11 @@ void usleep(Proc* p, ulong us) {
     }
 }
 
-int read(Proc* p, int fd, uintptr addr, usize sz) {
+int sys_read(Proc* p, int fd, uintptr addr, usize sz) {
     assert(false, "unimplemented");
 }
 
-long write(Proc* p, int fd, uintptr addr, usize sz) {
+long sys_write(Proc* p, int fd, uintptr addr, usize sz) {
     if (sz == 0) {
         return 0;
     }

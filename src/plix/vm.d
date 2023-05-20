@@ -104,6 +104,7 @@ struct PtIter {
         return PtIter(0, 0, null, pt);
     }
 
+    import plix.print;
     bool advance() {
         if (va >= Proc.MAX_VA) {
             return false;
@@ -120,7 +121,7 @@ struct PtIter {
             va += Pagetable.level2size(lvl);
         } else {
             pte = null;
-            va = Pagetable.level2size(PtLevel.normal);
+            va += Pagetable.level2size(PtLevel.normal);
         }
         return true;
     }
@@ -138,5 +139,14 @@ struct PtIter {
             }
         }
         return Option!(VaMapping)(VaMapping(pte, va));
+    }
+
+    int opApply(scope int delegate(ref VaMapping) dg) {
+        for (auto map = next(); map.has(); map = next()) {
+            VaMapping m = map.get();
+            int r = dg(m);
+            if (r) return r;
+        }
+        return 0;
     }
 }
