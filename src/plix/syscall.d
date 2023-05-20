@@ -1,8 +1,9 @@
 module plix.syscall;
 
-import plix.proc : Proc;
+import plix.proc : Proc, ProcState;
 import plix.print : printf, print;
-import plix.schedule : exit_queue, ticks_queue;
+import plix.schedule : exit_queue, ticks_queue, wait_queue, runq;
+import plix.alloc: kfree;
 
 enum Sys {
     WRITE  = 0,
@@ -78,15 +79,45 @@ int sys_getpid(Proc* p) {
 }
 
 int sys_fork(Proc* p) {
-    assert(false, "unimplemented");
+    Proc* child = Proc.make_from_parent(p);
+    if (!child) {
+        return Err.NOMEM;
+    }
+    child.trapframe.regs.retval = 0;
+    p.children++;
+
+    int pid = child.pid;
+    runq.push_front(child);
+    return pid;
 }
 
 int sys_wait(Proc* p) {
-    assert(false, "unimplemented");
+    if (p.children == 0)
+        return Err.CHILD;
+
+    while (true) {
+        foreach (ref zombie; exit_queue) {
+            if (zombie.parent == p) {
+                int pid = zombie.pid;
+                exit_queue.remove(zombie);
+                kfree(zombie);
+                p.children--;
+                return pid;
+            }
+        }
+
+        p.block(&wait_queue);
+        p.yield();
+    }
 }
 
 noreturn sys_exit(Proc* p) {
     printf("%d: exited\n", p.pid);
+
+    if (p.parent && p.parent.state == ProcState.blocked && p.parent.wq == cast(void*) &wait_queue) {
+        wait_queue.wake(p.parent);
+    }
+
     p.exit(&exit_queue);
     p.yield();
     assert(0, "exited process resumed");

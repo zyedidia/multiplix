@@ -1,12 +1,12 @@
 module plix.proc;
 
-import plix.alloc : knew, kfree, kzalloc;
+import plix.alloc : knew, kfree, kzalloc, kalloc;
 import plix.arch.vm : Pagetable;
 import plix.arch.boot : kernel_procmap;
 import plix.arch.regs : Context;
 import plix.arch.trap : Trapframe, usertrapret;
 import plix.elf : loadelf;
-import plix.vm : mappg, Perm;
+import plix.vm : mappg, Perm, PtIter;
 import plix.schedule : Queue;
 
 import sys = plix.sys;
@@ -65,6 +65,31 @@ struct Proc {
         p.pid = next_pid++;
         p.pt = pgtbl;
         p.context = Context(p.kstackp(), cast(uintptr) &Proc.forkret, pgtbl);
+
+        return p;
+    }
+
+    static Proc* make_from_parent(Proc* parent) {
+        Proc* p = Proc.make_empty();
+        if (!p)
+            return null;
+
+        foreach (ref map; PtIter.get(parent.pt)) {
+            ubyte[] pg = kalloc(sys.pagesize);
+            if (!pg) {
+                kfree(p);
+                return null;
+            }
+            import builtins : memcpy;
+            memcpy(pg.ptr, map.pg.ptr, pg.length);
+            if (!p.pt.mappg(map.va, pg.ptr, map.perm)) {
+                kfree(p);
+                return null;
+            }
+        }
+
+        p.parent = parent;
+        p.trapframe = parent.trapframe;
 
         return p;
     }

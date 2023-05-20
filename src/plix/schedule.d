@@ -58,6 +58,16 @@ struct Queue {
         p.state = ProcState.runnable;
         runq.push_front(p);
     }
+
+    int opApply(scope int delegate(ref Proc*) dg) {
+        Proc* n = front;
+        while (n) {
+            int r = dg(n);
+            if (r) return r;
+            n = n.next;
+        }
+        return 0;
+    }
 }
 
 // Returns the next process available to run, or blocks waiting for a process
@@ -80,6 +90,7 @@ extern (C) void kswitch(Proc* p, Context* oldctx, Context* newctx);
 __gshared Queue runq;
 __gshared Queue exit_queue;
 __gshared Queue ticks_queue;
+__gshared Queue wait_queue;
 __gshared Context scheduler;
 
 void schedule() {
