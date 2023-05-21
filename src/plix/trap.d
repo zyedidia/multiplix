@@ -3,6 +3,8 @@ module plix.trap;
 import plix.timer : Timer;
 import plix.proc : Proc;
 import plix.schedule : ticks_queue;
+import plix.syscall : sys_exit;
+import plix.print : printf;
 
 enum IrqType {
     timer,
@@ -30,8 +32,11 @@ enum FaultType {
 }
 
 void pgflt_handler(Proc* p, void* addr, FaultType fault) {
+    printf("%d: killed (page fault)\n", p.pid);
+    sys_exit(p);
 }
 
 noreturn unhandled(Proc* p) {
-    while (1) {}
+    printf("%d: killed (unhandled)\n", p.pid);
+    sys_exit(p);
 }
