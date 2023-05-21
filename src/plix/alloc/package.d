@@ -3,7 +3,7 @@ module plix.alloc;
 import plix.alloc.buddy : BuddyAlloc;
 import plix.spinlock : SpinGuard;
 
-import core.emplace : emplace_init, HasDtor;
+import core.emplace : emplace_init, HasDtor, HasDestroy;
 
 private shared SpinGuard!(BuddyAlloc!(10)) alloc;
 
@@ -44,6 +44,9 @@ T* knew(T, Args...)(Args args) {
 }
 
 void kfree(T)(T* ptr) if (is(T == struct)) {
+    static if (HasDestroy!(T)) {
+        ptr._destroy();
+    }
     static if (HasDtor!(T)) {
         ptr.__xdtor();
     }
@@ -57,8 +60,11 @@ void kfree(void* ptr, usize size) {
 }
 
 void kfree(T)(T[] arr) {
-    static if (HasDtor!(T)) {
-        foreach (ref val; arr) {
+    foreach (ref val; arr) {
+        static if (HasDestroy!(T)) {
+            val._destroy();
+        }
+        static if (HasDtor!(T)) {
             val.__xdtor();
         }
     }

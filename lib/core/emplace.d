@@ -4,6 +4,7 @@ import builtins : memcpy, memset;
 
 enum HasCtor(T) = __traits(hasMember, T, "__ctor");
 enum HasDtor(T) = __traits(hasMember, T, "__xdtor");
+enum HasDestroy(T) = __traits(hasMember, T, "_destroy");
 
 template emplace_init(T, Args...) {
     // Initializes the memory at `val` as a new value of type T, and calls its

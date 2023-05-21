@@ -122,8 +122,8 @@ struct Proc {
         return p;
     }
 
-    ~this() {
-        import plix.print;
+    void _destroy() {
+        import plix.print : printf;
         printf("%d: destroyed\n", pid);
         foreach (ref map; PtIter.get(pt)) {
             kfree(map.pg());
