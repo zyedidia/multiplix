@@ -3,7 +3,7 @@ module core.memory;
 static import builtins;
 import core.math : min;
 
-void mempcy(ubyte[] dst, ubyte[] src) {
+void memcpy(ubyte[] dst, ubyte[] src) {
     builtins.memcpy(dst.ptr, src.ptr, min(dst.length, src.length));
 }
 
