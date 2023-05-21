@@ -4,6 +4,9 @@ import plix.proc : Proc, ProcState;
 import plix.print : printf, print;
 import plix.schedule : exit_queue, ticks_queue, wait_queue, runq;
 import plix.alloc: kfree;
+import plix.vm : lookup;
+
+import sys = plix.sys;
 
 enum Sys {
     WRITE  = 0,
@@ -156,13 +159,12 @@ long sys_write(Proc* p, int fd, uintptr addr, usize sz) {
         return Err.FAULT;
     }
 
-    // TODO: validate
-    // for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
-    //     auto vmap = p.pt.lookup(va);
-    //     if (!vmap.has() || !vmap.get().user) {
-    //         return Err.E_FAULT;
-    //     }
-    // }
+    for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
+        auto vmap = p.pt.lookup(va);
+        if (!vmap.has() || !vmap.get().user) {
+            return Err.FAULT;
+        }
+    }
 
     // TODO: We only support console stdout for now.
     if (fd != 1) {

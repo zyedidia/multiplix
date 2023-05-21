@@ -67,23 +67,20 @@ bool mappg(Pagetable* pt, usize va, ubyte* page, Perm perm) {
 
 import plix.arch.vm : Pagetable, Pte, PtLevel;
 import plix.proc : Proc;
-import core.option;
+import core.option : Option;
 
 struct VaMapping {
     Pte* pte;
     uintptr va_;
 
-    uintptr va() {
-        return va_;
-    }
-
-    uintptr pa() {
-        return pte.pa;
-    }
-
-    Perm perm() {
-        return pte.perm;
-    }
+    uintptr va() { return va_; }
+    uintptr pa() { return pte.pa; }
+    Perm perm()  { return pte.perm; }
+    bool read()  { return (pte.perm & Perm.r) != 0; }
+    bool write() { return (pte.perm & Perm.w) != 0; }
+    bool exec()  { return (pte.perm & Perm.x) != 0; }
+    bool user()  { return (pte.perm & Perm.u) != 0; }
+    bool cow()   { return (pte.perm & Perm.cow) != 0; }
 
     ubyte[] pg() {
         return (cast(ubyte*) pa2ka(pte.pa))[0 .. sys.pagesize];
@@ -92,6 +89,17 @@ struct VaMapping {
     ubyte* pg_raw() {
         return cast(ubyte*) pa2ka(pte.pa);
     }
+}
+
+// Look up virtual address va in the pagetable.
+Option!(VaMapping) lookup(Pagetable* pt, uintptr va) {
+    PtLevel lvl = PtLevel.normal;
+    Pte* pte = pt.walk(va, lvl);
+    if (!pte || !pte.leaf(lvl)) {
+        return Option!(VaMapping).none;
+    }
+    size_t size = Pagetable.level2size(lvl);
+    return Option!(VaMapping)(VaMapping(pte, va));
 }
 
 struct PtIter {
@@ -104,7 +112,6 @@ struct PtIter {
         return PtIter(0, 0, null, pt);
     }
 
-    import plix.print;
     bool advance() {
         if (va >= Proc.MAX_VA) {
             return false;
