@@ -98,7 +98,6 @@ Option!(VaMapping) lookup(Pagetable* pt, uintptr va) {
     if (!pte || !pte.leaf(lvl)) {
         return Option!(VaMapping).none;
     }
-    size_t size = Pagetable.level2size(lvl);
     return Option!(VaMapping)(VaMapping(pte, va));
 }
 
