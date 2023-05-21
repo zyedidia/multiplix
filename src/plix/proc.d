@@ -122,13 +122,16 @@ struct Proc {
         return p;
     }
 
-    void _destroy() {
+    ~this() {
         import plix.print : printf;
         printf("%d: destroyed\n", pid);
         foreach (ref map; PtIter.get(pt)) {
             kfree(map.pg());
         }
     }
+
+    // Disable opAssign because it would overflow the stack.
+    @disable void opAssign(Proc);
 
     // Returns the top of the kernel stack.
     uintptr kstackp() {
