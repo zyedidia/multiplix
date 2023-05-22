@@ -104,6 +104,7 @@ conf = {
     profile = choose(cli.profile, uconf.profile, "dev"),
     unified = choose(tobool(cli.unified), uconf.unified, false),
     dc = choose(cli.dc, uconf.dc, "ldc"),
+    sanitize = choose(tobool(cli.sanitize), uconf.sanitize, false),
 }
 
 function makedep(s, output)
@@ -194,7 +195,8 @@ end
 lto = getlto(machine)
 
 function gdc(machine)
-    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", "")) -J.
+    local sanitize = sel(conf.sanitize, "-fsanitize=undefined -fversion=sanitizer", "")
+    local f := $(gnu(machine)) -$(opt.level) -ffunction-sections -fdata-sections -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti -g -Wframe-larger-than=1024 -Wall -Werror -nostdinc -ftransition=tls $(version(machine.board)) -Wno-builtin-declaration-mismatch $(sel(opt.lto, "-flto", "")) -J. $sanitize
     return f
 end
 

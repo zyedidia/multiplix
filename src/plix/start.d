@@ -5,6 +5,16 @@ import plix.board : setup;
 import plix.timer : Timer;
 import plix.arch.trap : Irq;
 
+version (GNU) {
+    // Disable compiler instrumentation for initialization routines so that
+    // sanitizers don't run before the BSS is setup.
+    import gcc.attributes;
+    @no_sanitize("undefined") {
+        private void init_bss();
+        void start(uint coreid, bool primary);
+    }
+}
+
 extern (C) {
     extern __gshared uint _bss_start, _bss_end;
 
