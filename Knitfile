@@ -229,6 +229,7 @@ function src.libplix()
         knit.glob(f"src/plix/arch/*.d"),
         knit.rglob("src/plix/dev", "*.d"),
         knit.rglob("src/plix/alloc", "*.d"),
+        knit.rglob("src/plix/fs", "*.d"),
         knit.glob("src/plix/*.d"),
         {
             f"src/plix/board/$(machine.board).d",
