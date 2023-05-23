@@ -72,9 +72,11 @@ import core.option : Option;
 struct VaMapping {
     Pte* pte;
     uintptr va_;
+    usize size;
 
     uintptr va() { return va_; }
     uintptr pa() { return pte.pa; }
+    uintptr ka() { return pa2ka(pte.pa); }
     Perm perm()  { return pte.perm; }
     bool read()  { return (pte.perm & Perm.r) != 0; }
     bool write() { return (pte.perm & Perm.w) != 0; }
@@ -98,7 +100,8 @@ Option!(VaMapping) lookup(Pagetable* pt, uintptr va) {
     if (!pte || !pte.leaf(lvl)) {
         return Option!(VaMapping).none;
     }
-    return Option!(VaMapping)(VaMapping(pte, va));
+    usize size = Pagetable.level2size(lvl);
+    return Option!(VaMapping)(VaMapping(pte, va, size));
 }
 
 struct PtIter {
@@ -144,7 +147,7 @@ struct PtIter {
                 return Option!(VaMapping).none;
             }
         }
-        return Option!(VaMapping)(VaMapping(pte, va));
+        return Option!(VaMapping)(VaMapping(pte, va, Pagetable.level2size(PtLevel.normal)));
     }
 
     int opApply(scope int delegate(ref VaMapping) dg) {
