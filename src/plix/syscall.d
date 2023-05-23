@@ -9,70 +9,70 @@ import plix.vm : lookup;
 import sys = plix.sys;
 
 enum Sys {
-    WRITE  = 0,
-    GETPID = 1,
-    EXIT   = 2,
-    FORK   = 3,
-    WAIT   = 4,
-    SBRK   = 5,
-    USLEEP = 6,
-    READ   = 7,
+    write  = 0,
+    getpid = 1,
+    exit   = 2,
+    fork   = 3,
+    wait   = 4,
+    sbrk   = 5,
+    usleep = 6,
+    read   = 7,
 }
 
 enum Err {
-    AGAIN  = -11, // Try again
-    BADF   = -9,  // Bad file number
-    CHILD  = -10, // No child processes
-    FAULT  = -14, // Bad address
-    FBIG   = -27, // File too large
-    INTR   = -4,  // Interrupted system call
-    INVAL  = -22, // Invalid argument
-    IO     = -5,  // I/O error
-    MFILE  = -24, // Too many open files
-    NFILE  = -23, // File table overflow
-    NOENT  = -2,  // No such file or directory
-    NOEXEC = -8,  // Exec format error
-    NOMEM  = -12, // Out of memory
-    NOSPC  = -28, // No space left on device
-    NOSYS  = -38, // Invalid system call number
-    NXIO   = -6,  // No such device or address
-    PERM   = -1,  // Operation not permitted
-    PIPE   = -32, // Broken pipe
+    again  = -11, // Try again
+    badf   = -9,  // Bad file number
+    child  = -10, // No child processes
+    fault  = -14, // Bad address
+    fbig   = -27, // File too large
+    intr   = -4,  // Interrupted system call
+    inval  = -22, // Invalid argument
+    io     = -5,  // I/O error
+    mfile  = -24, // Too many open files
+    nfile  = -23, // File table overflow
+    noent  = -2,  // No such file or directory
+    noexec = -8,  // Exec format error
+    nomem  = -12, // Out of memory
+    nospc  = -28, // No space left on device
+    nosys  = -38, // Invalid system call number
+    nxio   = -6,  // No such device or address
+    perm   = -1,  // Operation not permitted
+    pipe   = -32, // Broken pipe
     SPIPE  = -29, // Illegal seek
-    SRCH   = -3,  // No such process
-    TXTBSY = -26, // Text file busy
-    TOOBIG = -7,  // Argument list too long
+    srch   = -3,  // No such process
+    txtbsy = -26, // Text file busy
+    toobig = -7,  // Argument list too long
 }
 
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     uintptr ret;
     switch (sysno) {
-    case Sys.WRITE:
+    case Sys.write:
         ret = sys_write(p, cast(int) args[0], args[1], args[2]);
         break;
-    case Sys.READ:
+    case Sys.read:
         ret = sys_read(p, cast(int) args[0], args[1], args[2]);
         break;
-    case Sys.GETPID:
+    case Sys.getpid:
         ret = sys_getpid(p);
         break;
-    case Sys.EXIT:
+    case Sys.exit:
         sys_exit(p);
-    case Sys.FORK:
+    case Sys.fork:
         ret = sys_fork(p);
         break;
-    case Sys.WAIT:
+    case Sys.wait:
         ret = sys_wait(p);
         break;
-    case Sys.SBRK:
+    case Sys.sbrk:
         ret = sys_sbrk(p, cast(int) args[0]);
         break;
-    case Sys.USLEEP:
+    case Sys.usleep:
         sys_usleep(p, cast(ulong) args[0]);
         break;
     default:
         printf("invalid syscall: %lu\n", sysno);
-        return Err.NOSYS;
+        return Err.nosys;
     }
     return ret;
 }
@@ -84,7 +84,7 @@ int sys_getpid(Proc* p) {
 int sys_fork(Proc* p) {
     Proc* child = Proc.make_from_parent(p);
     if (!child) {
-        return Err.NOMEM;
+        return Err.nomem;
     }
     child.trapframe.regs.retval = 0;
     p.children++;
@@ -96,7 +96,7 @@ int sys_fork(Proc* p) {
 
 int sys_wait(Proc* p) {
     if (p.children == 0)
-        return Err.CHILD;
+        return Err.child;
 
     while (true) {
         foreach (ref zombie; exit_queue) {
@@ -155,20 +155,20 @@ long sys_write(Proc* p, int fd, uintptr addr, usize sz) {
 
     // Validate buffer.
     usize overflow = addr + sz;
-    if (overflow < addr || addr >= Proc.MAX_VA) {
-        return Err.FAULT;
+    if (overflow < addr || addr >= Proc.max_va) {
+        return Err.fault;
     }
 
     for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
         auto vmap = p.pt.lookup(va);
         if (!vmap.has() || !vmap.get().user) {
-            return Err.FAULT;
+            return Err.fault;
         }
     }
 
     // TODO: We only support console stdout for now.
     if (fd != 1) {
-        return Err.BADF;
+        return Err.badf;
     }
 
     string buf = cast(string) (cast(ubyte*) addr)[0 .. sz];

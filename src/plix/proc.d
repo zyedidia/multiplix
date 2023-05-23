@@ -22,13 +22,13 @@ __gshared int next_pid;
 
 struct Proc {
     // Virtual address of the user stack.
-    enum STACK_VA = 0x7fff0000;
+    enum stack_va = 0x7fff0000;
     // Size of a user stack.
-    enum STACK_SIZE = sys.pagesize;
+    enum stack_size = sys.pagesize;
     // Maximum virtual address that a user process can access.
-    enum MAX_VA = STACK_VA + STACK_SIZE;
+    enum max_va = stack_va + stack_size;
     // Stack canary.
-    enum CANARY = 0xfeedface_deadbeef;
+    enum canary_magic = 0xfeedface_deadbeef;
 
     Trapframe trapframe;
 
@@ -106,17 +106,17 @@ struct Proc {
         }
 
         // Allocate/map stack
-        ubyte[] ustack = kzalloc(Proc.STACK_SIZE);
+        ubyte[] ustack = kzalloc(Proc.stack_size);
         if (!ustack) {
             kfree(p);
             return null;
         }
-        if (!p.pt.mappg(Proc.STACK_VA, ustack.ptr, Perm.urw)) {
+        if (!p.pt.mappg(Proc.stack_va, ustack.ptr, Perm.urw)) {
             kfree(p);
             return null;
         }
 
-        p.trapframe.regs.sp = Proc.STACK_VA + sys.pagesize - 16;
+        p.trapframe.regs.sp = Proc.stack_va + sys.pagesize - 16;
         p.trapframe.epc = entry;
 
         return p;

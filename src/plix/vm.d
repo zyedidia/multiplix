@@ -115,7 +115,7 @@ struct PtIter {
     }
 
     bool advance() {
-        if (va >= Proc.MAX_VA) {
+        if (va >= Proc.max_va) {
             return false;
         }
 
