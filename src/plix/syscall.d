@@ -105,7 +105,6 @@ int sys_wait(Proc* p) {
                 exit_queue.remove(zombie);
                 kfree(zombie);
                 p.children--;
-                _mark();
                 return pid;
             }
         }

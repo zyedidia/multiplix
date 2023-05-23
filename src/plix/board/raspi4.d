@@ -49,7 +49,7 @@ __gshared BcmReboot reboot;
 
 void setup() {
     import plix.cpu : cpu;
-    import plix.print;
+    import plix.print : printf;
     import config : ismonitor;
 
     gpio = BcmGpio(pa2ka(Machine.device_base + 0x200000));
