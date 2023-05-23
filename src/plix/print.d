@@ -3,14 +3,14 @@ module plix.print;
 import core.stdc.stdarg;
 import core.fmt : Formatter;
 
-import plix.spinlock : SpinGuard;
+import plix.spinlock : SpinProtect;
 
 void uart_putc(ubyte b) {
     import plix.board : uart;
     uart.tx(b);
 }
 
-private shared SpinGuard!(Formatter) printer = SpinGuard!(Formatter)(Formatter(&uart_putc));
+private shared SpinProtect!(Formatter) printer = SpinProtect!(Formatter)(Formatter(&uart_putc));
 
 void print(Args...)(Args args) {
     auto p = printer.lock();

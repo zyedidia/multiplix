@@ -47,7 +47,7 @@ case 2:
 
 ---
 
-`shared` should only be used for objects of type `Spinlock`, `SpinGuard(T)`,
+`shared` should only be used for objects of type `Spinlock`, `SpinProtect(T)`,
 or `PerCpu(T)`. Otherwise `__gshared` should be used.
 
 ---

@@ -23,9 +23,9 @@ struct Spinlock {
     }
 }
 
-// Guards some data with a spinlock. The data is only accessible through a
+// Protects some data with a spinlock. The data is only accessible through a
 // guard object.
-struct SpinGuard(T) {
+struct SpinProtect(T) {
     private T val;
     private Spinlock lock_;
 
@@ -34,7 +34,7 @@ struct SpinGuard(T) {
     }
 
     struct Guard {
-        private shared SpinGuard!(T)* locked;
+        private shared SpinProtect!(T)* locked;
         bool irqen;
         bool moved;
         this(ref return scope Guard g) {

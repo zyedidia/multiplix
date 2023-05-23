@@ -1,11 +1,11 @@
 module plix.alloc;
 
 import plix.alloc.buddy : BuddyAlloc;
-import plix.spinlock : SpinGuard;
+import plix.spinlock : SpinProtect;
 
 import core.emplace : emplace_init, HasDtor;
 
-private shared SpinGuard!(BuddyAlloc!(10)) alloc;
+private shared SpinProtect!(BuddyAlloc!(10)) alloc;
 
 void kallocinit(ubyte* heap_start, usize size) {
     auto alloc = alloc.lock();
