@@ -96,6 +96,7 @@ __gshared Context scheduler;
 void schedule() {
     while (true) {
         Proc* p = runnable_proc();
+        import plix.print;
 
         Irq.off();
         kswitch(p, &scheduler, &p.context);

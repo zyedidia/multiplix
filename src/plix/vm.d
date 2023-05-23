@@ -60,9 +60,21 @@ enum Perm {
 }
 
 import plix.arch.vm : Pagetable, PtLevel;
+import plix.page : pages;
+
+bool mappg(Pagetable* pt, usize va, uintptr pa, Perm perm) {
+    if (!pt.map(va, pa, PtLevel.normal, perm)) {
+        return false;
+    }
+    bool irqs = pages[pa / sys.pagesize].lock();
+    pages[pa / sys.pagesize].refcnt++;
+    pages[pa / sys.pagesize].unlock(irqs);
+    return true;
+}
 
 bool mappg(Pagetable* pt, usize va, ubyte* page, Perm perm) {
-    return pt.map(va, ka2pa(cast(uintptr) page), PtLevel.normal, perm);
+    uintptr pa = ka2pa(cast(uintptr) page);
+    return mappg(pt, va, pa, perm);
 }
 
 import plix.arch.vm : Pagetable, Pte, PtLevel;

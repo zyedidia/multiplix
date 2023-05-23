@@ -6,7 +6,7 @@ import plix.arch.boot : kernel_procmap;
 import plix.arch.regs : Context;
 import plix.arch.trap : Trapframe, usertrapret;
 import plix.elf : loadelf;
-import plix.vm : mappg, Perm, PtIter;
+import plix.vm : mappg, Perm, PtIter, iska;
 import plix.schedule : Queue;
 
 import sys = plix.sys;
@@ -28,7 +28,7 @@ struct Proc {
     // Maximum virtual address that a user process can access.
     enum max_va = stack_va + stack_size;
     // Stack canary.
-    enum canary_magic = 0xfeedface_deadbeef;
+    enum canary_magic = 0xfeedface;
 
     Trapframe trapframe;
 
@@ -65,6 +65,7 @@ struct Proc {
         p.pid = next_pid++;
         p.pt = pgtbl;
         p.context = Context(p.kstackp(), cast(uintptr) &Proc.forkret, pgtbl);
+        p.canary = canary_magic;
 
         return p;
     }
@@ -75,14 +76,11 @@ struct Proc {
             return null;
 
         foreach (ref map; PtIter.get(parent.pt)) {
-            ubyte[] pg = kalloc(sys.pagesize);
-            if (!pg) {
-                kfree(p);
-                return null;
+            if (!map.user) {
+                continue;
             }
-            import builtins : memcpy;
-            memcpy(pg.ptr, map.pg.ptr, pg.length);
-            if (!p.pt.mappg(map.va, pg.ptr, map.perm)) {
+            map.pte.perm = (map.perm & ~Perm.w) | Perm.cow;
+            if (!p.pt.mappg(map.va, map.pa, Perm.urx | Perm.cow)) {
                 kfree(p);
                 return null;
             }
@@ -124,9 +122,17 @@ struct Proc {
 
     ~this() {
         import plix.print : printf;
+        import plix.page : pages;
         printf("%d: destroyed\n", pid);
         foreach (ref map; PtIter.get(pt)) {
-            kfree(map.pg());
+            if (!iska(map.va)) {
+                auto pg = &pages[map.pa / sys.pagesize];
+                bool irqs = pg.lock();
+                if (pg.refcnt == 0) {
+                    kfree(cast(void*) map.ka, sys.pagesize);
+                }
+                pg.unlock(irqs);
+            }
         }
     }
 
