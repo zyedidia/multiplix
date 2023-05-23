@@ -1,4 +1,4 @@
-module plix.arch.aarch64.monitor;
+module plix.arch.aarch64.fwi;
 
 usize monitor_call(usize fn, usize arg0 = 0, usize arg1 = 0, usize arg2 = 0) {
     version (LDC) {

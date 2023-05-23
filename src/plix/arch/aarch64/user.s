@@ -1,3 +1,4 @@
+.section .text.uservec_exception
 .globl uservec_exception
 uservec_exception:
 	// store x0 into a scratch location (using sp as scratch register)
@@ -36,6 +37,7 @@ uservec_exception:
 
 	b user_exception
 
+.section .text.uservec_interrupt
 .globl uservec_interrupt
 uservec_interrupt:
 	// store x0 into a scratch location (using sp as scratch register)
@@ -74,6 +76,7 @@ uservec_interrupt:
 
 	b user_interrupt
 
+.section .text.userret
 // function: userret(Proc* p)
 .globl userret
 userret:

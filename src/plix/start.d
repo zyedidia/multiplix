@@ -31,8 +31,11 @@ extern (C) {
 
         // board-specific setup
         setup();
-        // setup trap handler
-        Irq.setup();
+
+        version (kernel) {
+            import plix.arch.boot : kernel_init;
+            kernel_init();
+        }
 
         kmain(coreid, primary);
     }

@@ -1,5 +1,4 @@
 .section .text.boot.kernel
-
 .globl _kernel_start
 _kernel_start:
 	// set stack = _stack_start + (coreid + 1) * 4096
@@ -63,7 +62,7 @@ add sp, sp, #256
 eret
 .endm
 
-.section ".text.kernelvec"
+.section .text.kernelvec
 .globl kernelvec
 .balign 2048
 kernelvec:
@@ -124,6 +123,7 @@ interrupt_entry:
 	bl kernel_interrupt
 	EPILOGUE
 
+.section .text.kswitch
 .globl kswitch
 kswitch:
 	mov x9, sp

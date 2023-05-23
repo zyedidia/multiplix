@@ -11,10 +11,6 @@ import plix.vm : ka2pa;
 import bits = core.bits;
 
 struct Irq {
-    static void setup() {
-        SysReg.vbar_el1 = cast(uintptr) &kernelvec;
-    }
-
     static void on() {
         SysReg.daif = bits.write(SysReg.daif, 9, 6, 0b0000);
     }
@@ -50,8 +46,6 @@ extern (C) {
     extern noreturn userret(Proc* p);
     // uservec in uservec.s
     extern void uservec();
-    // kernelvec in kernelvec.s
-    extern void kernelvec();
 }
 
 extern (C) noreturn user_interrupt(Proc* p) {

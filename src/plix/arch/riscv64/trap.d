@@ -2,7 +2,7 @@ module plix.arch.riscv64.trap;
 
 import bits = core.bits;
 
-import plix.arch.riscv64.csr : Csr, Sstatus, Cause;
+import plix.arch.riscv64.csr : Csr, Sstatus, Cause, Mstatus;
 import plix.arch.riscv64.regs : Regs, rdtp, rdgp;
 import plix.arch.riscv64.cache : vm_fence;
 import plix.proc : Proc;
@@ -11,20 +11,28 @@ import plix.trap : irq_handler, pgflt_handler, unhandled, IrqType, FaultType;
 import plix.syscall : syscall_handler;
 
 struct Irq {
-    static void setup() {
-        Csr.stvec = cast(uintptr) &kernelvec;
-    }
-
     static void on() {
-        Csr.sstatus_set!(Sstatus.sie)();
+        version (kernel) {
+            Csr.sstatus_set!(Sstatus.sie)();
+        } else {
+            Csr.mstatus_set!(Mstatus.mie)();
+        }
     }
 
     static void off() {
-        Csr.sstatus_clear!(Sstatus.sie)();
+        version (kernel) {
+            Csr.sstatus_clear!(Sstatus.sie)();
+        } else {
+            Csr.mstatus_clear!(Mstatus.mie)();
+        }
     }
 
     static bool enabled() {
-        return bits.get(Csr.sstatus, Sstatus.sie) == 1;
+        version (kernel) {
+            return bits.get(Csr.sstatus, Sstatus.sie) == 1;
+        } else {
+            return bits.get(Csr.mstatus, Mstatus.mie) == 1;
+        }
     }
 }
 

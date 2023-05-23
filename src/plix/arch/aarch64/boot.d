@@ -52,3 +52,10 @@ void kernel_setup(bool primary) {
     SysReg.sctlr_el1 = Sctlr.reserved | Sctlr.mmu | Sctlr.icache | Sctlr.dcache; // enable mmu and caches
     sysreg_fence();
 }
+
+extern (C) extern void kernelvec();
+
+void kernel_init() {
+    // Install trap handler.
+    SysReg.vbar_el1 = cast(uintptr) &kernelvec;
+}

@@ -1,5 +1,4 @@
-.section ".text.boot.monitor"
-
+.section .text.boot.monitor
 .globl _monitor_start
 _monitor_start:
 	bl _reset_sp
@@ -31,18 +30,18 @@ _reset_sp:
 	mov sp, x1
 	ret
 
-.section ".data.primary"
+.section .data.primary
 .align 8
 primary:
 	.quad 1
 
-.section ".data.wakeup"
+.section .data.wakeup
 .globl wakeup
 .align 8
 wakeup:
 	.quad 0
 
-.section ".text.enter_el2"
+.section .text.enter_el2
 .globl _enter_el2
 _enter_el2:
 	mov x0, sp
@@ -56,7 +55,7 @@ _enter_el2:
 entry_el2:
 	ret
 
-.section ".text.enter_el1"
+.section .text.enter_el1
 .globl _enter_el1
 _enter_el1:
 	mov x0, sp
@@ -106,7 +105,7 @@ add sp, sp, #256
 eret
 .endm
 
-.section ".text.monitorvec"
+.section .text.monitorvec
 .globl monitorvec
 .balign 2048
 monitorvec:

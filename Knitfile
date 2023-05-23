@@ -222,10 +222,9 @@ flags.dc = sel(conf.dc == "gdc", flags.gdc, flags.ldc)
 
 local src = {}
 
-function src.libplix()
+function src.libplix_kernel()
     return knit.join(
         knit.glob(f"src/plix/arch/$(machine.arch)/*.d"),
-        knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.d"),
         knit.glob(f"src/plix/arch/*.d"),
         knit.rglob("src/plix/dev", "*.d"),
         knit.rglob("src/plix/alloc", "*.d"),
@@ -234,6 +233,30 @@ function src.libplix()
         {
             f"src/plix/board/$(machine.board).d",
             "src/plix/board/package.d",
+        }
+    )
+end
+
+function src.libplix_monitor()
+    return knit.join(
+        knit.glob(f"src/plix/arch/$(machine.arch)/*.d"),
+        knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.d"),
+        knit.glob(f"src/plix/arch/*.d"),
+        knit.rglob("src/plix/dev", "*.d"),
+        knit.rglob("src/plix/alloc", "*.d"),
+        {
+            f"src/plix/board/$(machine.board).d",
+            "src/plix/board/package.d",
+            "src/plix/start.d",
+            "src/plix/panic.d",
+            "src/plix/print.d",
+            "src/plix/sanitizer.d",
+            "src/plix/monitor.d",
+            "src/plix/guard.d",
+            "src/plix/crc.d",
+            "src/plix/cpu.d",
+            "src/plix/timer.d",
+            "src/plix/spinlock.d",
         }
     )
 end
@@ -252,10 +275,15 @@ end
 
 local asm = {}
 
-function asm.libplix()
+function asm.libplix_kernel()
     return knit.join(
-        knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.s"),
         knit.glob(f"src/plix/arch/$(machine.arch)/*.s")
+    )
+end
+
+function asm.libplix_monitor()
+    return knit.join(
+        knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.s")
     )
 end
 
@@ -272,25 +300,32 @@ function di(srcs)
     return knit.prefix(knit.extrepl(srcs, ".d", ".di"), depdir .. "/")
 end
 
-function getobj(src, asm, pkg)
+function getobj(src, asm, pkg, typ)
+    local dir = objdir
+    if typ ~= nil then
+        dir = objdir .. "/" .. typ
+    end
     if not conf.unified then
         return knit.join(
-            knit.prefix(knit.extrepl(src, ".d", ".o"), objdir .. "/"),
-            knit.prefix(knit.extrepl(asm, ".s", ".asm.o"), objdir .. "/")
+            knit.prefix(knit.extrepl(src, ".d", ".o"), dir .. "/"),
+            knit.prefix(knit.extrepl(asm, ".s", ".asm.o"), dir .. "/")
         )
     else
         return knit.join(
-            {objdir .. "/" .. pkg .. ".o"},
-            knit.prefix(knit.extrepl(asm, ".s", ".asm.o"), objdir .. "/")
+            {dir .. "/" .. pkg .. ".o"},
+            knit.prefix(knit.extrepl(asm, ".s", ".asm.o"), dir .. "/")
         )
     end
 end
 
 local obj = {
-    libplix = getobj(src.libplix(), asm.libplix(), "plix"),
-    core = getobj(src.core(), {}, "core"),
+    libplix = {
+        kernel = getobj(src.libplix_kernel(), asm.libplix_kernel(), "plix", "kernel"),
+        monitor = getobj(src.libplix_monitor(), asm.libplix_monitor(), "plix", "monitor"),
+    },
+    core = getobj(src.core(), {}, "core", nil),
     boot = {f"$objdir/lib/config.monitor.o"},
-    kernel = knit.join(getobj(src.kernel(), {}, "kernel"), {f"$objdir/lib/config.kernel.o"}),
+    kernel = knit.join(getobj(src.kernel(), {}, "kernel", nil), {f"$objdir/lib/config.kernel.o"}),
 }
 
 local extraobj := $objdir/lib/builtins.o $objdir/lib/object.o $objdir/lib/gcc/builtins.o
@@ -310,20 +345,28 @@ local o = sel(conf.dc == "gdc", "o", "of")
 return b{
     $ all:VB: kernel.boot.elf
 
-    $ libplix.a: $objdir/libplix.a
+    $ libplix.kernel.a: $objdir/libplix.kernel.a
+        mv $input $output
+    $ libplix.monitor.a: $objdir/libplix.monitor.a
         mv $input $output
 
-    $ boot.elf: $objdir/src/boot/main-uart.o $(obj.boot) $objdir/libplix.a $(link.boot)[I]
+    $ boot.elf: $objdir/src/boot/main-uart.o $(obj.boot) $objdir/libplix.monitor.a $(link.boot)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
-    $ kernel.boot.elf: $objdir/src/boot/main-payload.o $objdir/src/boot/payload.o $(obj.boot) $objdir/libplix.a $(link.boot)[I]
+    $ kernel.boot.elf: $objdir/src/boot/main-payload.o $objdir/src/boot/payload.o $(obj.boot) $objdir/libplix.monitor.a $(link.boot)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
-    $ kernel.elf: $(obj.kernel) $objdir/libplix.a $(link.kernel)[I]
+    $ kernel.elf: $(obj.kernel) $objdir/libplix.kernel.a $(link.kernel)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.kernel) -nostdinc -nostdlib $input -lgcc -o $output
 
-    $ $objdir/libplix.a: $(obj.libplix) $(obj.core) $extraobj
+    $ $objdir/libplix.kernel.a: $(obj.libplix.kernel) $(obj.core) $extraobj
         rm -f $output
         $(tools.ar) -rcs $output $input
         $(tools.ranlib) $(lto.plugin) $output
+
+    $ $objdir/libplix.monitor.a: $(obj.libplix.monitor) $(obj.core) $extraobj
+        rm -f $output
+        $(tools.ar) -rcs $output $input
+        $(tools.ranlib) $(lto.plugin) $output
+
 
     $ $objdir/src/boot/main-uart.o:D[$depdir/src/boot/main.dep]: src/boot/main.d
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) $(version("uart")) -c $input -$o $output
@@ -337,9 +380,11 @@ return b{
 
     $ $objdir/core.o: $(src.core())
         $(tools.dc) $(flags.dc) -c $input -$o $output
-    $ $objdir/plix.o: $(src.libplix()) [[$(src.core())]][I]
-        $(tools.dc) $(flags.dc) -c $input -$o $output
-    $ $objdir/kernel.o: $(src.kernel()) [[$(src.core()) $(src.libplix())]][I]
+    $ $objdir/kernel/plix.o: $(src.libplix_kernel()) [[$(src.core())]][I]
+        $(tools.dc) $(flags.dc) -c $input -$o $output $(version("kernel"))
+    $ $objdir/monitor/plix.o: $(src.libplix_monitor()) [[$(src.core())]][I]
+        $(tools.dc) $(flags.dc) -c $input -$o $output $(version("monitor"))
+    $ $objdir/kernel.o: $(src.kernel()) [[$(src.core()) $(src.libplix_kernel())]][I]
         $(tools.dc) $(flags.dc) -c $input -$o $output
     $ $objdir/lib/builtins.o: lib/builtins.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(nopattern())
@@ -350,9 +395,15 @@ return b{
     $ $objdir/lib/config.kernel.o: lib/config.d
         $(tools.dc) $(flags.dc) -c $input -$o $output $(version("kernel"))
 
-    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I] user/hello/hello.elf[I]
+    $ $objdir/monitor/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I]
+        $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output $(version("monitor"))
+    $ $objdir/kernel/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I] user/hello/hello.elf[I]
+        $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output $(version("kernel"))
+    $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
-    $ $objdir/%.asm.o: %.s
+    $ $objdir/monitor/%.asm.o: %.s
+        $(tools.cc) $(flags.as) $input -c -o $output
+    $ $objdir/kernel/%.asm.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
 
     $ %.list: %.elf

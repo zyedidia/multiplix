@@ -53,3 +53,9 @@ void kernel_setup(bool primary) {
     // enable SUM bit so supervisor mode can access usermode pages
     Csr.sstatus = Csr.sstatus | (1UL << Sstatus.sum);
 }
+
+extern (C) extern void kernelvec();
+
+void kernel_init() {
+    Csr.stvec = cast(uintptr) &kernelvec;
+}
