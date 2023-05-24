@@ -148,3 +148,11 @@ kswitch:
 .global empty
 empty:
 	ret
+
+.globl emptyvec
+.align 4
+emptyvec:
+	csrr a0, sepc
+	addi a0, a0, 4
+	csrw sepc, a0
+	sret

@@ -37,7 +37,9 @@ usize fwi_handler(usize num, usize arg0) {
         install_watchpt_handler();
         break;
     case monitor_func.watchpt_bench:
-        watchpt_bench();
+        for (int i = 0; i < 10; i++) {
+            watchpt_bench();
+        }
         break;
     default:
         printf("invalid monitor call: %ld\n", num);
@@ -78,5 +80,13 @@ void install_watchpt_handler() {
 }
 
 void watchpt_bench() {
-    printf("watchpt bench\n");
+    import plix.timer : Timer;
+    import plix.arch.riscv64.monitor.dbg : breakpoint, Brkpt;
+    auto start = Timer.cycles();
+    enum n = 100;
+    static foreach (i; 0 .. n) {
+        breakpoint(0, 0x4000_0000, Brkpt.super_ | Brkpt.load | Brkpt.store | Brkpt.exec | Brkpt.eq);
+    }
+    auto end = Timer.cycles();
+    printf("watchpt_bench: %ld\n", (end - start) / n);
 }

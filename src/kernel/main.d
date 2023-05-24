@@ -14,7 +14,22 @@ immutable ubyte[] hello_data = cast(immutable ubyte[]) import("user/hello/hello.
 
 extern (C) extern __gshared ubyte _heap_start;
 
+import plix.arch.vm : Pagetable, PtLevel;
+import plix.vm : Perm;
+import plix.arch.riscv64.csr : Csr;
+import plix.arch.cache : vm_fence;
+import plix.arch.boot : kernel_procmap;
+
+__gshared Pagetable pagetable;
+
 extern (C) void kmain(uint coreid, bool primary) {
+    kallocinit(&_heap_start, mb!(512));
+    kernel_procmap(&pagetable);
+    Csr.satp = pagetable.satp(0);
+    vm_fence();
+
+    printf("benchmarking...\n");
+
     benchmarks();
 
     // if (primary) {
@@ -52,10 +67,8 @@ extern (C) void kmain(uint coreid, bool primary) {
     // schedule();
 }
 
-import plix.arch.riscv64.csr : Csr;
-
 void benchmarks() {
-    watchpoint();
+    tlb_miss_individual();
 }
 
 void load_satp() {
@@ -120,4 +133,59 @@ void m_mode() {
 void watchpoint() {
     import plix.fwi : watchpt_bench;
     watchpt_bench();
+}
+
+void tlb_miss() {
+    pagetable.map(0, 0x8000_0000, PtLevel.mega, Perm.rwx);
+    vm_fence();
+    enum n = 1000;
+    auto start = Timer.cycles();
+    static foreach (i; 0 .. n) {
+        asm {
+            // comment for TLB hit
+            "sfence.vma";
+            "ld t0, 0(%0)" : : "r"(0) : "t0";
+        }
+    }
+    auto end = Timer.cycles();
+    printf("tlb_miss: %ld\n", (end - start) / n);
+}
+
+void tlb_miss_individual() {
+    pagetable.map(0, 0x8000_0000, PtLevel.normal, Perm.rwx);
+    vm_fence();
+    enum n = 100;
+    foreach (i; 0 .. n) {
+        // comment for TLB hit
+        vm_fence();
+        // asm {
+        //     "sfence.vma %0" : : "r"(0x8000_0000);
+        // }
+        auto start = Timer.cycles();
+        asm {
+            "ld t0, 0(%0)" : : "r"(0) : "t0";
+        }
+        auto end = Timer.cycles();
+        printf("tlb_miss_individual: %ld\n", end - start);
+    }
+}
+
+extern (C) extern void emptyvec();
+
+void pagefault_individual() {
+    Csr.stvec = cast(uintptr) &emptyvec;
+    pagetable.map(0, 0x8000_0000, PtLevel.normal, Perm.r);
+    vm_fence();
+
+    enum n = 100;
+    foreach (i; 0 .. n) {
+        // comment for TLB hit
+        // vm_fence();
+        auto start = Timer.cycles();
+        asm {
+            "sd t0, 0(%0)" : : "r"(0) : "t0";
+        }
+        auto end = Timer.cycles();
+        printf("pagefault: %ld\n", end - start);
+    }
 }
