@@ -427,7 +427,7 @@ return b{
         spike -p4 $input
 
     $ lint:VB:
-        dscanner --styleCheck $(src.core()) $(src.libplix()) $(src.boot()) $(src.kernel()) --config .dscanner.ini $(inc) --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
+        dscanner --styleCheck $(knit.rglob(".", "*.d")) --config .dscanner.ini $(inc) --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 
     include("user/hello/build.knit"),
 }
