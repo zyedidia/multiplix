@@ -59,4 +59,14 @@ struct Timer {
     static void intr(ulong us) {
         arch.Timer.intr(us);
     }
+
+    // Timing function for micro-benchmarks.
+    static ulong time_fn(ulong iters)(void function() fn) {
+        auto start = arch.Timer.cycles();
+        static foreach (j; 0 .. iters) {
+            fn();
+        }
+        auto end = arch.Timer.cycles();
+        return (end - start) / iters;
+    }
 }

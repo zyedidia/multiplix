@@ -144,3 +144,7 @@ kswitch:
 	# TODO: do we need a fence here?
 
 	ret
+
+.global empty
+empty:
+	ret

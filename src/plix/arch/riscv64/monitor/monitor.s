@@ -70,6 +70,32 @@ _enter_smode:
 entry:
 	ret
 
+.globl watchptvec
+.align 4
+watchptvec:
+	csrr a0, mepc
+	addi a0, a0, 4
+	csrw mepc, a0
+	mret
+
+.globl emptyvec
+.align 4
+emptyvec:
+	csrr a0, mepc
+	addi a0, a0, 4
+	csrw mepc, a0
+	mret
+
+.globl timevec
+.align 4
+timevec:
+	rdcycle a1
+	sub a0, a1, a0
+	csrr t0, mepc
+	addi t0, t0, 4
+	csrw mepc, t0
+	mret
+
 .section ".text.monitorvec"
 .globl monitorvec
 .align 4
