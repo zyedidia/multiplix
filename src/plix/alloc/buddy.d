@@ -23,7 +23,7 @@ struct BuddyAlloc(usize N) {
     }
 
     bool allocation_size(ref usize size, usize align_) {
-        // assert align_ is power of 2
+        // TODO: assert align_ is power of 2
         assert(align_ <= MIN_HEAP_ALIGN);
 
         if (align_ > size) {

@@ -4,7 +4,7 @@ import core.volatile : vst;
 
 struct Virt {
     struct Regs {
-        uint thr;
+        ubyte thr;
     }
 
     Regs* regs;
