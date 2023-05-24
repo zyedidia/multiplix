@@ -1,4 +1,4 @@
-module plix.board.visionfive;
+module plix.board.visionfive2;
 
 import plix.dev.uart.dwapb : DwApbUart;
 import plix.dev.irq.clint : Clint;
