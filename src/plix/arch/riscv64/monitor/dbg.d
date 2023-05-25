@@ -15,13 +15,13 @@ enum Brkpt : ulong {
     match6 = 6UL << 60,
 }
 
-void breakpoint(uint n, uintptr addr, Brkpt flags) {
+void set_breakpoint(uint n, uintptr addr, Brkpt flags) {
     Csr.tselect = n;
     Csr.tdata1 = flags | Brkpt.match6;
     Csr.tdata2 = addr;
 }
 
-void clear(uint n) {
+void clear_breakpoint(uint n) {
     Csr.tselect = n;
     Csr.tdata1 = Brkpt.match6;
 }
