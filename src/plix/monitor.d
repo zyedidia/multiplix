@@ -39,6 +39,5 @@ void monitor_wakeup_cores() {
     insn_fence();
     sev();
 
-    // TODO: enable VM
-    // enable_vm();
+    enable_vm();
 }

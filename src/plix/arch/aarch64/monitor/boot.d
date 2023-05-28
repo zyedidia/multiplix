@@ -34,7 +34,7 @@ void enter_el1() {
     // Enable all debug exceptions in kernel mode.
     SysReg.mdscr_el1 = SysReg.mdscr_el1 | Mdscr.mde;
     // Route debug exceptions to EL2.
-    SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;
+    // SysReg.mdcr_el2 = SysReg.mdcr_el2 | Mdcr.tde;
     // Clear the OS lock.
     SysReg.oslar_el1 = 0;
     // Enable SIMD/FP in kernel.
