@@ -16,7 +16,7 @@ function build.machine(board, monitor)
             board = "raspi3",
             march = "armv8-a+crc",
             mcpu = "cortex-a53",
-            mattr = f"$align_attr,-sve,-fp-armv8",
+            mattr = f"$align_attr,-sve,-fp-armv8,+reserve-x20,+reserve-x22",
             mflags = f"-mgeneral-regs-only $malign",
             arch = "aarch64",
             qemu = "-M raspi3ap -serial null -serial mon:stdio",

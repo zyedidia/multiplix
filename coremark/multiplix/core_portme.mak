@@ -42,7 +42,7 @@ OBJOUT 	= -o
 LFLAGS 	= 
 ASFLAGS =
 OFLAG 	= -o
-COUT 	= -c
+SOUT 	= -S
 
 LFLAGS_END = 
 # Flag : PORT_SRCS
@@ -66,10 +66,10 @@ OEXT = .o
 EXE = .elf
 
 $(OPATH)$(PORT_DIR)/%$(OEXT) : %.c
-	$(CC) $(CFLAGS) $(XCFLAGS) $(COUT) $< $(OBJOUT) $@
+	isogcc -o $@ -flags '$(CFLAGS) $(XCFLAGS)' $<
 
 $(OPATH)%$(OEXT) : %.c
-	$(CC) $(CFLAGS) $(XCFLAGS) $(COUT) $< $(OBJOUT) $@
+	isogcc -o $@ -flags '$(CFLAGS) $(XCFLAGS)' $<
 
 $(OPATH)$(PORT_DIR)/%$(OEXT) : %.s
 	$(AS) $(ASFLAGS) $< $(OBJOUT) $@

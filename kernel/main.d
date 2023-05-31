@@ -80,19 +80,19 @@ extern (C) void kmain(int coreid, ubyte* heap) {
 
     println("booted");
 
-    import kernel.timer;
-    auto cycles = Timer.time_fn!(1000)(() {
-        asm {
-            "ecall";
-        }
-    });
-    println("cycles: ", cycles);
+    uintptr segmask = 0xffff_ffff_ffff_ffff;
+    uintptr segid = 0;
+
+    asm {
+        "mov x20, %0" : : "r"(segmask);
+        "mov x22, %0" : : "r"(segid);
+    }
 
     // arch.Debug.enable();
     main();
     // arch.Debug.disable();
 
-    return;
+    while (1) {}
 
     // // Switch to the kernel pagetable (from the early boot pagetable). The main
     // // difference between this pagetable and the boot pagetable is that in this

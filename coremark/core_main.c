@@ -104,6 +104,10 @@ char *mem_name[3] = { "Static", "Heap", "Stack" };
 
 */
 
+void stop() {
+    while (1) {}
+}
+
 #if MAIN_HAS_NOARGC
 MAIN_RETURN_TYPE
 main(void)
@@ -129,7 +133,7 @@ main(int argc, char *argv[])
     if (sizeof(struct list_head_s) > 128)
     {
         ee_printf("list_head structure too big for comparable data!\n");
-        return MAIN_RETURN_VAL;
+        stop();
     }
     results[0].seed1      = get_seed(1);
     results[0].seed2      = get_seed(2);
@@ -438,5 +442,5 @@ for (i = 0; i < MULTITHREAD; i++)
     /* And last call any target specific code for finalizing */
     portable_fini(&(results[0].port));
 
-    return MAIN_RETURN_VAL;
+    stop();
 }
