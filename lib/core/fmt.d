@@ -6,7 +6,9 @@ import core.trait : Unqual;
 struct Formatter {
     void function(ubyte) putc;
 
-    this(void function(ubyte) putc) {
+    // Template the constructor so that we can run it at compile-time (the
+    // source code must be exposed in the interface file).
+    this()(void function(ubyte) putc) {
         this.putc = putc;
     }
 
