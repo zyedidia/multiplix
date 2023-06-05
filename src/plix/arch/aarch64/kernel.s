@@ -3,7 +3,8 @@
 _kernel_start:
 	// set stack = _stack_start + (coreid + 1) * 4096
 	// coreid is in x0
-	ldr x1, =_stack_start
+	adrp x1, :pg_hi21:_stack_start
+	add x1, x1, :lo12:_stack_start
 	add x2, x0, #1
 	lsl x2, x2, #12
 	add x1, x1, x2
