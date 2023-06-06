@@ -8,13 +8,13 @@ T max(T, U)(T a, U b) if (is(T == U) && is(typeof(a < b))) {
     return a < b ? b : a;
 }
 
-ulong log2ceil(ulong x) {
+ulong log2ceil()(ulong x) {
     ulong n = 0;
     while (x >>= 1) ++n;
     return n;
 }
 
-ulong pow2ceil(ulong x) {
+ulong pow2ceil()(ulong x) {
     ulong power = 1;
     while (power < x)
         power *= 2;

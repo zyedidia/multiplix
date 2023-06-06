@@ -1,15 +1,17 @@
 module plix.alloc;
 
 import plix.alloc.buddy : BuddyAlloc;
+import plix.alloc.block : BlockAlloc;
 import plix.spinlock : SpinProtect;
 
 import core.emplace : emplace_init, HasDtor;
 
-private shared SpinProtect!(BuddyAlloc!(10)) alloc;
+private __gshared BuddyAlloc!(17) buddy;
+private shared SpinProtect!(BlockAlloc!(typeof(buddy))) alloc;
 
 void kallocinit(ubyte* heap_start, usize size) {
     auto alloc = alloc.lock();
-    alloc.val.initialize(heap_start[0 .. size]);
+    alloc.val.initialize(&buddy, heap_start[0 .. size]);
 }
 
 ubyte[] kalloc(usize sz) {
