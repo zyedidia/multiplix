@@ -39,6 +39,7 @@ local machines = {
         mattr = "-sve,-fp-armv8",
         mflags = "-mgeneral-regs-only",
         qemu = "qemu-system-aarch64 -M raspi3ap -serial null -serial mon:stdio",
+        timer = 19200000,
     },
     raspi4 = {
         arch = "aarch64",
@@ -49,6 +50,7 @@ local machines = {
         mattr = "-sve,-fp-armv8",
         mflags = "-mgeneral-regs-only",
         qemu = "qemu-system-aarch64 -M raspi4b -serial null -serial mon:stdio",
+        timer = 54000000,
     },
     orpiz2 = {
         arch = "aarch64",
@@ -71,6 +73,7 @@ local machines = {
         mcmodel = "medany",
         cmodel = "medium",
         qemu = "qemu-system-riscv64 -M virt -bios none -smp 4 -m 2G",
+        timer = 3580000 * 2,
     },
     visionfive = {
         arch = "riscv64",
@@ -83,6 +86,7 @@ local machines = {
         mcmodel = "medany",
         cmodel = "medium",
         qemu = "qemu-system-riscv64 -M visionfive -bios none -smp 4 -m 2G",
+        timer = 6250000,
     },
     visionfive2 = {
         arch = "riscv64",
@@ -95,6 +99,7 @@ local machines = {
         mcmodel = "medany",
         cmodel = "medium",
         qemu = "qemu-system-riscv64 -M visionfive2 -bios none -smp 4 -m 2G",
+        timer = 4000000,
     }
 }
 
@@ -105,6 +110,7 @@ conf = {
     unified = choose(tobool(cli.unified), uconf.unified, false),
     dc = choose(cli.dc, uconf.dc, "ldc"),
     sanitize = choose(tobool(cli.sanitize), uconf.sanitize, false),
+    cmdebug = true,
 }
 
 function makedep(s, output)
@@ -406,6 +412,9 @@ return b{
         $(tools.cc) $(flags.as) $input -c -o $output
     $ $objdir/kernel/%.asm.o: %.s
         $(tools.cc) $(flags.as) $input -c -o $output
+
+    $ coremark/libcoremark.a:VB:
+        make -B -C coremark PORT_DIR=multiplix PORT_CFLAGS="$(flags.cc) $(sel(conf.cmdebug, "-DCORE_DEBUG=1", "")) -DTIMER_FREQ=$(machine.timer)" CC=$(tools.cc)
 
     $ %.list: %.elf
         $(tools.objdump) $(flags.objdump) $input > $output

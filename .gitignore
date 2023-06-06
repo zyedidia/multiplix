@@ -7,6 +7,7 @@
 *.payload
 *.img
 *.a
+*.log
 
 .build
 conf.knit
