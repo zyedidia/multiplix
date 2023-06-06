@@ -45,6 +45,15 @@ T* knew(T, Args...)(Args args) {
     return p;
 }
 
+T[] kallocarray(T)(usize nelem) {
+    auto alloc = alloc.lock();
+    T* p = cast(T*) alloc.alloc(T.sizeof * nelem);
+    if (!p) {
+        return null;
+    }
+    return p[0 .. nelem];
+}
+
 void kfree(T)(T* ptr) if (is(T == struct)) {
     static if (HasDtor!(T)) {
         ptr.__xdtor();

@@ -243,6 +243,7 @@ function src.libplix_monitor()
         knit.glob(f"src/plix/arch/$(machine.arch)/monitor/*.d"),
         knit.glob(f"src/plix/arch/*.d"),
         knit.rglob("src/plix/dev", "*.d"),
+        knit.rglob("src/plix/check", "*.d"),
         knit.rglob("src/plix/alloc", "*.d"),
         {
             f"src/plix/board/$(machine.board).d",
