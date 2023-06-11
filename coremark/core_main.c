@@ -110,13 +110,13 @@ void stop() {
 
 #if MAIN_HAS_NOARGC
 MAIN_RETURN_TYPE
-main(void)
+coremark_main(void)
 {
     int   argc = 0;
     char *argv[1];
 #else
 MAIN_RETURN_TYPE
-main(int argc, char *argv[])
+coremark_main(int argc, char *argv[])
 {
 #endif
     ee_u16       i, j = 0, num_algorithms = 0;

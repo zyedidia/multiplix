@@ -110,7 +110,8 @@ conf = {
     unified = choose(tobool(cli.unified), uconf.unified, false),
     dc = choose(cli.dc, uconf.dc, "ldc"),
     sanitize = choose(tobool(cli.sanitize), uconf.sanitize, false),
-    cmdebug = true,
+    cmdebug = choose(tobool(cli.cmdebug), uconf.cmdebug, true),
+    coremark = choose(tobool(cli.coremark), uconf.coremark, false),
 }
 
 function makedep(s, output)
@@ -349,6 +350,8 @@ local plboot = {
 
 local o = sel(conf.dc == "gdc", "o", "of")
 
+local coremark = sel(conf.coremark, "coremark/libcoremark.a", "")
+
 return b{
     $ all:VB: kernel.boot.elf
 
@@ -361,7 +364,7 @@ return b{
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
     $ kernel.boot.elf: $objdir/src/boot/main-payload.o $objdir/src/boot/payload.o $(obj.boot) $objdir/libplix.monitor.a $(link.boot)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.boot) -nostdinc -nostdlib $input -lgcc -o $output
-    $ kernel.elf: $(obj.kernel) $objdir/libplix.kernel.a $(link.kernel)[I]
+    $ kernel.elf: $(obj.kernel) $(coremark) $objdir/libplix.kernel.a $(link.kernel)[I]
         $(tools.cc) $(flags.gnu) $(lto.flags) -Wl,--gc-sections -T$(link.kernel) -nostdinc -nostdlib $input -lgcc -o $output
 
     $ $objdir/libplix.kernel.a: $(obj.libplix.kernel) $(obj.core) $extraobj
