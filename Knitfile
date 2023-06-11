@@ -417,7 +417,7 @@ return b{
         $(tools.cc) $(flags.as) $input -c -o $output
 
     $ coremark/libcoremark.a:B:
-        make -B -C coremark PORT_DIR=multiplix PORT_CFLAGS="$(flags.cc) $(sel(conf.cmdebug, "-DCORE_DEBUG=1", "")) -DTIMER_FREQ=$(machine.timer)" CC=$(tools.cc)
+        make -B -C coremark PORT_DIR=multiplix PORT_CFLAGS="$(flags.cc) $(sel(conf.cmdebug, "-DCORE_DEBUG=1", "")) -DTIMER_FREQ=$(machine.timer)" CC=isocc
 
     $ %.list: %.elf
         $(tools.objdump) $(flags.objdump) $input > $output

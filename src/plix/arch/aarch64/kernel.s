@@ -145,3 +145,12 @@ kswitch:
 
 	ret
 
+.section .text.sandbox_call
+.globl sandbox_call
+sandbox_call:
+	mov x20, xzr
+	mov x21, x0
+	mov x24, lr
+	blr x1
+	mov lr, x24
+	ret

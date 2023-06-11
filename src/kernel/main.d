@@ -15,8 +15,14 @@ immutable ubyte[] hello_data = cast(immutable ubyte[]) import("user/hello/hello.
 extern (C) extern __gshared ubyte _heap_start;
 
 extern (C) void coremark_main();
+extern (C) void sandbox_call(ulong segment, void function() fn);
 
 extern (C) void kmain(uint coreid, bool primary) {
+    // kernel(coreid, primary);
+    sandbox_call(0xffff_ffc0_0000_0000, &coremark_main);
+}
+
+void kernel(uint coreid, bool primary) {
     if (primary) {
         wakeup_cores();
     }
