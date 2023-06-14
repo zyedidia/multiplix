@@ -59,7 +59,7 @@ enum Perm {
     urwx = urw | x,
 }
 
-import plix.arch.vm : Pagetable, PtLevel;
+import plix.arch.vm : Pagetable, PtLevel, Pte;
 import plix.page : pages;
 
 bool mappg(Pagetable* pt, usize va, uintptr pa, Perm perm) {
@@ -77,7 +77,6 @@ bool mappg(Pagetable* pt, usize va, ubyte* page, Perm perm) {
     return mappg(pt, va, pa, perm);
 }
 
-import plix.arch.vm : Pagetable, Pte, PtLevel;
 import plix.proc : Proc;
 import core.option : Option;
 
