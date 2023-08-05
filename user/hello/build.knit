@@ -1,12 +1,4 @@
-local machine = build.machine(conf.board, false)
-if machine == nil then
-    return "could not find machine for board " .. conf.board
-end
-
 local darch = sel(machine.arch == "aarch64", "-DAARCH64", "-DRISCV64")
-
-local tools = build.tools(machine)
-local flags = build.flags(machine, conf.lto, conf.release, false)
 
 return b{
     $ hello.elf: hello.dbg.elf

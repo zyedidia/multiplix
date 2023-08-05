@@ -1,50 +1,51 @@
-ENTRY(_start)
+ENTRY(_kernel_start)
 
 SECTIONS
 {
     /* kernel is located at high canonical addresses */
-    /* boot entry: 0x44010000 */
-    /* kernel entry: 0xFFFFFFC044010000 = highmem + 0x44010000 */
-
-    . = 0xFFFFFFC044010000;
+    . = 0xFFFFFFC044000000;
     .text : {
-        _kcode_start = .;
-        KEEP(*(.text.boot))  
+        _text_start = .;
+        KEEP(*(.text.boot.kernel))
         *(.text*) 
-        _kcode_end = .;
+        _text_end = .;
         . = ALIGN(8);
     }
     .rodata : {
-        . = ALIGN(8);
-        _krodata_start = .;
+        _rodata_start = .;
         __global_pointer$ = . + 0x800;
         *(.rodata*)
         *(.srodata*)
-        . = ALIGN(8);
-        _krodata_end = .;
+        _rodata_end = .;
     }
     .data : { 
-        . = ALIGN(8);
-        _kdata_start = .;
+        _data_start = .;
         *(.sdata*)
         *(.data*)
         . = ALIGN(8);
-        _kdata_end = .;
+        _data_end = .;
     } 
     .bss : {
         . = ALIGN(8);
-        _kbss_start = .;
+        _bss_start = .;
         *(.sbss*)
         *(.bss*)
         *(COMMON)
         . = ALIGN(8);
-        _kbss_end = .;
+        _bss_end = .;
+    }
+
+    .stack : {
+        . = ALIGN(16);
+        _stack_start = .;
+        . += 20K; /* enough for 5 cores */
     }
 
     .heap : {
-        . = ALIGN(16);
-        _kheap_start = .;
+        . = ALIGN(4K);
+        _heap_start = .;
     }
 
     /DISCARD/ : { *(.comment .note .eh_frame) }
 }
+

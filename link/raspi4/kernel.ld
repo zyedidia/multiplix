@@ -1,41 +1,56 @@
-ENTRY(_start)
+ENTRY(_kernel_start)
 
 SECTIONS
 {
     .text 0xffffffc000100000 : {
-        _kcode_start = .;
-        KEEP(*(.text.boot))  
+        _code_start = .;
+        KEEP(*(.text.boot.kernel))
         *(.text*) 
+        _code_end = .;
         . = ALIGN(8);
-        _kcode_end = .;
     }
     .rodata : {
         . = ALIGN(8);
-        _krodata_start = .;
+        _rodata_start = .;
+        *(.srodata*)
         *(.rodata*)
         . = ALIGN(8);
-        _krodata_end = .;
+        _rodata_end = .;
     }
     .data : { 
         . = ALIGN(8);
-        _kdata_start = .;
+        _data_start = .;
+        *(.sdata*)
         *(.data*)
         . = ALIGN(8);
-        _kdata_end = .;
-    }
+        _data_end = .;
+    } 
     .bss : {
         . = ALIGN(8);
-        _kbss_start = .;
+        _bss_start = .;
+        *(.sbss*)
         *(.bss*)
         *(COMMON)
         . = ALIGN(8);
-        _kbss_end = .;
+        _bss_end = .;
+    }
+    .tls : {
+        *(.tdata*)
+        *(.tbss*)
+    }
+    ASSERT((SIZEOF(.tls) == 0), "ERROR: cannot have tdata or tbss")
+
+    .stack : {
+        . = ALIGN(16);
+        _stack_start = .;
+        . += 16K; /* enough for 4 cores */
     }
 
     .heap : {
-        . = ALIGN(16);
-        _kheap_start = .;
+        . = ALIGN(4K);
+        _heap_start = .;
     }
 
     /DISCARD/ : { *(.comment .note .eh_frame) }
 }
+
