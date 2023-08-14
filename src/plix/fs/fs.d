@@ -1,6 +1,7 @@
 module plix.fs.fs;
 
 import plix.fs.bcache : BSIZE, Buf, bread, brelease, bwrite;
+import plix.fs.file : Inode;
 import plix.print : println;
 
 enum {
@@ -8,10 +9,17 @@ enum {
     NDIRECT = 12,
     NINDIRECT = (BSIZE / uint.sizeof),
     MAXFILE = NDIRECT + NINDIRECT,
-    BPB = BSIZE * 8,
+    BPB = BSIZE * 8,             // bitmap bits per block
+    IPB = BSIZE / Dinode.sizeof, // inodes per block
+
+    NINODE = 50, // max number of active inodes
 }
 
-private uint bblock(uint b, Superblock sb) {
+uint iblock(uint i, Superblock sb) {
+    return i / cast(uint) IPB + sb.inodestart;
+}
+
+uint bblock(uint b, Superblock sb) {
     return b / BPB + sb.bmapstart;
 }
 
@@ -26,7 +34,8 @@ struct Superblock {
     uint bmapstart;    // Block number of first free map block
 }
 
-struct Inode {
+// On-disk inode representation.
+struct Dinode {
     short type;              // File type
     short major;             // Major device number (T_DEVICE only)
     short minor;             // Minor device number (T_DEVICE only)

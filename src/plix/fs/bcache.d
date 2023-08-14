@@ -22,11 +22,17 @@ struct Buf {
 struct BufferCache {
     Buf[NBUF] buf;
     Buf head;
+    Disk* disk;
+}
+
+struct Disk {
+    void function(Buf* b) read;
+    void function(Buf* b) write;
 }
 
 private __gshared BufferCache bcache;
 
-void binit() {
+void binit(Disk* disk) {
     bcache.head.prev = &bcache.head;
     bcache.head.next = &bcache.head;
     for (Buf* b = bcache.buf.ptr; b < bcache.buf.ptr + NBUF; b++) {
@@ -35,6 +41,7 @@ void binit() {
         bcache.head.next.prev = b;
         bcache.head.next = b;
     }
+    bcache.disk = disk;
 }
 
 Buf* bget(uint dev, uint blocknum) {
@@ -61,14 +68,14 @@ Buf* bget(uint dev, uint blocknum) {
 Buf* bread(uint dev, uint blocknum) {
     Buf* b = bget(dev, blocknum);
     if (!b.valid) {
-        // TODO: disk_read(b);
+        bcache.disk.read(b);
         b.valid = true;
     }
     return b;
 }
 
 void bwrite(Buf* b) {
-    // TODO: disk_write(b)
+    bcache.disk.write(b);
 }
 
 void brelease(Buf* b) {
