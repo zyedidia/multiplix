@@ -1,8 +1,12 @@
 module plix.fs.fs;
 
 import plix.fs.bcache : BSIZE, Buf, bread, brelease, bwrite;
-import plix.fs.file : Inode;
+import plix.fs.stat : T_DIR;
+import plix.fs.file : Inode, iget;
+import plix.fs.dir : DIRSIZ;
 import plix.print : println;
+
+import builtins : memmove, memset;
 
 enum {
     FSMAGIC = 0x10203040,
@@ -11,6 +15,9 @@ enum {
     MAXFILE = NDIRECT + NINDIRECT,
     BPB = BSIZE * 8,             // bitmap bits per block
     IPB = BSIZE / Dinode.sizeof, // inodes per block
+
+    ROOTINO = 1,
+    ROOTDEV = 1,
 
     NINODE = 50, // max number of active inodes
 }
@@ -45,9 +52,9 @@ struct Dinode {
 }
 
 void readsb(uint dev, Superblock* sb) {
-    import builtins : memmove;
     Buf* bp = bread(dev, 1);
     memmove(sb, &bp.data[0], Superblock.sizeof);
+    brelease(bp);
 }
 
 __gshared Superblock sb;
@@ -61,7 +68,6 @@ void fsinit(uint dev) {
 }
 
 void bzero(uint dev, uint bno) {
-    import builtins : memset;
     Buf* bp = bread(dev, bno);
     memset(&bp.data[0], 0, BSIZE);
     // TODO: log_write
@@ -98,5 +104,63 @@ void bfree(uint dev, uint b) {
     brelease(bp);
 }
 
-// string skipelem(string path, string name) {
-// }
+char* skipelem(char* path, char* name) {
+    while (*path == '/')
+        path++;
+    if (*path == 0)
+        return null;
+    char* s = path;
+    while (*path != '/' && *path != 0)
+        path++;
+    usize len = path - s;
+    if (len >= DIRSIZ) {
+        memmove(name, s, DIRSIZ);
+    } else {
+        memmove(name, s, len);
+        name[len] = 0;
+    }
+    while (*path == '/')
+        path++;
+    return path;
+}
+
+// Look up and return the inode for a path name.
+Inode* namex(Inode* cwd, char* path, int nameiparent, char* name) {
+    Inode* ip, next;
+    if (*path == '/')
+        ip = iget(ROOTDEV, ROOTINO);
+    else
+        ip = cwd;
+
+    while ((path = skipelem(path, name)) != null) {
+        ip.lock();
+        if (ip.type != T_DIR) {
+            ip.unlockput();
+            return null;
+        }
+        if (nameiparent && *path == '\0') {
+            ip.unlock();
+            return ip;
+        }
+        if ((next = ip.lookup(name, null)) == null) {
+            ip.unlockput();
+            return null;
+        }
+        ip.unlockput();
+        ip = next;
+    }
+    if (nameiparent) {
+        ip.put();
+        return null;
+    }
+    return ip;
+}
+
+Inode* namei(Inode* cwd, char* path) {
+    char[DIRSIZ] name;
+    return namex(cwd, path, 0, name.ptr);
+}
+
+Inode* nameiparent(Inode* cwd, char* path, char* name) {
+    return namex(cwd, path, 1, name);
+}

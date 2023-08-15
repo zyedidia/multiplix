@@ -1,12 +1,14 @@
 module plix.fs.dir;
 
+import core.string : strncmp;
+
 enum DIRSIZ = 14;
 
 struct Dirent {
     uint inum;
-    char[DIRSIZ] name_;
+    char[DIRSIZ] name;
+}
 
-    string name() {
-        return cast(string) name_[0 .. name_.length];
-    }
+int namecmp(const(char)* s, const(char)* t) {
+    return strncmp(s, t, DIRSIZ);
 }

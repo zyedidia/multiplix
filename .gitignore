@@ -21,3 +21,5 @@ TODO.txt
 
 !/tools/vf2/jh7110-recovery.bin
 /tools/plboot/plboot
+
+/tools/mkfs/mkfs

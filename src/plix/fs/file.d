@@ -4,7 +4,7 @@ import plix.fs.fs;
 import plix.fs.bcache;
 import plix.fs.stat;
 import plix.fs.stat : Stat;
-import plix.fs.dir : Dirent;
+import plix.fs.dir : Dirent, namecmp;
 
 import core.math : min;
 
@@ -52,8 +52,10 @@ struct File {
 
     int stat(ulong addr) {
         if (type == Ft.INODE || type == Ft.DEVICE) {
+            ip.lock();
             Stat st;
             ip.stat(&st);
+            ip.unlock();
             return 0;
         }
         return -1;
@@ -70,8 +72,10 @@ struct File {
         } else if (type == Ft.DEVICE) {
             // TODO: device read
         } else if (type == Ft.INODE) {
+            ip.lock();
             if ((r = ip.read(cast(ubyte*) addr, off, n)) > 0)
                 off += r;
+            ip.unlock();
         } else {
             assert(0);
         }
@@ -96,10 +100,12 @@ struct File {
                 int n1 = n - i;
                 if (n1 > max)
                     n1 = max;
-                
+
+                ip.lock();
                 if ((r = ip.write(cast(ubyte*) addr + i, off, n1)) > 0)
                     off += r;
-                
+                ip.unlock();
+
                 if (r != n1) {
                     break;
                 }
@@ -157,6 +163,7 @@ struct Inode {
         dip.nlink = nlink;
         dip.size = size;
         memmove(dip.addrs.ptr, addrs.ptr, addrs.sizeof);
+        brelease(bp);
     }
 
     void dup() {
@@ -194,6 +201,11 @@ struct Inode {
             valid = false;
         }
         refcnt--;
+    }
+
+    void unlockput() {
+        unlock();
+        put();
     }
 
     // Return the disk block address of the nth block in the inode.
@@ -314,7 +326,7 @@ struct Inode {
     // Directory operations
 
     // Look for a directory entry in a directory.
-    Inode* lookup(string name, uint* poff) {
+    Inode* lookup(const(char)* name, uint* poff) {
         assert(type == T_DIR);
 
         for (uint off = 0; off < size; off += Dirent.sizeof) {
@@ -323,7 +335,7 @@ struct Inode {
                 assert(0);
             if (de.inum == 0)
                 continue;
-            if (name == de.name) {
+            if (namecmp(name, de.name.ptr) == 0) {
                 if (poff)
                     *poff = off;
                 inum = de.inum;
@@ -333,7 +345,7 @@ struct Inode {
         return null;
     }
 
-    int link(string name, uint inum) {
+    int link(const(char)* name, uint inum) {
         Inode* ip;
         if ((ip = lookup(name, null)) != null) {
             put();
@@ -373,8 +385,10 @@ Inode* ialloc(uint dev, short type) {
         if (dip.type == 0) {
             memset(dip, 0, Dinode.sizeof);
             dip.type = type;
+            brelease(bp);
             return iget(dev, inum);
         }
+        brelease(bp);
     }
     return null;
 }

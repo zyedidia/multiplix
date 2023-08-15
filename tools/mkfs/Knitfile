@@ -1,0 +1,7 @@
+local knit = require("knit")
+local hsrc = knit.glob("*.h")
+
+return b{
+    $ mkfs: mkfs.c [[$(hsrc)]][I]
+        cc -O2 $input -o $output
+}

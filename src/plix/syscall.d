@@ -6,6 +6,8 @@ import plix.schedule : exit_queue, ticks_queue, wait_queue, runq;
 import plix.alloc: kfree;
 import plix.vm : lookup;
 
+import plix.sysfile : sys_open, sys_close, sys_read, sys_write;
+
 import sys = plix.sys;
 
 enum Sys {
@@ -17,6 +19,16 @@ enum Sys {
     sbrk   = 5,
     usleep = 6,
     read   = 7,
+    open   = 8,
+    dup    = 9,
+    close  = 10,
+    fstat  = 11,
+    link   = 12,
+    exec   = 13,
+    chdir  = 14,
+    mknod  = 15,
+    mkdir  = 16,
+    unlink = 17,
 }
 
 enum Err {
@@ -38,7 +50,7 @@ enum Err {
     nxio   = -6,  // No such device or address
     perm   = -1,  // Operation not permitted
     pipe   = -32, // Broken pipe
-    SPIPE  = -29, // Illegal seek
+    spipe  = -29, // Illegal seek
     srch   = -3,  // No such process
     txtbsy = -26, // Text file busy
     toobig = -7,  // Argument list too long
@@ -47,6 +59,12 @@ enum Err {
 uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     uintptr ret;
     switch (sysno) {
+    case Sys.open:
+        ret = sys_open(p, cast(char*) args[0], cast(int) args[1]);
+        break;
+    case Sys.close:
+        ret = sys_close(p, cast(int) args[0]);
+        break;
     case Sys.write:
         ret = sys_write(p, cast(int) args[0], args[1], args[2]);
         break;
@@ -142,37 +160,4 @@ void sys_usleep(Proc* p, ulong us) {
         p.block(&ticks_queue);
         p.yield();
     }
-}
-
-int sys_read(Proc* p, int fd, uintptr addr, usize sz) {
-    assert(false, "unimplemented");
-}
-
-long sys_write(Proc* p, int fd, uintptr addr, usize sz) {
-    if (sz == 0) {
-        return 0;
-    }
-
-    // Validate buffer.
-    usize overflow = addr + sz;
-    if (overflow < addr || addr >= Proc.max_va) {
-        return Err.fault;
-    }
-
-    for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
-        auto vmap = p.pt.lookup(va);
-        if (!vmap.has() || !vmap.get().user) {
-            return Err.fault;
-        }
-    }
-
-    // TODO: We only support console stdout for now.
-    if (fd != 1) {
-        return Err.badf;
-    }
-
-    string buf = cast(string) (cast(ubyte*) addr)[0 .. sz];
-    print(buf);
-
-    return sz;
 }

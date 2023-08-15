@@ -8,6 +8,7 @@ import plix.arch.trap : Trapframe, usertrapret;
 import plix.elf : loadelf;
 import plix.vm : mappg, Perm, PtIter, iska;
 import plix.schedule : Queue;
+import plix.fs.file : Inode, File;
 
 import sys = plix.sys;
 
@@ -29,6 +30,8 @@ struct Proc {
     enum max_va = stack_va + stack_size;
     // Stack canary.
     enum canary_magic = 0xfeedface;
+    // Max number of open files per process.
+    enum nofile = 16;
 
     Trapframe trapframe;
 
@@ -44,6 +47,9 @@ struct Proc {
 
     Proc* next;
     Proc* prev;
+
+    File*[nofile] ofile;
+    Inode* cwd;
 
     uint canary;
     align(16) ubyte[3008] kstack;
