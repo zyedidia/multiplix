@@ -2,7 +2,9 @@ module plix.fs.file;
 
 import plix.fs.fs;
 import plix.fs.bcache;
+import plix.fs.stat;
 import plix.fs.stat : Stat;
+import plix.fs.dir : Dirent;
 
 import core.math : min;
 
@@ -307,6 +309,51 @@ struct Inode {
         update();
 
         return tot;
+    }
+
+    // Directory operations
+
+    // Look for a directory entry in a directory.
+    Inode* lookup(string name, uint* poff) {
+        assert(type == T_DIR);
+
+        for (uint off = 0; off < size; off += Dirent.sizeof) {
+            Dirent de;
+            if (read(cast(ubyte*) &de, off, Dirent.sizeof) != Dirent.sizeof)
+                assert(0);
+            if (de.inum == 0)
+                continue;
+            if (name == de.name) {
+                if (poff)
+                    *poff = off;
+                inum = de.inum;
+                return iget(dev, inum);
+            }
+        }
+        return null;
+    }
+
+    int link(string name, uint inum) {
+        Inode* ip;
+        if ((ip = lookup(name, null)) != null) {
+            put();
+            return -1;
+        }
+
+        Dirent de;
+        int off;
+        for (off = 0; off < size; off += Dirent.sizeof) {
+            if (read(cast(ubyte*) &de, off, Dirent.sizeof) != Dirent.sizeof)
+                assert(0);
+            if (de.inum == 0)
+                break;
+        }
+
+        de.inum = inum;
+        if (write(cast(ubyte*) &de, off, Dirent.sizeof) != Dirent.sizeof) {
+            return -1;
+        }
+        return 0;
     }
 }
 

@@ -97,3 +97,6 @@ void bfree(uint dev, uint b) {
     // TODO: log_write
     brelease(bp);
 }
+
+// string skipelem(string path, string name) {
+// }
