@@ -3,31 +3,23 @@ module plix.dev.disk.ramdisk;
 import plix.alloc : kalloc;
 import core.math : min;
 
+import plix.fs.bcache : Buf;
+
+import builtins : memcpy;
+
+private __gshared ubyte[] disk = cast(ubyte[]) import("fs.img");
+enum blocksz = 1024;
+
 struct RamDisk {
-    ubyte[] disk;
-    usize blocksz;
-
-    bool initialize(usize blocksz, usize nblocks) {
-        this.blocksz = blocksz;
-
-        disk = kalloc(blocksz * nblocks);
-        if (!disk)
-            return false;
-
-        return true;
-    }
-
-    import builtins : memcpy;
-
-    usize read(usize block, ubyte[] data) {
-        usize n = min(disk.length - block * blocksz, data.length);
-        memcpy(data.ptr, &disk[block * blocksz], n);
+    static usize read(Buf* b) {
+        usize n = min(disk.length - b.blocknum * blocksz, b.data.length);
+        memcpy(b.data.ptr, &disk[b.blocknum * blocksz], n);
         return n;
     }
 
-    usize write(usize block, ubyte[] data) {
-        usize n = min(disk.length - block * blocksz, data.length);
-        memcpy(&disk[block * blocksz], data.ptr, n);
+    static usize write(Buf* b) {
+        usize n = min(disk.length - b.blocknum * blocksz, b.data.length);
+        memcpy(&disk[b.blocknum * blocksz], b.data.ptr, n);
         return n;
     }
 }

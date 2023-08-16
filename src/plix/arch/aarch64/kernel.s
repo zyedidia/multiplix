@@ -9,7 +9,8 @@ _kernel_start:
 	lsl x2, x2, #12
 	add x1, x1, x2
 	mov sp, x1
-	adr x2, primary
+	adrp x2, primary
+	add x2, x2, :lo12:primary
 	ldr x1, [x2]
 	str xzr, [x2]
 	bl start

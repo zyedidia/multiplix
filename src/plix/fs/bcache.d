@@ -1,5 +1,7 @@
 module plix.fs.bcache;
 
+import plix.print : printf;
+
 enum {
     BSIZE = 1024,
     MAXOPBLOCKS = 10,       // max # of blocks any FS op writes
@@ -22,17 +24,17 @@ struct Buf {
 struct BufferCache {
     Buf[NBUF] buf;
     Buf head;
-    Disk* disk;
+    Disk disk;
 }
 
 struct Disk {
-    void function(Buf* b) read;
-    void function(Buf* b) write;
+    ulong function(Buf* b) read;
+    ulong function(Buf* b) write;
 }
 
 private __gshared BufferCache bcache;
 
-void binit(Disk* disk) {
+void binit(Disk disk) {
     bcache.head.prev = &bcache.head;
     bcache.head.next = &bcache.head;
     for (Buf* b = bcache.buf.ptr; b < bcache.buf.ptr + NBUF; b++) {

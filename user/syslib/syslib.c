@@ -4,6 +4,7 @@
 #include <sys/times.h>
 
 #include "syscall.h"
+#include "syslib.h"
 
 char *__env[1] = { 0 };
 char **_environ = __env;
@@ -26,6 +27,14 @@ void* _sbrk(int incr) {
 
 int _close(int file) {
     return -1;
+}
+
+int _open(const char* name, int flags, int mode) {
+    return syscall_2(SYS_OPEN, (uintptr_t) name, mode);
+}
+
+int mstat(int file, struct mstat* st) {
+    return syscall_2(SYS_FSTAT, file, (uintptr_t) st);
 }
 
 int _fstat(int file, struct stat* st) {

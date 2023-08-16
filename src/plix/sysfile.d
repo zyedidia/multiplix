@@ -140,6 +140,10 @@ int sys_read(Proc* p, int fd, uintptr addr, usize sz) {
     assert(false, "unimplemented");
 }
 
+long sys_fstat(Proc* p, int fd, Stat* st) {
+    return p.ofile[fd].stat(cast(uintptr) st);
+}
+
 long sys_write(Proc* p, int fd, uintptr addr, usize sz) {
     if (sz == 0) {
         return 0;

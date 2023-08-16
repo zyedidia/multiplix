@@ -8,6 +8,8 @@ import plix.fs.dir : Dirent, namecmp;
 
 import core.math : min;
 
+import plix.print;
+
 import builtins : memmove, memset;
 
 enum Ft {
@@ -50,11 +52,11 @@ struct File {
         }
     }
 
-    int stat(ulong addr) {
+    int stat(uintptr addr) {
         if (type == Ft.INODE || type == Ft.DEVICE) {
             ip.lock();
-            Stat st;
-            ip.stat(&st);
+            Stat* st = cast(Stat*) addr;
+            ip.stat(st);
             ip.unlock();
             return 0;
         }
@@ -338,7 +340,7 @@ struct Inode {
             if (namecmp(name, de.name.ptr) == 0) {
                 if (poff)
                     *poff = off;
-                inum = de.inum;
+                uint inum = de.inum;
                 return iget(dev, inum);
             }
         }
@@ -361,7 +363,7 @@ struct Inode {
                 break;
         }
 
-        de.inum = inum;
+        de.inum = cast(ushort) inum;
         if (write(cast(ubyte*) &de, off, Dirent.sizeof) != Dirent.sizeof) {
             return -1;
         }
@@ -407,7 +409,7 @@ Inode* iget(uint dev, uint inum) {
         }
     }
 
-    assert(!empty, "no inodes");
+    assert(empty != null, "no inodes");
 
     ip = empty;
     ip.dev = dev;

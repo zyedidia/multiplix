@@ -8,6 +8,9 @@ import plix.proc : Proc;
 import plix.schedule : runq, schedule;
 import plix.arch.trap : Irq;
 
+import plix.fs.bcache : binit, Disk;
+import plix.dev.disk.ramdisk : RamDisk;
+
 import plix.sys : mb;
 
 immutable ubyte[] hello_data = cast(immutable ubyte[]) import("user/hello/hello.elf");
@@ -28,6 +31,10 @@ extern (C) void kmain(uint coreid, bool primary) {
     }
 
     kallocinit(&_heap_start, mb!(512));
+
+    binit(Disk(&RamDisk.read, &RamDisk.write));
+    import plix.fs.fs : fsinit;
+    fsinit(1);
 
     ubyte[] hello = kalloc(hello_data.length);
     ensure(hello != null);

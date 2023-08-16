@@ -4,7 +4,7 @@ import plix.fs.bcache : BSIZE, Buf, bread, brelease, bwrite;
 import plix.fs.stat : T_DIR;
 import plix.fs.file : Inode, iget;
 import plix.fs.dir : DIRSIZ;
-import plix.print : println;
+import plix.print;
 
 import builtins : memmove, memset;
 

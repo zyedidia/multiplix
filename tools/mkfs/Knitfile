@@ -4,4 +4,6 @@ local hsrc = knit.glob("*.h")
 return b{
     $ mkfs: mkfs.c [[$(hsrc)]][I]
         cc -O2 $input -o $output
+    $ install:VB: mkfs
+        cp mkfs ~/bin
 }

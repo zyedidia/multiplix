@@ -70,4 +70,6 @@ enum {
     SYS_SBRK   = 5,
     SYS_USLEEP = 6,
     SYS_READ   = 7,
+    SYS_OPEN   = 8,
+    SYS_FSTAT  = 11,
 };

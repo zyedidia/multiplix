@@ -6,7 +6,9 @@ import plix.schedule : exit_queue, ticks_queue, wait_queue, runq;
 import plix.alloc: kfree;
 import plix.vm : lookup;
 
-import plix.sysfile : sys_open, sys_close, sys_read, sys_write;
+import plix.fs.stat : Stat;
+
+import plix.sysfile : sys_open, sys_close, sys_read, sys_write, sys_fstat;
 
 import sys = plix.sys;
 
@@ -61,6 +63,9 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     switch (sysno) {
     case Sys.open:
         ret = sys_open(p, cast(char*) args[0], cast(int) args[1]);
+        break;
+    case Sys.fstat:
+        ret = sys_fstat(p, cast(int) args[0], cast(Stat*) args[1]);
         break;
     case Sys.close:
         ret = sys_close(p, cast(int) args[0]);

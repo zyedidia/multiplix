@@ -5,7 +5,7 @@ import core.string : strncmp;
 enum DIRSIZ = 14;
 
 struct Dirent {
-    uint inum;
+    ushort inum;
     char[DIRSIZ] name;
 }
 
