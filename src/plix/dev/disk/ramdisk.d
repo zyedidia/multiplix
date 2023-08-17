@@ -7,7 +7,12 @@ import plix.fs.bcache : Buf;
 
 import builtins : memcpy;
 
-private __gshared ubyte[] disk = cast(ubyte[]) import("fs.img");
+version (kernel) {
+    private __gshared ubyte[] disk = cast(ubyte[]) import("fs.img");
+} else {
+    private __gshared ubyte[] disk;
+}
+
 enum blocksz = 1024;
 
 struct RamDisk {
