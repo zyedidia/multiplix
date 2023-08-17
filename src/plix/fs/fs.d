@@ -104,12 +104,12 @@ void bfree(uint dev, uint b) {
     brelease(bp);
 }
 
-char* skipelem(char* path, char* name) {
+const(char)* skipelem(const(char)* path, char* name) {
     while (*path == '/')
         path++;
     if (*path == 0)
         return null;
-    char* s = path;
+    const(char)* s = path;
     while (*path != '/' && *path != 0)
         path++;
     usize len = path - s;
@@ -125,7 +125,7 @@ char* skipelem(char* path, char* name) {
 }
 
 // Look up and return the inode for a path name.
-Inode* namex(Inode* cwd, char* path, int nameiparent, char* name) {
+Inode* namex(Inode* cwd, const(char)* path, int nameiparent, char* name) {
     Inode* ip, next;
     if (*path == '/')
         ip = iget(ROOTDEV, ROOTINO);
@@ -156,11 +156,11 @@ Inode* namex(Inode* cwd, char* path, int nameiparent, char* name) {
     return ip;
 }
 
-Inode* namei(Inode* cwd, char* path) {
+Inode* namei(Inode* cwd, const(char)* path) {
     char[DIRSIZ] name;
     return namex(cwd, path, 0, name.ptr);
 }
 
-Inode* nameiparent(Inode* cwd, char* path, char* name) {
+Inode* nameiparent(Inode* cwd, const(char)* path, char* name) {
     return namex(cwd, path, 1, name);
 }

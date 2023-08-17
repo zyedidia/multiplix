@@ -133,15 +133,30 @@ ulong sys_open(Proc* p, char* path, int mode) {
 }
 
 ulong sys_close(Proc* p, int fd) {
-    assert(false, "unimplemented");
-}
-
-int sys_read(Proc* p, int fd, uintptr addr, usize sz) {
-    assert(false, "unimplemented");
+    // TODO: check fd
+    File* f = p.ofile[fd];
+    p.ofile[fd] = null;
+    f.close();
+    return 0;
 }
 
 long sys_fstat(Proc* p, int fd, Stat* st) {
+    // TODO: check fd
     return p.ofile[fd].stat(cast(uintptr) st);
+}
+
+long sys_dup(Proc* p, int fd) {
+    // TODO: check fd
+    File* f = p.ofile[fd];
+    int nfd = fdalloc(p, f);
+    if (nfd < 0)
+        return -1;
+    return nfd;
+}
+
+int sys_read(Proc* p, int fd, uintptr addr, usize sz) {
+    // TODO: check fd and addr
+    return p.ofile[fd].read(addr, cast(int) sz);
 }
 
 long sys_write(Proc* p, int fd, uintptr addr, usize sz) {

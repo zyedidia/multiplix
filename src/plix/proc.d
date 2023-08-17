@@ -9,6 +9,7 @@ import plix.elf : loadelf;
 import plix.vm : mappg, Perm, PtIter, iska;
 import plix.schedule : Queue;
 import plix.fs.file : Inode, File;
+import plix.fs.fs : namei;
 
 import sys = plix.sys;
 
@@ -92,6 +93,14 @@ struct Proc {
             }
         }
 
+        // increment reference counts for open file descriptors
+        for (usize i = 0; i < parent.ofile.length; i++) {
+            if (parent.ofile[i]) {
+                p.ofile[i] = parent.ofile[i].dup();
+            }
+        }
+        p.cwd = parent.cwd.dup();
+
         p.parent = parent;
         p.trapframe = parent.trapframe;
 
@@ -119,6 +128,8 @@ struct Proc {
             kfree(p);
             return null;
         }
+
+        p.cwd = namei(null, "/".ptr);
 
         p.trapframe.regs.sp = Proc.stack_va + sys.pagesize - 16;
         p.trapframe.epc = entry;

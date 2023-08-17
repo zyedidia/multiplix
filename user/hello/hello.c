@@ -14,6 +14,12 @@ int main() {
     struct mstat st;
     mstat(fd, &st);
     printf("type: %d, size: %d\n", st.type, st.size);
+
+    char data[32];
+    read(fd, data, 31);
+    data[32] = 0;
+    printf("%s\n", data);
+
     /* fork(); */
     /* int child = fork(); */
     /* int pid = getpid(); */

@@ -10,7 +10,7 @@ void* memcpy(void* dst, const(void)* src, usize n) {
     return dst;
 }
 
-void* memmove(void* dst, void* src, usize n) {
+void* memmove(void* dst, const(void)* src, usize n) {
     char* s = cast(char*) src;
     char* d = cast(char*) dst;
     if (s < d && s + n > d) {

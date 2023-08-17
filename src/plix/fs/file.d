@@ -29,9 +29,10 @@ struct File {
     short major;
 
     // Increment ref count for file f.
-    void dup() {
+    File* dup() {
         assert(refcnt >= 1);
         refcnt++;
+        return &this;
     }
 
     void close() {
@@ -168,8 +169,9 @@ struct Inode {
         brelease(bp);
     }
 
-    void dup() {
+    Inode* dup() {
         refcnt++;
+        return &this;
     }
 
     void lock() {
