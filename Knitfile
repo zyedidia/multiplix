@@ -385,7 +385,7 @@ return b{
     $ $objdir/src/boot/payload.o: src/boot/payload.s kernel.payload
         $(tools.cc) $(flags.as) -c -o $output $(inputs[1]) -DPAYLOAD=$(inputs[2])
 
-    $ $depdir/%.di: %.d user/hello/hello.elf[I]
+    $ $depdir/%.di: %.d user/hello/hello.elf[I] fs.img[I]
         $(tools.dc) $(flags.dc) $(noobj()) -Hf $output $input -O0
 
     $ $objdir/core.o: $(src.core())
@@ -442,5 +442,9 @@ return b{
     $ lint:VB:
         dscanner --styleCheck $(knit.rglob(".", "*.d")) --config .dscanner.ini $(inc) --errorFormat '{filepath}({line},{column}): Error: [{type}] {message}'
 
+    $ fs.img: README.md tools/mkfs/mkfs[I]
+        ./tools/mkfs/mkfs fs.img README.md
+
+    include("tools/mkfs/Knitfile"),
     include("user/hello/build.knit"),
 }
