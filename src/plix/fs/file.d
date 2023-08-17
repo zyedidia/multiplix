@@ -6,6 +6,8 @@ import plix.fs.stat;
 import plix.fs.stat : Stat;
 import plix.fs.dir : Dirent, namecmp;
 
+import plix.pipe;
+
 import core.math : min;
 
 import plix.print;
@@ -24,6 +26,7 @@ struct File {
     int refcnt;
     bool readable;
     bool writable;
+    Pipe* pipe;
     Inode* ip;
     uint off;
     short major;
@@ -73,7 +76,12 @@ struct File {
         if (type == Ft.PIPE) {
             // TODO: piperead
         } else if (type == Ft.DEVICE) {
-            // TODO: device read
+            // TODO: more general device read
+            ubyte[] buf = (cast(ubyte*) addr)[0 .. n];
+            import plix.board;
+            for (int i = 0; i < n; i++) {
+                buf[i] = uart.rx();
+            }
         } else if (type == Ft.INODE) {
             ip.lock();
             if ((r = ip.read(cast(ubyte*) addr, off, n)) > 0)
@@ -95,7 +103,10 @@ struct File {
         if (type == Ft.PIPE) {
             // TODO: pipewrite
         } else if (type == Ft.DEVICE) {
-            // TODO: device write
+            // TODO: we are just writing to the UART instead of the selected device
+            string buf = cast(string) (cast(ubyte*) addr)[0 .. n];
+            print(buf);
+            ret = n;
         } else if (type == Ft.INODE) {
             int max = ((MAXOPBLOCKS-1-1-2) / 2) * BSIZE;
             int i = 0;

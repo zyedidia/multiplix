@@ -8,7 +8,7 @@ import plix.arch.trap : Trapframe, usertrapret;
 import plix.elf : loadelf;
 import plix.vm : mappg, Perm, PtIter, iska;
 import plix.schedule : Queue;
-import plix.fs.file : Inode, File;
+import plix.fs.file : Inode, File, Ft, falloc;
 import plix.fs.fs : namei;
 
 import sys = plix.sys;
@@ -73,6 +73,15 @@ struct Proc {
         p.pt = pgtbl;
         p.context = Context(p.kstackp(), cast(uintptr) &Proc.forkret, pgtbl);
         p.canary = canary_magic;
+
+        p.ofile[0] = falloc();
+        assert(p.ofile[0]);
+        p.ofile[1] = falloc();
+        assert(p.ofile[1]);
+        p.ofile[0].type = Ft.DEVICE;
+        p.ofile[0].readable = true;
+        p.ofile[1].type = Ft.DEVICE;
+        p.ofile[1].writable = true;
 
         return p;
     }

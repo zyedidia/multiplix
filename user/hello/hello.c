@@ -8,6 +8,8 @@
 
 #include "syslib.h"
 
+#define BACKSPACE 127
+
 int main() {
     int fd = open("/README.md", 0, 0);
     printf("open: %d\n", fd);
@@ -19,6 +21,16 @@ int main() {
     read(fd, data, 31);
     data[32] = 0;
     printf("%s\n", data);
+
+    while (1) {
+        char c;
+        read(0, &c, 1);
+        if (c == BACKSPACE) {
+            printf("\b \b");
+        } else {
+            printf("%c", c);
+        }
+    }
 
     /* fork(); */
     /* int child = fork(); */

@@ -84,6 +84,26 @@ fail:
     return null;
 }
 
+private bool checkfd(Proc* p, int fd) {
+    return !(fd < 0 || fd >= Proc.nofile || p.ofile[fd] == null);
+}
+
+private bool checkaddr(Proc* p, uintptr addr, usize sz) {
+    // Validate buffer.
+    usize overflow = addr + sz;
+    if (overflow < addr || addr >= Proc.max_va) {
+        return false;
+    }
+
+    for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
+        auto vmap = p.pt.lookup(va);
+        if (!vmap.has() || !vmap.get().user) {
+            return false;
+        }
+    }
+    return true;
+}
+
 ulong sys_open(Proc* p, char* path, int mode) {
     Inode* ip;
     if (mode & Mode.CREATE) {
@@ -132,8 +152,10 @@ ulong sys_open(Proc* p, char* path, int mode) {
     return fd;
 }
 
-ulong sys_close(Proc* p, int fd) {
-    // TODO: check fd
+long sys_close(Proc* p, int fd) {
+    if (!checkfd(p, fd)) {
+        return -1;
+    }
     File* f = p.ofile[fd];
     p.ofile[fd] = null;
     f.close();
@@ -141,12 +163,16 @@ ulong sys_close(Proc* p, int fd) {
 }
 
 long sys_fstat(Proc* p, int fd, Stat* st) {
-    // TODO: check fd
+    if (!checkfd(p, fd)) {
+        return -1;
+    }
     return p.ofile[fd].stat(cast(uintptr) st);
 }
 
 long sys_dup(Proc* p, int fd) {
-    // TODO: check fd
+    if (!checkfd(p, fd)) {
+        return -1;
+    }
     File* f = p.ofile[fd];
     int nfd = fdalloc(p, f);
     if (nfd < 0)
@@ -155,35 +181,40 @@ long sys_dup(Proc* p, int fd) {
 }
 
 int sys_read(Proc* p, int fd, uintptr addr, usize sz) {
-    // TODO: check fd and addr
+    if (sz == 0)
+        return 0;
+    if (!checkfd(p, fd))
+        return -1;
+    if (!checkaddr(p, addr, sz))
+        return Err.fault;
+
     return p.ofile[fd].read(addr, cast(int) sz);
 }
 
 long sys_write(Proc* p, int fd, uintptr addr, usize sz) {
-    if (sz == 0) {
+    if (sz == 0)
         return 0;
-    }
-
-    // Validate buffer.
-    usize overflow = addr + sz;
-    if (overflow < addr || addr >= Proc.max_va) {
+    if (!checkfd(p, fd))
+        return -1;
+    if (!checkaddr(p, addr, sz))
         return Err.fault;
+
+    return p.ofile[fd].write(addr, cast(int) sz);
+}
+
+long sys_chdir(Proc* p, const(char)* path) {
+    // TODO: check that path does not exceed MAXPATH
+    Inode* ip;
+    if ((ip = namei(p.cwd, path)) == null) {
+        return -1;
     }
-
-    for (uintptr va = addr - (addr & 0xFFF); va < addr + sz; va += sys.pagesize) {
-        auto vmap = p.pt.lookup(va);
-        if (!vmap.has() || !vmap.get().user) {
-            return Err.fault;
-        }
+    ip.lock();
+    if (ip.type != T_DIR) {
+        ip.unlockput();
+        return -1;
     }
-
-    // TODO: We only support console stdout for now.
-    if (fd != 1) {
-        return Err.badf;
-    }
-
-    string buf = cast(string) (cast(ubyte*) addr)[0 .. sz];
-    print(buf);
-
-    return sz;
+    ip.unlock();
+    p.cwd.put();
+    p.cwd = ip;
+    return 0;
 }

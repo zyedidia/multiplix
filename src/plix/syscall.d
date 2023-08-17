@@ -70,6 +70,9 @@ uintptr syscall_handler(Args...)(Proc* p, ulong sysno, Args args) {
     case Sys.dup:
         ret = sys_dup(p, cast(int) args[0]);
         break;
+    case Sys.chdir:
+        ret = sys_chdir(p, cast(const(char)*) args[0]);
+        break;
     case Sys.close:
         ret = sys_close(p, cast(int) args[0]);
         break;
