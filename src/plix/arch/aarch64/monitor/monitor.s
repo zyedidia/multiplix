@@ -5,13 +5,15 @@ _monitor_start:
 	mrs x0, mpidr_el1
 	and x0, x0, #0xff
 	cbz x0, _primary_boot
-	adr x1, wakeup
+	adrp x1, wakeup
+	add x1, x1, :lo12:wakeup
 _spin:
 	wfe
 	ldr x2, [x1]
 	cbz x2, _spin
 _primary_boot:
-	adr x2, primary
+	adrp x2, primary
+	add x2, x2, :lo12:primary
 	ldr x1, [x2]
 	str xzr, [x2]
 	bl start
