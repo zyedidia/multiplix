@@ -407,7 +407,7 @@ return b{
 
     $ $objdir/monitor/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output $(version("monitor"))
-    $ $objdir/kernel/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I] user/hello/hello.elf[I]
+    $ $objdir/kernel/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I] user/hello/hello.elf[I] fs.img[I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output $(version("kernel"))
     $ $objdir/%.o:D[$depdir/%.dep]: %.d [[$depdir/%.di]][I]
         $(tools.dc) $(incdi) $(flags.dc) $(makedep(dep, output)) -c $input -$o $output
