@@ -19,7 +19,7 @@ int main() {
 
     char data[32];
     read(fd, data, 31);
-    data[32] = 0;
+    data[31] = 0;
     printf("%s\n", data);
 
     while (1) {
