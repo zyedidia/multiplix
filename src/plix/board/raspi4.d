@@ -41,11 +41,13 @@ struct Machine {
     }
 }
 
-__gshared BcmGpio gpio;
-__gshared BcmMiniUart uart;
-__gshared BcmCoreTimer timer;
-__gshared BcmMailbox mailbox;
-__gshared BcmReboot reboot;
+__gshared {
+    BcmGpio gpio;
+    BcmMiniUart uart;
+    BcmCoreTimer timer;
+    BcmMailbox mailbox;
+    BcmReboot reboot;
+}
 
 void setup() {
     import plix.cpu : cpu;

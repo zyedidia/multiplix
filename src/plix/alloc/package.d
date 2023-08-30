@@ -32,13 +32,13 @@ ubyte[] kzalloc(usize sz) {
     return mem;
 }
 
-T* knew(T, Args...)(Args args) {
+T* knew(T)() {
     auto alloc = alloc.lock();
     T* p = cast(T*) alloc.alloc(T.sizeof);
     if (!p) {
         return null;
     }
-    if (!emplace_init(p, args)) {
+    if (!emplace_init(p)) {
         alloc.free(cast(void*) p, T.sizeof);
         return null;
     }
@@ -62,7 +62,7 @@ void kfree(T)(T* ptr) if (is(T == struct)) {
     alloc.free(cast(void*) ptr, T.sizeof);
 }
 
-void kfree(void* ptr, usize size) {
+private void kfree(void* ptr, usize size) {
     auto alloc = alloc.lock();
     alloc.free(ptr, size);
 }
