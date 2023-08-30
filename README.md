@@ -32,7 +32,7 @@ To build multiplix you must have a GNU bare-metal toolchain and either LDC or
 GDC. You can get everything you need (prebuilt) from
 [`multiplix-toolchain-linux-amd64.tar.gz`](https://github.com/zyedidia/build-gdc/releases/latest).
 You must also have Go installed to build the `plboot` tool (for creating
-bootloader payloads).
+bootloader payloads). You'll also need QEMU if you want to simulate the OS.
 
 Multiplix uses the [Knit](https://github.com/zyedidia/knit) build tool. The
 Knitfile has the following targets:
@@ -62,6 +62,8 @@ plugin.
 The `unified` option controls whether the build is done as a single compilation
 unit (one invocation of the D compiler), or in parallel with multiple
 compilation units.
+
+You might also find it useful to read this blog post: https://zyedidia.github.io/blog/posts/1-d-baremetal/.
 
 # Acknowledgements
 
