@@ -1,17 +1,9 @@
 local knit = require("knit")
 
-local machine = build.machine(conf.board, true)
-if machine == nil then
-    return "could not find machine for board " .. board
-end
-
 local defines = ""
 if conf.board == "raspi4" then
     defines = "-DBCM2711=1"
 end
-
-local tools = build.tools(machine)
-local flags = build.flags(machine, false, conf.release, true)
 
 local meta = r{
     $ %.o: %.s
@@ -23,10 +15,10 @@ local meta = r{
 }
 
 return b{
-    $ all:V: armstub8.bin
+    $ armstub:V: armstub8.bin
 
     $ armstub8.elf: armstub8.o link.ld[I]
-        $(tools.ld) $(flags.ld) --section-start=.text=0x0 $input -o $output
+        $(tools.cc) $(flags.cc) -nostdlib -Wl,--section-start=.text=0x0 $input -o $output
 
     meta
 }

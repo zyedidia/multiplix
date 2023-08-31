@@ -447,4 +447,5 @@ return b{
 
     include("tools/mkfs/Knitfile"),
     include("user/hello/build.knit"),
+    include("firmware/raspi/build.knit"),
 }
