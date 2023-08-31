@@ -55,6 +55,7 @@ var autodetect = []string{
 	"/dev/ttyACM0",
 	"/dev/ttyUSB0",
 	"/dev/ttyUSB1",
+	"/dev/cu.usbserial-0001",
 }
 
 var baud = flag.Uint("baud", 115200, "baud rate")
@@ -185,7 +186,7 @@ func (p *progCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	fmt.Println("Waiting for program request")
 	for !ProgRequested(port) {
 	}
-	fmt.Println("Programming...")
+	fmt.Printf("Programming (estimate: %0.2fs)...\n", float64(len(bin)) / (float64(*baud) / 8.0))
 
 	PutUint[uint32](port, PutProgInfo)
 	time.Sleep(200 * time.Millisecond)
