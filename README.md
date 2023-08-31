@@ -28,6 +28,14 @@ versions running on the Ox64 and Orange Pi Zero 2).
 
 # Building
 
+If you have the necessary tools, you can build and run the kernel with
+
+```
+knit qemu board=raspi3
+```
+
+See below for details:
+
 To build multiplix you must have a GNU bare-metal toolchain and either LDC or
 GDC. You can get everything you need (prebuilt) from
 [`multiplix-toolchain-linux-amd64.tar.gz`](https://github.com/zyedidia/build-gdc/releases/latest).
@@ -64,6 +72,39 @@ unit (one invocation of the D compiler), or in parallel with multiple
 compilation units.
 
 You might also find it useful to read this blog post: https://zyedidia.github.io/blog/posts/1-d-baremetal/.
+
+# Installation on Raspberry Pi
+
+First build the armstub firmware with
+
+```
+knit firmware/raspi/armstub8.bin board=raspi3
+```
+
+Make sure to select the correct board.
+
+Next download the appropriate firmware:
+
+* Raspberry Pi 3: https://www.scs.stanford.edu/~zyedidia/docs/rpi/rpi3-firmware.tar.gz
+* Raspberry Pi 4: https://www.scs.stanford.edu/~zyedidia/docs/rpi/rpi4-firmware.tar.gz
+
+Copy `firmware/raspi/armstub8.bin` and `firmware/raspi/config.txt` into the firmware folder that you downloaded.
+
+Finally build the kernel: you can choose either the bootloader or the kernel
+itself. The bootloader will allow you to load new kernels over UART.
+
+```
+knit bootloader.bin
+knit kernel.boot.bin
+```
+
+Copy the `.bin` file you choose into the firmware folder as `kernel8.img`. Next
+flash the firmware folder onto an SD card as FAT32. Finally, insert the SD card
+and boot up the Pi.
+
+If you loaded the bootloader on the SD card, you can send a new kernel over
+UART with `knit prog`. Otherwise you'll want to use the `rduart` tool to read
+from the UART to view the kernel output.
 
 # Acknowledgements
 
